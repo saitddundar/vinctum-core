@@ -1,0 +1,55 @@
+# Binaries
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test output
+*.test
+*.out
+coverage.out
+
+# Go workspace
+go.sum.bak
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment files
+.env
+.env.local
+*.env
+
+# Certificates & Keys
+*.pem
+*.key
+*.crt
+*.p12
+certs/
+
+# OS generated
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+dist/
+build/
+
+# Proto generated files (regenerate with buf)
+**/*.pb.go
+**/*_grpc.pb.go
+
+# Logs
+*.log
+logs/
+
+# Dependency directories (already in go.sum)
+vendor/
+
+# buf
+.buf/
