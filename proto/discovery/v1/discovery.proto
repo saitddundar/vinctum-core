@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+package discovery.v1;
+
+option go_package = "github.com/saitddundar/vinctum-core/proto/discovery/v1;discoveryv1";
+
+import "google/protobuf/timestamp.proto";
+
+service DiscoveryService {
+  rpc AnnounceNode(AnnounceNodeRequest) returns (AnnounceNodeResponse);
+  rpc FindPeers(FindPeersRequest) returns (FindPeersResponse);
+  rpc GetNodeInfo(GetNodeInfoRequest) returns (GetNodeInfoResponse);
+  rpc StreamPeerUpdates(StreamPeerUpdatesRequest) returns (stream PeerUpdate);
+}
+
+message AnnounceNodeRequest {
+  string node_id         = 1;
+  repeated string addrs  = 2; // multiaddrs: /ip4/1.2.3.4/tcp/4001
+  string public_key      = 3; // Ed25519 public key (base64)
+}
+
+message AnnounceNodeResponse {
+  bool   success    = 1;
+  string message    = 2;
+  google.protobuf.Timestamp announced_at = 3;
+}
+
+message FindPeersRequest {
+  string node_id = 1; // find peers close to this node ID
+  int32  count   = 2; // max number of peers to return
+}
+
+message FindPeersResponse {
+  repeated PeerInfo peers = 1;
+}
+
+message GetNodeInfoRequest {
+  string node_id = 1;
+}
+
+message GetNodeInfoResponse {
+  PeerInfo peer = 1;
+}
+
+message StreamPeerUpdatesRequest {
+  string node_id = 1;
+}
+
+message PeerUpdate {
+  enum UpdateType {
+    PEER_JOINED = 0;
+    PEER_LEFT   = 1;
+    PEER_UPDATED = 2;
+  }
+  UpdateType type    = 1;
+  PeerInfo   peer    = 2;
+  google.protobuf.Timestamp timestamp = 3;
+}
+
+message PeerInfo {
+  string          node_id    = 1;
+  repeated string addrs      = 2;
+  string          public_key = 3;
+  bool            is_relay   = 4;
+  google.protobuf.Timestamp last_seen = 5;
+}
