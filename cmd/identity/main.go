@@ -10,10 +10,12 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog/log"
 	"github.com/saitddundar/vinctum-core/internal/auth"
+	"github.com/saitddundar/vinctum-core/internal/migrator"
 	"github.com/saitddundar/vinctum-core/pkg/config"
 	"github.com/saitddundar/vinctum-core/pkg/logger"
 	"github.com/saitddundar/vinctum-core/pkg/middleware"
 	identityv1 "github.com/saitddundar/vinctum-core/proto/identity/v1"
+	migrations "github.com/saitddundar/vinctum-core/scripts/migrations"
 	identityhandler "github.com/saitddundar/vinctum-core/services/identity/handler"
 	"github.com/saitddundar/vinctum-core/services/identity/repository"
 	"google.golang.org/grpc"
@@ -38,6 +40,10 @@ func main() {
 
 	if err := pool.Ping(ctx); err != nil {
 		log.Fatal().Err(err).Msg("postgres ping failed")
+	}
+
+	if err := migrator.Run(ctx, pool, migrations.FS); err != nil {
+		log.Fatal().Err(err).Msg("migration failed")
 	}
 
 	queries := repository.New(pool)

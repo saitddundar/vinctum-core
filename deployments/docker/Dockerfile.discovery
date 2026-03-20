@@ -1,0 +1,26 @@
+FROM golang:1.22-alpine AS builder
+
+WORKDIR /app
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+
+# go-libp2p bazı ortamlarda CGO isteyebilir ancak çoğunlukla pure Go fallback'leri mevcuttur. 
+# CGO_ENABLED=0 tercih ediyoruz.
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o /go/bin/discovery ./cmd/discovery
+
+# ---------------------------------------------------------
+FROM scratch
+
+COPY --from=alpine:latest /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=builder /go/bin/discovery /discovery
+
+# gRPC için
+EXPOSE 50052
+# P2P için TCP ve UDP (QUIC)
+EXPOSE 4001/tcp
+EXPOSE 4001/udp
+
+ENTRYPOINT ["/discovery"]
