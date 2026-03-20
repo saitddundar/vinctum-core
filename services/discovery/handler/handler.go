@@ -15,10 +15,10 @@ import (
 
 type DiscoveryHandler struct {
 	discoveryv1.UnimplementedDiscoveryServiceServer
-	queries *repository.Queries
+	queries repository.Querier
 }
 
-func NewDiscoveryHandler(q *repository.Queries) *DiscoveryHandler {
+func NewDiscoveryHandler(q repository.Querier) *DiscoveryHandler {
 	return &DiscoveryHandler{queries: q}
 }
 

@@ -17,13 +17,13 @@ import (
 
 type IdentityHandler struct {
 	identityv1.UnimplementedIdentityServiceServer
-	queries    *repository.Queries
+	queries    repository.Querier
 	jwt        *auth.Manager
 	blacklist  *auth.TokenBlacklist
 	bcryptCost int
 }
 
-func NewIdentityHandler(q *repository.Queries, jwt *auth.Manager, bl *auth.TokenBlacklist, bcryptCost int) *IdentityHandler {
+func NewIdentityHandler(q repository.Querier, jwt *auth.Manager, bl *auth.TokenBlacklist, bcryptCost int) *IdentityHandler {
 	return &IdentityHandler{queries: q, jwt: jwt, blacklist: bl, bcryptCost: bcryptCost}
 }
 
