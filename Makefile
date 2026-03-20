@@ -1,8 +1,13 @@
 .PHONY: generate build run-identity run-discovery tidy lint test
 
 # Proto code generation (requires buf CLI: https://buf.build/docs/installation)
-generate:
+generate: generate-proto generate-sql
+
+generate-proto:
 	buf generate
+
+generate-sql:
+	sqlc generate
 
 # Build all services
 build:
