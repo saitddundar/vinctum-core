@@ -5,27 +5,42 @@ import (
 
 	"github.com/rs/zerolog/log"
 	discoveryv1 "github.com/saitddundar/vinctum-core/proto/discovery/v1"
+	"github.com/saitddundar/vinctum-core/services/discovery/repository"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type DiscoveryHandler struct {
 	discoveryv1.UnimplementedDiscoveryServiceServer
+	peers repository.PeerRepository
 }
 
-func NewDiscoveryHandler() *DiscoveryHandler {
-	return &DiscoveryHandler{}
+func NewDiscoveryHandler(peers repository.PeerRepository) *DiscoveryHandler {
+	return &DiscoveryHandler{peers: peers}
 }
 
 func (h *DiscoveryHandler) AnnounceNode(ctx context.Context, req *discoveryv1.AnnounceNodeRequest) (*discoveryv1.AnnounceNodeResponse, error) {
-	log.Info().Str("node_id", req.NodeId).Msg("node announce")
-
 	if req.NodeId == "" || len(req.Addrs) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "node_id and addrs are required")
 	}
 
-	// TODO: store in DHT / peer store
-	return nil, status.Error(codes.Unimplemented, "not implemented yet")
+	peer := &repository.Peer{
+		NodeID:    req.NodeId,
+		Addrs:     req.Addrs,
+		PublicKey: req.PublicKey,
+	}
+
+	if err := h.peers.Upsert(ctx, peer); err != nil {
+		return nil, status.Error(codes.Internal, "failed to store peer")
+	}
+
+	log.Info().Str("node_id", req.NodeId).Strs("addrs", req.Addrs).Msg("node announced")
+
+	return &discoveryv1.AnnounceNodeResponse{
+		Success:     true,
+		AnnouncedAt: timestamppb.Now(),
+	}, nil
 }
 
 func (h *DiscoveryHandler) FindPeers(ctx context.Context, req *discoveryv1.FindPeersRequest) (*discoveryv1.FindPeersResponse, error) {
@@ -33,8 +48,28 @@ func (h *DiscoveryHandler) FindPeers(ctx context.Context, req *discoveryv1.FindP
 		return nil, status.Error(codes.InvalidArgument, "node_id is required")
 	}
 
-	// TODO: query DHT for closest peers
-	return nil, status.Error(codes.Unimplemented, "not implemented yet")
+	all, err := h.peers.All(ctx)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to fetch peers")
+	}
+
+	limit := int(req.Count)
+	if limit <= 0 || limit > len(all) {
+		limit = len(all)
+	}
+
+	result := make([]*discoveryv1.PeerInfo, 0, limit)
+	for _, p := range all {
+		if p.NodeID == req.NodeId {
+			continue
+		}
+		result = append(result, toPeerInfo(p))
+		if len(result) >= limit {
+			break
+		}
+	}
+
+	return &discoveryv1.FindPeersResponse{Peers: result}, nil
 }
 
 func (h *DiscoveryHandler) GetNodeInfo(ctx context.Context, req *discoveryv1.GetNodeInfoRequest) (*discoveryv1.GetNodeInfoResponse, error) {
@@ -42,13 +77,25 @@ func (h *DiscoveryHandler) GetNodeInfo(ctx context.Context, req *discoveryv1.Get
 		return nil, status.Error(codes.InvalidArgument, "node_id is required")
 	}
 
-	// TODO: lookup peer in store
-	return nil, status.Error(codes.Unimplemented, "not implemented yet")
+	p, err := h.peers.Find(ctx, req.NodeId)
+	if err != nil {
+		return nil, status.Error(codes.NotFound, "peer not found")
+	}
+
+	return &discoveryv1.GetNodeInfoResponse{Peer: toPeerInfo(p)}, nil
 }
 
 func (h *DiscoveryHandler) StreamPeerUpdates(req *discoveryv1.StreamPeerUpdatesRequest, stream discoveryv1.DiscoveryService_StreamPeerUpdatesServer) error {
-	log.Info().Str("node_id", req.NodeId).Msg("peer updates stream opened")
+	// Full pub/sub implementation coming in Week 3 (P2P layer).
+	return status.Error(codes.Unimplemented, "streaming not yet available")
+}
 
-	// TODO: subscribe to peer events and stream them
-	return status.Error(codes.Unimplemented, "not implemented yet")
+func toPeerInfo(p *repository.Peer) *discoveryv1.PeerInfo {
+	return &discoveryv1.PeerInfo{
+		NodeId:    p.NodeID,
+		Addrs:     p.Addrs,
+		PublicKey: p.PublicKey,
+		IsRelay:   p.IsRelay,
+		LastSeen:  timestamppb.New(p.LastSeen),
+	}
 }
