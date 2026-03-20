@@ -40,10 +40,6 @@ Thumbs.db
 dist/
 build/
 
-# Proto generated files (regenerate with buf)
-**/*.pb.go
-**/*_grpc.pb.go
-
 # Logs
 *.log
 logs/
