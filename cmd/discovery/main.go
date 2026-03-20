@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"net"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog/log"
 	"github.com/saitddundar/vinctum-core/pkg/config"
 	"github.com/saitddundar/vinctum-core/pkg/logger"
@@ -24,8 +26,20 @@ func main() {
 
 	logger.Init(cfg.Service.Name, cfg.Service.Version, cfg.Service.LogLevel, cfg.Service.Environment == "development")
 
-	peerRepo := repository.NewInMemoryPeerRepository()
-	handler := discoveryhandler.NewDiscoveryHandler(peerRepo)
+	ctx := context.Background()
+
+	pool, err := pgxpool.New(ctx, cfg.Database.DSN)
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to connect to postgres")
+	}
+	defer pool.Close()
+
+	if err := pool.Ping(ctx); err != nil {
+		log.Fatal().Err(err).Msg("postgres ping failed")
+	}
+
+	queries := repository.New(pool)
+	handler := discoveryhandler.NewDiscoveryHandler(queries)
 
 	lis, err := net.Listen("tcp", cfg.GRPC.Address())
 	if err != nil {

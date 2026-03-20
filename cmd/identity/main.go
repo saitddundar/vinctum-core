@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"net"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog/log"
 	"github.com/saitddundar/vinctum-core/internal/auth"
 	"github.com/saitddundar/vinctum-core/pkg/config"
@@ -26,9 +28,22 @@ func main() {
 
 	logger.Init(cfg.Service.Name, cfg.Service.Version, cfg.Service.LogLevel, cfg.Service.Environment == "development")
 
+	ctx := context.Background()
+
+	pool, err := pgxpool.New(ctx, cfg.Database.DSN)
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to connect to postgres")
+	}
+	defer pool.Close()
+
+	if err := pool.Ping(ctx); err != nil {
+		log.Fatal().Err(err).Msg("postgres ping failed")
+	}
+
+	queries := repository.New(pool)
 	jwtManager := auth.NewManager(cfg.Auth.JWTSecret, cfg.Auth.JWTExpiry, cfg.Auth.RefreshExpiry)
-	userRepo := repository.NewInMemoryUserRepository()
-	handler := identityhandler.NewIdentityHandler(userRepo, jwtManager, cfg.Auth.BcryptCost)
+	blacklist := auth.NewTokenBlacklist(cfg.Redis.Addr)
+	handler := identityhandler.NewIdentityHandler(queries, jwtManager, blacklist, cfg.Auth.BcryptCost)
 
 	lis, err := net.Listen("tcp", cfg.GRPC.Address())
 	if err != nil {
