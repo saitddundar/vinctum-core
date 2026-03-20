@@ -2,7 +2,9 @@ package handler
 
 import (
 	"context"
+	"errors"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/rs/zerolog/log"
 	discoveryv1 "github.com/saitddundar/vinctum-core/proto/discovery/v1"
 	"github.com/saitddundar/vinctum-core/services/discovery/repository"
@@ -13,11 +15,11 @@ import (
 
 type DiscoveryHandler struct {
 	discoveryv1.UnimplementedDiscoveryServiceServer
-	peers repository.PeerRepository
+	queries *repository.Queries
 }
 
-func NewDiscoveryHandler(peers repository.PeerRepository) *DiscoveryHandler {
-	return &DiscoveryHandler{peers: peers}
+func NewDiscoveryHandler(q *repository.Queries) *DiscoveryHandler {
+	return &DiscoveryHandler{queries: q}
 }
 
 func (h *DiscoveryHandler) AnnounceNode(ctx context.Context, req *discoveryv1.AnnounceNodeRequest) (*discoveryv1.AnnounceNodeResponse, error) {
@@ -25,13 +27,13 @@ func (h *DiscoveryHandler) AnnounceNode(ctx context.Context, req *discoveryv1.An
 		return nil, status.Error(codes.InvalidArgument, "node_id and addrs are required")
 	}
 
-	peer := &repository.Peer{
+	err := h.queries.UpsertPeer(ctx, repository.UpsertPeerParams{
 		NodeID:    req.NodeId,
 		Addrs:     req.Addrs,
 		PublicKey: req.PublicKey,
-	}
-
-	if err := h.peers.Upsert(ctx, peer); err != nil {
+		IsRelay:   false,
+	})
+	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to store peer")
 	}
 
@@ -48,7 +50,7 @@ func (h *DiscoveryHandler) FindPeers(ctx context.Context, req *discoveryv1.FindP
 		return nil, status.Error(codes.InvalidArgument, "node_id is required")
 	}
 
-	all, err := h.peers.All(ctx)
+	all, err := h.queries.ListPeers(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to fetch peers")
 	}
@@ -77,20 +79,22 @@ func (h *DiscoveryHandler) GetNodeInfo(ctx context.Context, req *discoveryv1.Get
 		return nil, status.Error(codes.InvalidArgument, "node_id is required")
 	}
 
-	p, err := h.peers.Find(ctx, req.NodeId)
+	p, err := h.queries.GetPeer(ctx, req.NodeId)
 	if err != nil {
-		return nil, status.Error(codes.NotFound, "peer not found")
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, status.Error(codes.NotFound, "peer not found")
+		}
+		return nil, status.Error(codes.Internal, "failed to fetch peer")
 	}
 
 	return &discoveryv1.GetNodeInfoResponse{Peer: toPeerInfo(p)}, nil
 }
 
 func (h *DiscoveryHandler) StreamPeerUpdates(req *discoveryv1.StreamPeerUpdatesRequest, stream discoveryv1.DiscoveryService_StreamPeerUpdatesServer) error {
-	// Full pub/sub implementation coming in Week 3 (P2P layer).
 	return status.Error(codes.Unimplemented, "streaming not yet available")
 }
 
-func toPeerInfo(p *repository.Peer) *discoveryv1.PeerInfo {
+func toPeerInfo(p repository.Peer) *discoveryv1.PeerInfo {
 	return &discoveryv1.PeerInfo{
 		NodeId:    p.NodeID,
 		Addrs:     p.Addrs,

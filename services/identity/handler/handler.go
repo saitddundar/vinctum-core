@@ -2,8 +2,9 @@ package handler
 
 import (
 	"context"
-	"time"
+	"errors"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/rs/zerolog/log"
 	"github.com/saitddundar/vinctum-core/internal/auth"
 	"github.com/saitddundar/vinctum-core/pkg/crypto"
@@ -16,13 +17,14 @@ import (
 
 type IdentityHandler struct {
 	identityv1.UnimplementedIdentityServiceServer
-	repo       repository.UserRepository
+	queries    *repository.Queries
 	jwt        *auth.Manager
+	blacklist  *auth.TokenBlacklist
 	bcryptCost int
 }
 
-func NewIdentityHandler(repo repository.UserRepository, jwt *auth.Manager, bcryptCost int) *IdentityHandler {
-	return &IdentityHandler{repo: repo, jwt: jwt, bcryptCost: bcryptCost}
+func NewIdentityHandler(q *repository.Queries, jwt *auth.Manager, bl *auth.TokenBlacklist, bcryptCost int) *IdentityHandler {
+	return &IdentityHandler{queries: q, jwt: jwt, blacklist: bl, bcryptCost: bcryptCost}
 }
 
 func (h *IdentityHandler) Register(ctx context.Context, req *identityv1.RegisterRequest) (*identityv1.RegisterResponse, error) {
@@ -35,14 +37,13 @@ func (h *IdentityHandler) Register(ctx context.Context, req *identityv1.Register
 		return nil, status.Error(codes.Internal, "failed to process password")
 	}
 
-	user := &repository.User{
+	user, err := h.queries.CreateUser(ctx, repository.CreateUserParams{
 		Username:     req.Username,
 		Email:        req.Email,
 		PasswordHash: hash,
-	}
-
-	if err := h.repo.Create(ctx, user); err != nil {
-		return nil, status.Error(codes.AlreadyExists, err.Error())
+	})
+	if err != nil {
+		return nil, status.Error(codes.AlreadyExists, "email already registered")
 	}
 
 	log.Info().Str("user_id", user.ID).Str("email", user.Email).Msg("user registered")
@@ -60,9 +61,12 @@ func (h *IdentityHandler) Login(ctx context.Context, req *identityv1.LoginReques
 		return nil, status.Error(codes.InvalidArgument, "email and password are required")
 	}
 
-	user, err := h.repo.FindByEmail(ctx, req.Email)
+	user, err := h.queries.GetUserByEmail(ctx, req.Email)
 	if err != nil {
-		return nil, status.Error(codes.NotFound, "invalid credentials")
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, status.Error(codes.NotFound, "invalid credentials")
+		}
+		return nil, status.Error(codes.Internal, "failed to fetch user")
 	}
 
 	if err := crypto.CheckPassword(req.Password, user.PasswordHash); err != nil {
@@ -92,6 +96,11 @@ func (h *IdentityHandler) Login(ctx context.Context, req *identityv1.LoginReques
 func (h *IdentityHandler) ValidateToken(ctx context.Context, req *identityv1.ValidateTokenRequest) (*identityv1.ValidateTokenResponse, error) {
 	if req.Token == "" {
 		return nil, status.Error(codes.InvalidArgument, "token is required")
+	}
+
+	blacklisted, _ := h.blacklist.IsBlacklisted(ctx, req.Token)
+	if blacklisted {
+		return &identityv1.ValidateTokenResponse{Valid: false}, nil
 	}
 
 	claims, err := h.jwt.Validate(req.Token)
@@ -129,8 +138,19 @@ func (h *IdentityHandler) RefreshToken(ctx context.Context, req *identityv1.Refr
 }
 
 func (h *IdentityHandler) Logout(ctx context.Context, req *identityv1.LogoutRequest) (*identityv1.LogoutResponse, error) {
-	// Token blacklisting will be implemented with Redis in Week 2.
-	// For now, clients discard the token client-side.
-	_ = time.Now()
+	if req.RefreshToken == "" {
+		return nil, status.Error(codes.InvalidArgument, "refresh_token is required")
+	}
+
+	claims, err := h.jwt.Validate(req.RefreshToken)
+	if err != nil {
+		return nil, status.Error(codes.Unauthenticated, "invalid token")
+	}
+
+	ttl := claims.ExpiresAt.Time.Sub(claims.IssuedAt.Time)
+	if err := h.blacklist.Add(ctx, req.RefreshToken, ttl); err != nil {
+		return nil, status.Error(codes.Internal, "failed to invalidate token")
+	}
+
 	return &identityv1.LogoutResponse{Success: true}, nil
 }
