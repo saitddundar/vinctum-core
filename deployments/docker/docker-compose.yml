@@ -1,0 +1,61 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: vinctum
+      POSTGRES_PASSWORD: vinctum
+      POSTGRES_DB: vinctum
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vinctum"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  identity:
+    build:
+      context: ../..
+      dockerfile: deployments/docker/Dockerfile.identity
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      VINCTUM_SERVICE_NAME: identity-service
+      VINCTUM_GRPC_PORT: 50051
+      VINCTUM_DATABASE_DSN: postgres://vinctum:vinctum@postgres:5432/vinctum?sslmode=disable
+      VINCTUM_AUTH_JWT_SECRET: ${JWT_SECRET}
+    ports:
+      - "50051:50051"
+
+  discovery:
+    build:
+      context: ../..
+      dockerfile: deployments/docker/Dockerfile.discovery
+    restart: unless-stopped
+    environment:
+      VINCTUM_SERVICE_NAME: discovery-service
+      VINCTUM_GRPC_PORT: 50052
+      VINCTUM_DATABASE_DSN: postgres://vinctum:vinctum@postgres:5432/vinctum?sslmode=disable
+    ports:
+      - "50052:50052"
+
+volumes:
+  postgres_data:

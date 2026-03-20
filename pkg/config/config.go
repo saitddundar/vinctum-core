@@ -12,6 +12,7 @@ type Config struct {
 	Service   ServiceConfig   `mapstructure:"service"`
 	GRPC      GRPCConfig      `mapstructure:"grpc"`
 	Database  DatabaseConfig  `mapstructure:"database"`
+	Redis     RedisConfig     `mapstructure:"redis"`
 	Auth      AuthConfig      `mapstructure:"auth"`
 	P2P       P2PConfig       `mapstructure:"p2p"`
 	WireGuard WireGuardConfig `mapstructure:"wireguard"`
@@ -47,6 +48,12 @@ type DatabaseConfig struct {
 	MaxOpenConns    int           `mapstructure:"max_open_conns"`
 	MaxIdleConns    int           `mapstructure:"max_idle_conns"`
 	ConnMaxLifetime time.Duration `mapstructure:"conn_max_lifetime"`
+}
+
+type RedisConfig struct {
+	Addr     string `mapstructure:"addr"`
+	Password string `mapstructure:"password"`
+	DB       int    `mapstructure:"db"`
 }
 
 type AuthConfig struct {
@@ -129,6 +136,11 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("p2p.enable_dht", true)
 	v.SetDefault("p2p.enable_relay", true)
 
+	// Redis
+	v.SetDefault("redis.addr", "localhost:6379")
+	v.SetDefault("redis.db", 0)
+
+	// WireGuard
 	v.SetDefault("wireguard.enabled", false)
 	v.SetDefault("wireguard.interface", "wg0")
 	v.SetDefault("wireguard.listen_port", 51820)
