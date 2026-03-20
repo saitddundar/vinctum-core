@@ -1,0 +1,32 @@
+version: "2"
+
+sql:
+  - engine: "postgresql"
+    schema: "scripts/migrations/001_create_users.sql"
+    queries: "services/identity/repository/queries.sql"
+    gen:
+      go:
+        package: "repository"
+        out: "services/identity/repository"
+        sql_package: "pgx/v5"
+        emit_interface: true
+        emit_json_tags: true
+        overrides:
+          - db_type: "uuid"
+            go_type: "string"
+          - db_type: "timestamptz"
+            go_type: "time.Time"
+
+  - engine: "postgresql"
+    schema: "scripts/migrations/002_create_peers.sql"
+    queries: "services/discovery/repository/queries.sql"
+    gen:
+      go:
+        package: "repository"
+        out: "services/discovery/repository"
+        sql_package: "pgx/v5"
+        emit_interface: true
+        emit_json_tags: true
+        overrides:
+          - db_type: "timestamptz"
+            go_type: "time.Time"

@@ -26,41 +26,64 @@ Client / Mobile App
 
 ## Tech Stack
 
-| Layer      | Technology         |
-|------------|--------------------|
-| Language   | Go 1.22+           |
-| RPC        | gRPC + Protobuf    |
-| P2P        | go-libp2p (DHT)    |
-| Auth       | JWT + mTLS         |
-| VPN        | WireGuard (opt.)   |
-| Config     | Viper              |
-| Logging    | Zerolog            |
+| Layer      | Technology              |
+|------------|-------------------------|
+| Language   | Go 1.22+                |
+| RPC        | gRPC + Protobuf         |
+| P2P        | go-libp2p (DHT)         |
+| Auth       | JWT + mTLS              |
+| VPN        | WireGuard (opt.)        |
+| Database   | PostgreSQL via pgx/v5   |
+| Query gen  | sqlc                    |
+| Cache      | Redis                   |
+| Config     | Viper                   |
+| Logging    | Zerolog                 |
+
+### What is sqlc?
+
+sqlc is **not an ORM**. You write raw SQL, and sqlc generates type-safe Go code from it — think of it as protobuf for SQL queries. No reflection, no magic, no hidden N+1 queries. The generated code uses pgx directly, so performance is identical to hand-written queries.
 
 ## Project Structure
 
 ```
 vinctum-core/
-├── cmd/           # Service entry points
-├── services/      # Microservice implementations
+├── cmd/              # Service entry points
+├── services/         # Microservice implementations
 │   ├── identity/
 │   ├── discovery/
 │   ├── routing/
 │   ├── transfer/
 │   └── gateway/
-├── proto/         # Protobuf schemas
-├── pkg/           # Shared packages (config, logger, crypto)
-├── internal/      # Internal packages
-├── deployments/   # Docker & Kubernetes manifests
+├── proto/            # Protobuf schemas (.proto + generated .pb.go)
+├── pkg/              # Shared packages (config, logger, crypto, middleware)
+├── internal/         # Internal packages (auth JWT, token blacklist)
+├── deployments/      # Docker Compose & Kubernetes manifests
 ├── scripts/
-└── docs/adr/      # Architecture Decision Records
+│   └── migrations/   # SQL migration files
+└── docs/adr/         # Architecture Decision Records
 ```
 
 ## Getting Started
 
 ```bash
-go mod download
-buf generate          # requires buf CLI
+# Install tools
+go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+
+# Generate code from proto and SQL
+buf generate
+sqlc generate
+
+# Start infrastructure
+docker compose -f deployments/docker/docker-compose.yml up -d
+
+# Run a service
 go run ./cmd/identity/...
+```
+
+## Testing
+
+```bash
+go test ./...
 ```
 
 ## License
