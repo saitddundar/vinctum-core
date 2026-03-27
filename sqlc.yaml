@@ -30,3 +30,31 @@ sql:
         overrides:
           - db_type: "timestamptz"
             go_type: "time.Time"
+
+  - engine: "postgresql"
+    schema: "scripts/migrations/003_create_routes.sql"
+    queries: "services/routing/repository/queries.sql"
+    gen:
+      go:
+        package: "repository"
+        out: "services/routing/repository"
+        sql_package: "pgx/v5"
+        emit_interface: true
+        emit_json_tags: true
+        overrides:
+          - db_type: "timestamptz"
+            go_type: "time.Time"
+
+  - engine: "postgresql"
+    schema: "scripts/migrations/004_create_transfers.sql"
+    queries: "services/transfer/repository/queries.sql"
+    gen:
+      go:
+        package: "repository"
+        out: "services/transfer/repository"
+        sql_package: "pgx/v5"
+        emit_interface: true
+        emit_json_tags: true
+        overrides:
+          - db_type: "timestamptz"
+            go_type: "time.Time"
