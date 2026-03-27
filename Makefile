@@ -1,4 +1,4 @@
-.PHONY: generate build run-identity run-discovery tidy lint test
+.PHONY: generate build run-identity run-discovery run-routing run-transfer tidy lint test docker-up docker-down
 
 # Proto code generation (requires buf CLI: https://buf.build/docs/installation)
 generate: generate-proto generate-sql
@@ -24,6 +24,12 @@ run-identity:
 run-discovery:
 	go run ./cmd/discovery/...
 
+run-routing:
+	go run ./cmd/routing/...
+
+run-transfer:
+	go run ./cmd/transfer/...
+
 # Sync dependencies
 tidy:
 	go mod tidy
@@ -40,6 +46,14 @@ test-cover:
 lint:
 	golangci-lint run ./...
 
+# Docker
+docker-up:
+	docker compose -f deployments/docker/docker-compose.yml up --build -d
+
+docker-down:
+	docker compose -f deployments/docker/docker-compose.yml down
+
 # Clean build artifacts
 clean:
 	rm -rf bin/ coverage.out
+
