@@ -50,6 +50,9 @@ services:
       context: ../..
       dockerfile: deployments/docker/Dockerfile.discovery
     restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
     environment:
       VINCTUM_SERVICE_NAME: discovery-service
       VINCTUM_GRPC_PORT: 50052
@@ -57,5 +60,38 @@ services:
     ports:
       - "50052:50052"
 
+  routing:
+    build:
+      context: ../..
+      dockerfile: deployments/docker/Dockerfile.routing
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      VINCTUM_SERVICE_NAME: routing-service
+      VINCTUM_GRPC_PORT: 50053
+      VINCTUM_DATABASE_DSN: postgres://vinctum:vinctum@postgres:5432/vinctum?sslmode=disable
+      VINCTUM_AUTH_JWT_SECRET: ${JWT_SECRET}
+    ports:
+      - "50053:50053"
+
+  transfer:
+    build:
+      context: ../..
+      dockerfile: deployments/docker/Dockerfile.transfer
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      VINCTUM_SERVICE_NAME: transfer-service
+      VINCTUM_GRPC_PORT: 50054
+      VINCTUM_DATABASE_DSN: postgres://vinctum:vinctum@postgres:5432/vinctum?sslmode=disable
+      VINCTUM_AUTH_JWT_SECRET: ${JWT_SECRET}
+    ports:
+      - "50054:50054"
+
 volumes:
   postgres_data:
+

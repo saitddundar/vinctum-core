@@ -1,29 +1,17 @@
-FROM golang:1.22-alpine AS builder
-
+FROM golang:1.25.4-alpine AS builder
 WORKDIR /app
 
-# Bağımlılıkları önbellekte tutmak için önce mod dosyalarını kopyala
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Tüm kaynak kodunu kopyala
 COPY . .
 
-# Static binary olarak derle (CGO_ENABLED=0 => libc bağımlılığı yok)
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o /go/bin/identity ./cmd/identity
 
-# ---------------------------------------------------------
-# Minimal runtime imajı (sadece binary içerir)
 FROM scratch
-
-# Alpine sertifikalarını (mTLS ve dış istekler için) kopyala (önceki aşamadan alamayız, alpine image'dan alıyoruz)
 COPY --from=alpine:latest /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-
-# Binary'i kopyala
 COPY --from=builder /go/bin/identity /identity
 
-# Gerekli port
 EXPOSE 50051
 
-# Başlat
 ENTRYPOINT ["/identity"]
