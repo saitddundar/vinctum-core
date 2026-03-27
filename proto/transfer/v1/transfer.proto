@@ -1,0 +1,140 @@
+syntax = "proto3";
+
+package transfer.v1;
+
+option go_package = "github.com/saitddundar/vinctum-core/proto/transfer/v1;transferv1";
+
+import "google/protobuf/timestamp.proto";
+
+service TransferService {
+  // Initiates a new file/data transfer session.
+  rpc InitiateTransfer(InitiateTransferRequest) returns (InitiateTransferResponse);
+
+  // Streams encrypted data chunks from sender to the service (client streaming).
+  rpc SendChunk(stream SendChunkRequest) returns (SendChunkResponse);
+
+  // Streams encrypted data chunks to the receiver (server streaming).
+  rpc ReceiveChunks(ReceiveChunksRequest) returns (stream DataChunk);
+
+  // Queries the current status of a transfer.
+  rpc GetTransferStatus(GetTransferStatusRequest) returns (GetTransferStatusResponse);
+
+  // Lists transfers associated with a node.
+  rpc ListTransfers(ListTransfersRequest) returns (ListTransfersResponse);
+
+  // Cancels an in-progress transfer.
+  rpc CancelTransfer(CancelTransferRequest) returns (CancelTransferResponse);
+}
+
+// ─── InitiateTransfer ────────────────────────────────────
+
+message InitiateTransferRequest {
+  string sender_node_id   = 1;
+  string receiver_node_id = 2;
+  string filename          = 3;
+  int64  total_size_bytes  = 4;
+  string content_hash      = 5; // SHA-256 hash of the entire payload
+  string encryption_key    = 6; // E2E encryption key (base64-encoded)
+  int32  chunk_size_bytes  = 7; // Size per chunk in bytes (default: 256KB)
+}
+
+message InitiateTransferResponse {
+  string transfer_id  = 1;
+  int32  total_chunks = 2;
+  TransferStatus status = 3;
+  google.protobuf.Timestamp created_at = 4;
+}
+
+// ─── SendChunk ───────────────────────────────────────────
+
+message SendChunkRequest {
+  string transfer_id = 1;
+  int32  chunk_index = 2;
+  bytes  data        = 3; // Encrypted chunk data
+  string chunk_hash  = 4; // SHA-256 hash of this chunk
+}
+
+message SendChunkResponse {
+  string transfer_id     = 1;
+  int32  chunks_received = 2;
+  int32  total_chunks    = 3;
+  TransferStatus status  = 4;
+}
+
+// ─── ReceiveChunks ───────────────────────────────────────
+
+message ReceiveChunksRequest {
+  string transfer_id      = 1;
+  int32  start_chunk      = 2; // Starting chunk index for resumable downloads
+  string receiver_node_id = 3;
+}
+
+message DataChunk {
+  string transfer_id = 1;
+  int32  chunk_index = 2;
+  bytes  data        = 3;
+  string chunk_hash  = 4;
+  bool   is_last     = 5;
+}
+
+// ─── GetTransferStatus ───────────────────────────────────
+
+message GetTransferStatusRequest {
+  string transfer_id = 1;
+}
+
+message GetTransferStatusResponse {
+  string transfer_id        = 1;
+  TransferStatus status     = 2;
+  int32  chunks_transferred = 3;
+  int32  total_chunks       = 4;
+  int64  bytes_transferred  = 5;
+  int64  total_bytes        = 6;
+  google.protobuf.Timestamp started_at  = 7;
+  google.protobuf.Timestamp updated_at  = 8;
+}
+
+// ─── ListTransfers ───────────────────────────────────────
+
+message ListTransfersRequest {
+  string node_id = 1; // List transfers belonging to this node
+  TransferStatus filter_status = 2;
+}
+
+message ListTransfersResponse {
+  repeated TransferInfo transfers = 1;
+}
+
+message TransferInfo {
+  string transfer_id       = 1;
+  string sender_node_id    = 2;
+  string receiver_node_id  = 3;
+  string filename          = 4;
+  int64  total_size_bytes  = 5;
+  TransferStatus status    = 6;
+  int32  progress_percent  = 7;
+  google.protobuf.Timestamp created_at = 8;
+}
+
+// ─── CancelTransfer ─────────────────────────────────────
+
+message CancelTransferRequest {
+  string transfer_id = 1;
+  string reason       = 2;
+}
+
+message CancelTransferResponse {
+  bool   success = 1;
+  string message = 2;
+}
+
+// ─── Enums ──────────────────────────────────────────────
+
+enum TransferStatus {
+  TRANSFER_STATUS_UNSPECIFIED = 0;
+  TRANSFER_STATUS_PENDING     = 1;
+  TRANSFER_STATUS_IN_PROGRESS = 2;
+  TRANSFER_STATUS_COMPLETED   = 3;
+  TRANSFER_STATUS_FAILED      = 4;
+  TRANSFER_STATUS_CANCELLED   = 5;
+}
