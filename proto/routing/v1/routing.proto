@@ -1,0 +1,110 @@
+syntax = "proto3";
+
+package routing.v1;
+
+option go_package = "github.com/saitddundar/vinctum-core/proto/routing/v1;routingv1";
+
+import "google/protobuf/timestamp.proto";
+
+service RoutingService {
+  // Computes the best route to the target node.
+  rpc FindRoute(FindRouteRequest) returns (FindRouteResponse);
+
+  // Updates a node's routing table entries.
+  rpc UpdateRouteTable(UpdateRouteTableRequest) returns (UpdateRouteTableResponse);
+
+  // Retrieves the full routing table for a given node.
+  rpc GetRouteTable(GetRouteTableRequest) returns (GetRouteTableResponse);
+
+  // Lists available relay nodes ordered by latency.
+  rpc ListRelays(ListRelaysRequest) returns (ListRelaysResponse);
+
+  // Registers or updates a relay node.
+  rpc RegisterRelay(RegisterRelayRequest) returns (RegisterRelayResponse);
+}
+
+// ─── FindRoute ───────────────────────────────────────────
+
+message FindRouteRequest {
+  string source_node_id = 1;
+  string target_node_id = 2;
+  int32  max_hops       = 3; // Maximum hop count (default: 5)
+}
+
+message FindRouteResponse {
+  repeated RouteHop hops       = 1;
+  int32   total_hops           = 2;
+  int64   estimated_latency_ms = 3; // Estimated end-to-end latency (ms)
+  bool    direct_possible      = 4; // Whether a direct connection is possible
+}
+
+message RouteHop {
+  string node_id   = 1;
+  string address   = 2; // multiaddr
+  bool   is_relay  = 3;
+  int32  hop_index = 4;
+}
+
+// ─── UpdateRouteTable ────────────────────────────────────
+
+message UpdateRouteTableRequest {
+  string node_id              = 1;
+  repeated RouteEntry entries = 2;
+}
+
+message UpdateRouteTableResponse {
+  bool   success         = 1;
+  int32  entries_updated = 2;
+  google.protobuf.Timestamp updated_at = 3;
+}
+
+message RouteEntry {
+  string target_node_id = 1;
+  string next_hop_id    = 2;
+  int32  metric         = 3; // Cost metric (lower = better)
+  int64  latency_ms     = 4;
+}
+
+// ─── GetRouteTable ───────────────────────────────────────
+
+message GetRouteTableRequest {
+  string node_id = 1;
+}
+
+message GetRouteTableResponse {
+  string node_id              = 1;
+  repeated RouteEntry entries = 2;
+  google.protobuf.Timestamp last_updated = 3;
+}
+
+// ─── ListRelays ──────────────────────────────────────────
+
+message ListRelaysRequest {
+  int32 limit = 1;
+}
+
+message ListRelaysResponse {
+  repeated RelayInfo relays = 1;
+}
+
+message RelayInfo {
+  string node_id          = 1;
+  string address          = 2;
+  int32  active_circuits  = 3;
+  int32  max_circuits     = 4;
+  int64  latency_ms       = 5;
+  google.protobuf.Timestamp last_seen = 6;
+}
+
+// ─── RegisterRelay ───────────────────────────────────────
+
+message RegisterRelayRequest {
+  string node_id      = 1;
+  string address      = 2;
+  int32  max_circuits = 3;
+}
+
+message RegisterRelayResponse {
+  bool   success = 1;
+  google.protobuf.Timestamp registered_at = 2;
+}
