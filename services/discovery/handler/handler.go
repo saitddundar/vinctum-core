@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/rs/zerolog/log"
@@ -91,7 +92,77 @@ func (h *DiscoveryHandler) GetNodeInfo(ctx context.Context, req *discoveryv1.Get
 }
 
 func (h *DiscoveryHandler) StreamPeerUpdates(req *discoveryv1.StreamPeerUpdatesRequest, stream discoveryv1.DiscoveryService_StreamPeerUpdatesServer) error {
-	return status.Error(codes.Unimplemented, "streaming not yet available")
+	if req.NodeId == "" {
+		return status.Error(codes.InvalidArgument, "node_id is required")
+	}
+
+	// Track known peers to detect joins / leaves / updates.
+	known := make(map[string]repository.Peer)
+
+	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-stream.Context().Done():
+			return nil
+		case <-ticker.C:
+			all, err := h.queries.ListPeers(stream.Context())
+			if err != nil {
+				continue
+			}
+			current := make(map[string]repository.Peer, len(all))
+			for _, p := range all {
+				if p.NodeID == req.NodeId {
+					continue // skip self
+				}
+				current[p.NodeID] = p
+
+				prev, exists := known[p.NodeID]
+				var updateType discoveryv1.PeerUpdate_UpdateType
+				if !exists {
+					updateType = discoveryv1.PeerUpdate_PEER_JOINED
+				} else if !peerEqual(prev, p) {
+					updateType = discoveryv1.PeerUpdate_PEER_UPDATED
+				} else {
+					continue // no change
+				}
+
+				if err := stream.Send(&discoveryv1.PeerUpdate{
+					Type:      updateType,
+					Peer:      toPeerInfo(p),
+					Timestamp: timestamppb.Now(),
+				}); err != nil {
+					return err
+				}
+			}
+
+			// Detect peers that left.
+			for id, p := range known {
+				if _, ok := current[id]; !ok {
+					_ = stream.Send(&discoveryv1.PeerUpdate{
+						Type:      discoveryv1.PeerUpdate_PEER_LEFT,
+						Peer:      toPeerInfo(p),
+						Timestamp: timestamppb.Now(),
+					})
+				}
+			}
+
+			known = current
+		}
+	}
+}
+
+func peerEqual(a, b repository.Peer) bool {
+	if len(a.Addrs) != len(b.Addrs) {
+		return false
+	}
+	for i := range a.Addrs {
+		if a.Addrs[i] != b.Addrs[i] {
+			return false
+		}
+	}
+	return a.PublicKey == b.PublicKey && a.IsRelay == b.IsRelay
 }
 
 func toPeerInfo(p repository.Peer) *discoveryv1.PeerInfo {
