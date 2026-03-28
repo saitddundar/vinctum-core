@@ -40,6 +40,7 @@ func (f *fakeQuerier) CreateTransfer(_ context.Context, arg repository.CreateTra
 		Status:         arg.Status,
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
+		EncryptionKey:  arg.EncryptionKey,
 	}
 	f.transfers[t.TransferID] = t
 	return t, nil

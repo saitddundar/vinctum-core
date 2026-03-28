@@ -19,9 +19,9 @@ func (q *Queries) CompleteTransfer(ctx context.Context, transferID string) error
 }
 
 const createTransfer = `-- name: CreateTransfer :one
-INSERT INTO transfers (transfer_id, sender_node_id, receiver_node_id, filename, total_size_bytes, content_hash, chunk_size_bytes, total_chunks, status)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-RETURNING transfer_id, sender_node_id, receiver_node_id, filename, total_size_bytes, content_hash, chunk_size_bytes, total_chunks, chunks_done, status, created_at, updated_at
+INSERT INTO transfers (transfer_id, sender_node_id, receiver_node_id, filename, total_size_bytes, content_hash, chunk_size_bytes, total_chunks, status, encryption_key)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+RETURNING transfer_id, sender_node_id, receiver_node_id, filename, total_size_bytes, content_hash, chunk_size_bytes, total_chunks, chunks_done, status, created_at, updated_at, encryption_key
 `
 
 type CreateTransferParams struct {
@@ -34,6 +34,7 @@ type CreateTransferParams struct {
 	ChunkSizeBytes int32  `json:"chunk_size_bytes"`
 	TotalChunks    int32  `json:"total_chunks"`
 	Status         int32  `json:"status"`
+	EncryptionKey  string `json:"encryption_key"`
 }
 
 func (q *Queries) CreateTransfer(ctx context.Context, arg CreateTransferParams) (Transfer, error) {
@@ -47,6 +48,7 @@ func (q *Queries) CreateTransfer(ctx context.Context, arg CreateTransferParams) 
 		arg.ChunkSizeBytes,
 		arg.TotalChunks,
 		arg.Status,
+		arg.EncryptionKey,
 	)
 	var i Transfer
 	err := row.Scan(
@@ -62,12 +64,13 @@ func (q *Queries) CreateTransfer(ctx context.Context, arg CreateTransferParams) 
 		&i.Status,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.EncryptionKey,
 	)
 	return i, err
 }
 
 const getTransfer = `-- name: GetTransfer :one
-SELECT transfer_id, sender_node_id, receiver_node_id, filename, total_size_bytes, content_hash, chunk_size_bytes, total_chunks, chunks_done, status, created_at, updated_at FROM transfers WHERE transfer_id = $1
+SELECT transfer_id, sender_node_id, receiver_node_id, filename, total_size_bytes, content_hash, chunk_size_bytes, total_chunks, chunks_done, status, created_at, updated_at, encryption_key FROM transfers WHERE transfer_id = $1
 `
 
 func (q *Queries) GetTransfer(ctx context.Context, transferID string) (Transfer, error) {
@@ -86,12 +89,13 @@ func (q *Queries) GetTransfer(ctx context.Context, transferID string) (Transfer,
 		&i.Status,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.EncryptionKey,
 	)
 	return i, err
 }
 
 const listTransfersByNode = `-- name: ListTransfersByNode :many
-SELECT transfer_id, sender_node_id, receiver_node_id, filename, total_size_bytes, content_hash, chunk_size_bytes, total_chunks, chunks_done, status, created_at, updated_at FROM transfers WHERE sender_node_id = $1 OR receiver_node_id = $1 ORDER BY created_at DESC
+SELECT transfer_id, sender_node_id, receiver_node_id, filename, total_size_bytes, content_hash, chunk_size_bytes, total_chunks, chunks_done, status, created_at, updated_at, encryption_key FROM transfers WHERE sender_node_id = $1 OR receiver_node_id = $1 ORDER BY created_at DESC
 `
 
 func (q *Queries) ListTransfersByNode(ctx context.Context, senderNodeID string) ([]Transfer, error) {
@@ -116,6 +120,7 @@ func (q *Queries) ListTransfersByNode(ctx context.Context, senderNodeID string) 
 			&i.Status,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.EncryptionKey,
 		); err != nil {
 			return nil, err
 		}
@@ -128,7 +133,7 @@ func (q *Queries) ListTransfersByNode(ctx context.Context, senderNodeID string) 
 }
 
 const listTransfersByStatus = `-- name: ListTransfersByStatus :many
-SELECT transfer_id, sender_node_id, receiver_node_id, filename, total_size_bytes, content_hash, chunk_size_bytes, total_chunks, chunks_done, status, created_at, updated_at FROM transfers WHERE (sender_node_id = $1 OR receiver_node_id = $1) AND status = $2 ORDER BY created_at DESC
+SELECT transfer_id, sender_node_id, receiver_node_id, filename, total_size_bytes, content_hash, chunk_size_bytes, total_chunks, chunks_done, status, created_at, updated_at, encryption_key FROM transfers WHERE (sender_node_id = $1 OR receiver_node_id = $1) AND status = $2 ORDER BY created_at DESC
 `
 
 type ListTransfersByStatusParams struct {
@@ -158,6 +163,7 @@ func (q *Queries) ListTransfersByStatus(ctx context.Context, arg ListTransfersBy
 			&i.Status,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.EncryptionKey,
 		); err != nil {
 			return nil, err
 		}

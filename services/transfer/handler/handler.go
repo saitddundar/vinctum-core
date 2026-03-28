@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/rs/zerolog/log"
+	"github.com/saitddundar/vinctum-core/internal/encryption"
 	routingv1 "github.com/saitddundar/vinctum-core/proto/routing/v1"
 	transferv1 "github.com/saitddundar/vinctum-core/proto/transfer/v1"
 	"github.com/saitddundar/vinctum-core/services/transfer/repository"
@@ -69,6 +70,13 @@ func (h *TransferHandler) InitiateTransfer(ctx context.Context, req *transferv1.
 	totalChunks := int32((req.TotalSizeBytes + int64(chunkSize) - 1) / int64(chunkSize))
 	transferID := uuid.NewString()
 
+	encKey := req.EncryptionKey
+	if encKey != "" {
+		if _, err := encryption.DecodeKey(encKey); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "invalid encryption_key: %v", err)
+		}
+	}
+
 	t, err := h.queries.CreateTransfer(ctx, repository.CreateTransferParams{
 		TransferID:     transferID,
 		SenderNodeID:   req.SenderNodeId,
@@ -79,6 +87,7 @@ func (h *TransferHandler) InitiateTransfer(ctx context.Context, req *transferv1.
 		ChunkSizeBytes: chunkSize,
 		TotalChunks:    totalChunks,
 		Status:         int32(transferv1.TransferStatus_TRANSFER_STATUS_PENDING),
+		EncryptionKey:  encKey,
 	})
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to create transfer")
@@ -103,6 +112,7 @@ func (h *TransferHandler) SendChunk(stream transferv1.TransferService_SendChunkS
 	var transferID string
 	var chunksReceived int32
 	var totalChunks int32
+	var encKeyBytes []byte
 
 	for {
 		chunk, err := stream.Recv()
@@ -122,6 +132,13 @@ func (h *TransferHandler) SendChunk(stream transferv1.TransferService_SendChunkS
 			}
 			totalChunks = t.TotalChunks
 
+			if t.EncryptionKey != "" {
+				encKeyBytes, err = encryption.DecodeKey(t.EncryptionKey)
+				if err != nil {
+					return status.Errorf(codes.Internal, "invalid stored encryption key: %v", err)
+				}
+			}
+
 			// Mark as in-progress on first chunk.
 			_ = h.queries.UpdateTransferStatus(stream.Context(), repository.UpdateTransferStatusParams{
 				TransferID: transferID,
@@ -129,15 +146,25 @@ func (h *TransferHandler) SendChunk(stream transferv1.TransferService_SendChunkS
 			})
 		}
 
+		// Encrypt chunk data before persisting if E2E key is set.
+		dataToStore := chunk.Data
+		if encKeyBytes != nil {
+			dataToStore, err = encryption.Encrypt(encKeyBytes, chunk.Data)
+			if err != nil {
+				log.Error().Err(err).Str("transfer_id", transferID).Int32("chunk", chunk.ChunkIndex).Msg("failed to encrypt chunk")
+				return status.Error(codes.Internal, "failed to encrypt chunk")
+			}
+		}
+
 		// Persist chunk to storage backend.
 		if h.chunks != nil {
-			storedHash, err := h.chunks.SaveChunk(transferID, chunk.ChunkIndex, chunk.Data)
+			storedHash, err := h.chunks.SaveChunk(transferID, chunk.ChunkIndex, dataToStore)
 			if err != nil {
 				log.Error().Err(err).Str("transfer_id", transferID).Int32("chunk", chunk.ChunkIndex).Msg("failed to persist chunk")
 				return status.Error(codes.Internal, "failed to persist chunk")
 			}
-			// Verify hash if the client provided one.
-			if chunk.ChunkHash != "" && chunk.ChunkHash != storedHash {
+			// Verify hash against the original (unencrypted) data if the client provided one.
+			if chunk.ChunkHash != "" && encKeyBytes == nil && chunk.ChunkHash != storedHash {
 				log.Warn().
 					Str("expected", chunk.ChunkHash).
 					Str("actual", storedHash).
@@ -192,6 +219,14 @@ func (h *TransferHandler) ReceiveChunks(req *transferv1.ReceiveChunksRequest, st
 		return status.Error(codes.Internal, "failed to fetch transfer")
 	}
 
+	var encKeyBytes []byte
+	if t.EncryptionKey != "" {
+		encKeyBytes, err = encryption.DecodeKey(t.EncryptionKey)
+		if err != nil {
+			return status.Errorf(codes.Internal, "invalid stored encryption key: %v", err)
+		}
+	}
+
 	startChunk := req.StartChunk
 	if startChunk < 0 {
 		startChunk = 0
@@ -208,6 +243,14 @@ func (h *TransferHandler) ReceiveChunks(req *transferv1.ReceiveChunksRequest, st
 			if err != nil {
 				log.Error().Err(err).Str("transfer_id", t.TransferID).Int32("chunk", i).Msg("failed to load chunk")
 				return status.Error(codes.Internal, "failed to load chunk from storage")
+			}
+			// Decrypt if E2E key is set.
+			if encKeyBytes != nil {
+				data, err = encryption.Decrypt(encKeyBytes, data)
+				if err != nil {
+					log.Error().Err(err).Str("transfer_id", t.TransferID).Int32("chunk", i).Msg("failed to decrypt chunk")
+					return status.Error(codes.Internal, "failed to decrypt chunk")
+				}
 			}
 		} else {
 			chunkHash = fmt.Sprintf("chunk-%d-hash", i)

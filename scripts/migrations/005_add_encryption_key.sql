@@ -1,0 +1,1 @@
+ALTER TABLE transfers ADD COLUMN IF NOT EXISTS encryption_key TEXT NOT NULL DEFAULT '';
