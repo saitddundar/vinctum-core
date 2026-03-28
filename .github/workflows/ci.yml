@@ -23,8 +23,8 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v7
         with:
-          version: v2.1
-          args: run --timeout=5m
+          version: latest
+          args: --timeout=5m
 
   test:
     name: Test
