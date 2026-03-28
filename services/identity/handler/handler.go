@@ -120,9 +120,20 @@ func (h *IdentityHandler) RefreshToken(ctx context.Context, req *identityv1.Refr
 		return nil, status.Error(codes.InvalidArgument, "refresh_token is required")
 	}
 
+	blacklisted, _ := h.blacklist.IsBlacklisted(ctx, req.RefreshToken)
+	if blacklisted {
+		return nil, status.Error(codes.Unauthenticated, "refresh token has been revoked")
+	}
+
 	claims, err := h.jwt.Validate(req.RefreshToken)
 	if err != nil {
 		return nil, status.Error(codes.Unauthenticated, "invalid or expired refresh token")
+	}
+
+	// Rotate: blacklist the old refresh token so it cannot be reused.
+	ttl := claims.ExpiresAt.Time.Sub(claims.IssuedAt.Time)
+	if err := h.blacklist.Add(ctx, req.RefreshToken, ttl); err != nil {
+		log.Warn().Err(err).Msg("failed to blacklist old refresh token")
 	}
 
 	pair, err := h.jwt.Issue(claims.Subject, claims.Email)
