@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
+	"github.com/saitddundar/vinctum-core/internal/encryption"
 	identityv1 "github.com/saitddundar/vinctum-core/proto/identity/v1"
 	routingv1 "github.com/saitddundar/vinctum-core/proto/routing/v1"
 	transferv1 "github.com/saitddundar/vinctum-core/proto/transfer/v1"
@@ -107,6 +108,9 @@ func (h *GatewayHandler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/routes/find", h.handleFindRoute)
 	mux.HandleFunc("GET /api/v1/routes/table/{nodeId}", h.handleGetRouteTable)
 	mux.HandleFunc("GET /api/v1/relays", h.handleListRelays)
+
+	// encryption utility
+	mux.HandleFunc("POST /api/v1/encryption/generate-key", h.handleGenerateKey)
 
 	// transfer proxy
 	mux.HandleFunc("POST /api/v1/transfers", h.handleInitiateTransfer)
@@ -376,6 +380,17 @@ func (h *GatewayHandler) handleCancelTransfer(w http.ResponseWriter, r *http.Req
 		return
 	}
 	writeJSON(w, http.StatusOK, resp)
+}
+
+// ─── Encryption ────────────────────────────────────────────────
+
+func (h *GatewayHandler) handleGenerateKey(w http.ResponseWriter, r *http.Request) {
+	key, err := encryption.GenerateKey()
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to generate key")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"encryption_key": key})
 }
 
 // ─── Helpers ────────────────────────────────────────────────

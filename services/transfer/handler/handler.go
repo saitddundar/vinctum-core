@@ -2,8 +2,9 @@ package handler
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
-	"fmt"
 	"io"
 
 	"github.com/google/uuid"
@@ -146,6 +147,18 @@ func (h *TransferHandler) SendChunk(stream transferv1.TransferService_SendChunkS
 			})
 		}
 
+		// Verify chunk hash against plaintext data before encryption.
+		if chunk.ChunkHash != "" {
+			plaintextHash := sha256Hex(chunk.Data)
+			if chunk.ChunkHash != plaintextHash {
+				log.Warn().
+					Str("expected", chunk.ChunkHash).
+					Str("actual", plaintextHash).
+					Msg("chunk hash mismatch")
+				return status.Error(codes.DataLoss, "chunk hash mismatch")
+			}
+		}
+
 		// Encrypt chunk data before persisting if E2E key is set.
 		dataToStore := chunk.Data
 		if encKeyBytes != nil {
@@ -158,18 +171,9 @@ func (h *TransferHandler) SendChunk(stream transferv1.TransferService_SendChunkS
 
 		// Persist chunk to storage backend.
 		if h.chunks != nil {
-			storedHash, err := h.chunks.SaveChunk(transferID, chunk.ChunkIndex, dataToStore)
-			if err != nil {
+			if _, err := h.chunks.SaveChunk(transferID, chunk.ChunkIndex, dataToStore); err != nil {
 				log.Error().Err(err).Str("transfer_id", transferID).Int32("chunk", chunk.ChunkIndex).Msg("failed to persist chunk")
 				return status.Error(codes.Internal, "failed to persist chunk")
-			}
-			// Verify hash against the original (unencrypted) data if the client provided one.
-			if chunk.ChunkHash != "" && encKeyBytes == nil && chunk.ChunkHash != storedHash {
-				log.Warn().
-					Str("expected", chunk.ChunkHash).
-					Str("actual", storedHash).
-					Msg("chunk hash mismatch")
-				return status.Error(codes.DataLoss, "chunk hash mismatch")
 			}
 		}
 
@@ -186,9 +190,16 @@ func (h *TransferHandler) SendChunk(stream transferv1.TransferService_SendChunkS
 			Msg("chunk received")
 	}
 
-	// Complete if all chunks received.
+	// Complete if all chunks received; verify content hash if provided.
 	finalStatus := transferv1.TransferStatus_TRANSFER_STATUS_IN_PROGRESS
 	if chunksReceived >= totalChunks {
+		if err := h.verifyContentHash(stream.Context(), transferID, encKeyBytes); err != nil {
+			_ = h.queries.UpdateTransferStatus(stream.Context(), repository.UpdateTransferStatusParams{
+				TransferID: transferID,
+				Status:     int32(transferv1.TransferStatus_TRANSFER_STATUS_FAILED),
+			})
+			return err
+		}
 		_ = h.queries.CompleteTransfer(stream.Context(), transferID)
 		finalStatus = transferv1.TransferStatus_TRANSFER_STATUS_COMPLETED
 	}
@@ -252,8 +263,7 @@ func (h *TransferHandler) ReceiveChunks(req *transferv1.ReceiveChunksRequest, st
 					return status.Error(codes.Internal, "failed to decrypt chunk")
 				}
 			}
-		} else {
-			chunkHash = fmt.Sprintf("chunk-%d-hash", i)
+			chunkHash = sha256Hex(data)
 		}
 
 		if err := stream.Send(&transferv1.DataChunk{
@@ -374,4 +384,47 @@ func (h *TransferHandler) CancelTransfer(ctx context.Context, req *transferv1.Ca
 		Success: true,
 		Message: "transfer cancelled",
 	}, nil
+}
+
+// verifyContentHash reassembles all chunks, decrypts if needed, and verifies
+// the SHA-256 hash of the full content matches what was declared on initiation.
+func (h *TransferHandler) verifyContentHash(ctx context.Context, transferID string, encKey []byte) error {
+	if h.chunks == nil {
+		return nil
+	}
+	t, err := h.queries.GetTransfer(ctx, transferID)
+	if err != nil || t.ContentHash == "" {
+		return nil // nothing to verify
+	}
+
+	hasher := sha256.New()
+	for i := int32(0); i < t.TotalChunks; i++ {
+		data, err := h.chunks.LoadChunk(transferID, i)
+		if err != nil {
+			return status.Error(codes.Internal, "failed to load chunk for verification")
+		}
+		if encKey != nil {
+			data, err = encryption.Decrypt(encKey, data)
+			if err != nil {
+				return status.Error(codes.Internal, "failed to decrypt chunk for verification")
+			}
+		}
+		hasher.Write(data)
+	}
+
+	actualHash := hex.EncodeToString(hasher.Sum(nil))
+	if actualHash != t.ContentHash {
+		log.Error().
+			Str("transfer_id", transferID).
+			Str("expected", t.ContentHash).
+			Str("actual", actualHash).
+			Msg("content hash mismatch after transfer")
+		return status.Error(codes.DataLoss, "content hash mismatch")
+	}
+	return nil
+}
+
+func sha256Hex(data []byte) string {
+	h := sha256.Sum256(data)
+	return hex.EncodeToString(h[:])
 }
