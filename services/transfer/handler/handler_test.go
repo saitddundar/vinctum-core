@@ -2,10 +2,10 @@ package handler_test
 
 import (
 	"context"
-	"errors"
 	"testing"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
@@ -24,7 +24,7 @@ func newFakeQuerier() *fakeQuerier {
 	return &fakeQuerier{transfers: make(map[string]repository.Transfer)}
 }
 
-var errNotFound = errors.New("not found")
+var errNotFound = pgx.ErrNoRows
 
 func (f *fakeQuerier) CreateTransfer(_ context.Context, arg repository.CreateTransferParams) (repository.Transfer, error) {
 	t := repository.Transfer{

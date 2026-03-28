@@ -8,7 +8,6 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/saitddundar/vinctum-core/internal/auth"
-	"github.com/saitddundar/vinctum-core/pkg/crypto"
 	identityv1 "github.com/saitddundar/vinctum-core/proto/identity/v1"
 	"github.com/saitddundar/vinctum-core/services/identity/handler"
 	"github.com/saitddundar/vinctum-core/services/identity/repository"
@@ -168,9 +167,3 @@ func TestRefreshToken(t *testing.T) {
 
 // Ensure fakeQuerier satisfies the Querier interface at compile time.
 var _ repository.Querier = (*fakeQuerier)(nil)
-
-// hashForTest is a helper to pre-hash passwords in fake data.
-func hashForTest(pw string) string {
-	h, _ := crypto.HashPassword(pw, 4)
-	return h
-}
