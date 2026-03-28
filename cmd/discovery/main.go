@@ -13,6 +13,7 @@ import (
 	"github.com/saitddundar/vinctum-core/internal/p2p"
 	"github.com/saitddundar/vinctum-core/pkg/config"
 	"github.com/saitddundar/vinctum-core/pkg/logger"
+	"github.com/saitddundar/vinctum-core/pkg/middleware"
 	discoveryv1 "github.com/saitddundar/vinctum-core/proto/discovery/v1"
 	migrations "github.com/saitddundar/vinctum-core/scripts/migrations"
 	discoveryhandler "github.com/saitddundar/vinctum-core/services/discovery/handler"
@@ -60,7 +61,10 @@ func main() {
 		log.Fatal().Err(err).Str("addr", cfg.GRPC.Address()).Msg("failed to listen")
 	}
 
-	srv := grpc.NewServer()
+	srv := grpc.NewServer(
+		grpc.UnaryInterceptor(middleware.UnaryAuthInterceptor(cfg.Auth.JWTSecret)),
+		grpc.StreamInterceptor(middleware.StreamAuthInterceptor(cfg.Auth.JWTSecret)),
+	)
 	discoveryv1.RegisterDiscoveryServiceServer(srv, handler)
 	reflection.Register(srv)
 

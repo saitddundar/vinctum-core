@@ -17,9 +17,11 @@ const UserIDKey contextKey = "user_id"
 const EmailKey  contextKey = "email"
 
 var publicMethods = map[string]bool{
-	"/identity.v1.IdentityService/Register":      true,
-	"/identity.v1.IdentityService/Login":          true,
-	"/identity.v1.IdentityService/RefreshToken":   true,
+	"/identity.v1.IdentityService/Register":       true,
+	"/identity.v1.IdentityService/Login":           true,
+	"/identity.v1.IdentityService/RefreshToken":    true,
+	"/discovery.v1.DiscoveryService/FindPeers":     true,
+	"/discovery.v1.DiscoveryService/GetNodeInfo":   true,
 }
 
 func UnaryAuthInterceptor(jwtSecret string) grpc.UnaryServerInterceptor {
