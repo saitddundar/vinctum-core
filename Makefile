@@ -1,4 +1,4 @@
-.PHONY: generate build run-identity run-discovery run-routing run-transfer tidy lint test docker-up docker-down
+.PHONY: generate build run-identity run-discovery run-routing run-transfer run-gateway tidy lint test docker-up docker-down
 
 # Proto code generation (requires buf CLI: https://buf.build/docs/installation)
 generate: generate-proto generate-sql
@@ -29,6 +29,9 @@ run-routing:
 
 run-transfer:
 	go run ./cmd/transfer/...
+
+run-gateway:
+	go run ./cmd/gateway/...
 
 # Sync dependencies
 tidy:
