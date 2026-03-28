@@ -92,6 +92,26 @@ services:
     ports:
       - "50054:50054"
 
+  gateway:
+    build:
+      context: ../..
+      dockerfile: deployments/docker/Dockerfile.gateway
+    restart: unless-stopped
+    depends_on:
+      - identity
+      - discovery
+      - routing
+      - transfer
+    environment:
+      VINCTUM_SERVICE_NAME: gateway-service
+      VINCTUM_GATEWAY_HTTP_PORT: 8080
+      VINCTUM_GATEWAY_IDENTITY_ADDR: identity:50051
+      VINCTUM_GATEWAY_DISCOVERY_ADDR: discovery:50052
+      VINCTUM_GATEWAY_ROUTING_ADDR: routing:50053
+      VINCTUM_GATEWAY_TRANSFER_ADDR: transfer:50054
+      VINCTUM_AUTH_JWT_SECRET: ${JWT_SECRET}
+    ports:
+      - "8080:8080"
+
 volumes:
   postgres_data:
-
