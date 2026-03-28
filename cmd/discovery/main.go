@@ -61,9 +61,16 @@ func main() {
 		log.Fatal().Err(err).Str("addr", cfg.GRPC.Address()).Msg("failed to listen")
 	}
 
+	rl := middleware.NewRateLimiter(100, 200)
 	srv := grpc.NewServer(
-		grpc.UnaryInterceptor(middleware.UnaryAuthInterceptor(cfg.Auth.JWTSecret)),
-		grpc.StreamInterceptor(middleware.StreamAuthInterceptor(cfg.Auth.JWTSecret)),
+		grpc.ChainUnaryInterceptor(
+			middleware.UnaryRateLimitInterceptor(rl),
+			middleware.UnaryAuthInterceptor(cfg.Auth.JWTSecret),
+		),
+		grpc.ChainStreamInterceptor(
+			middleware.StreamRateLimitInterceptor(rl),
+			middleware.StreamAuthInterceptor(cfg.Auth.JWTSecret),
+		),
 	)
 	discoveryv1.RegisterDiscoveryServiceServer(srv, handler)
 	reflection.Register(srv)
