@@ -13,11 +13,14 @@ import (
 	"github.com/saitddundar/vinctum-core/pkg/config"
 	"github.com/saitddundar/vinctum-core/pkg/logger"
 	"github.com/saitddundar/vinctum-core/pkg/middleware"
+	routingv1 "github.com/saitddundar/vinctum-core/proto/routing/v1"
 	transferv1 "github.com/saitddundar/vinctum-core/proto/transfer/v1"
 	migrations "github.com/saitddundar/vinctum-core/scripts/migrations"
 	transferhandler "github.com/saitddundar/vinctum-core/services/transfer/handler"
 	"github.com/saitddundar/vinctum-core/services/transfer/repository"
+	transferstorage "github.com/saitddundar/vinctum-core/services/transfer/storage"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
 )
 
@@ -46,7 +49,35 @@ func main() {
 	}
 
 	queries := repository.New(pool)
-	handler := transferhandler.NewTransferHandler(queries)
+
+	var routingClient routingv1.RoutingServiceClient
+	routingAddr := os.Getenv("VINCTUM_ROUTING_ADDR")
+	if routingAddr == "" {
+		routingAddr = "localhost:50053"
+	}
+
+	routingConn, err := grpc.NewClient(routingAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Warn().Err(err).Str("addr", routingAddr).Msg("could not dial routing service, route resolution disabled")
+	} else {
+		routingClient = routingv1.NewRoutingServiceClient(routingConn)
+		defer routingConn.Close()
+		log.Info().Str("addr", routingAddr).Msg("connected to routing service")
+	}
+
+	//Initialise chunk storage backend
+	chunkDir := os.Getenv("VINCTUM_CHUNK_DIR")
+	if chunkDir == "" {
+		chunkDir = "./data/chunks"
+	}
+
+	chunkStore, err := transferstorage.NewFileStore(chunkDir)
+	if err != nil {
+		log.Fatal().Err(err).Str("dir", chunkDir).Msg("failed to init chunk storage")
+	}
+	log.Info().Str("dir", chunkDir).Msg("chunk storage initialised")
+
+	handler := transferhandler.NewTransferHandler(queries, routingClient, chunkStore)
 
 	lis, err := net.Listen("tcp", cfg.GRPC.Address())
 	if err != nil {

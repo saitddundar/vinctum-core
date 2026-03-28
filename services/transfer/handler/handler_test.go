@@ -16,8 +16,6 @@ import (
 	"github.com/saitddundar/vinctum-core/services/transfer/repository"
 )
 
-// ──────────────────── fake querier ────────────────────────
-
 type fakeQuerier struct {
 	transfers map[string]repository.Transfer
 }
@@ -102,7 +100,7 @@ func (f *fakeQuerier) CompleteTransfer(_ context.Context, transferID string) err
 	if !ok {
 		return errNotFound
 	}
-	t.Status = 3 // COMPLETED
+	t.Status = 3
 	t.ChunksDone = t.TotalChunks
 	t.UpdatedAt = time.Now()
 	f.transfers[transferID] = t
@@ -115,7 +113,7 @@ var _ repository.Querier = (*fakeQuerier)(nil)
 // ──────────────────── helpers ────────────────────────────
 
 func newTestHandler() *handler.TransferHandler {
-	return handler.NewTransferHandler(newFakeQuerier())
+	return handler.NewTransferHandler(newFakeQuerier(), nil, nil)
 }
 
 func initTransfer(t *testing.T, h *handler.TransferHandler) *transferv1.InitiateTransferResponse {

@@ -9,8 +9,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/rs/zerolog/log"
+	routingv1 "github.com/saitddundar/vinctum-core/proto/routing/v1"
 	transferv1 "github.com/saitddundar/vinctum-core/proto/transfer/v1"
 	"github.com/saitddundar/vinctum-core/services/transfer/repository"
+	"github.com/saitddundar/vinctum-core/services/transfer/storage"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -21,21 +23,42 @@ const defaultChunkSize = 256 * 1024 // 256 KB
 // TransferHandler implements the TransferService gRPC server.
 type TransferHandler struct {
 	transferv1.UnimplementedTransferServiceServer
-	queries repository.Querier
+	queries       repository.Querier
+	routingClient routingv1.RoutingServiceClient // optional — may be nil
+	chunks        storage.ChunkStore             // optional — may be nil
 }
 
-// NewTransferHandler creates a new TransferHandler backed by the given Querier.
-func NewTransferHandler(q repository.Querier) *TransferHandler {
-	return &TransferHandler{queries: q}
+func NewTransferHandler(q repository.Querier, rc routingv1.RoutingServiceClient, cs storage.ChunkStore) *TransferHandler {
+	return &TransferHandler{queries: q, routingClient: rc, chunks: cs}
 }
 
-// InitiateTransfer creates a new transfer session and returns the transfer ID.
 func (h *TransferHandler) InitiateTransfer(ctx context.Context, req *transferv1.InitiateTransferRequest) (*transferv1.InitiateTransferResponse, error) {
 	if req.SenderNodeId == "" || req.ReceiverNodeId == "" {
 		return nil, status.Error(codes.InvalidArgument, "sender_node_id and receiver_node_id are required")
 	}
 	if req.TotalSizeBytes <= 0 {
 		return nil, status.Error(codes.InvalidArgument, "total_size_bytes must be positive")
+	}
+
+	if h.routingClient != nil {
+		routeResp, err := h.routingClient.FindRoute(ctx, &routingv1.FindRouteRequest{
+			SourceNodeId: req.SenderNodeId,
+			TargetNodeId: req.ReceiverNodeId,
+			MaxHops:      10,
+		})
+		if err != nil {
+			// Non-fatal: log and continue without route info.
+			log.Warn().Err(err).
+				Str("sender", req.SenderNodeId).
+				Str("receiver", req.ReceiverNodeId).
+				Msg("route resolution failed, proceeding without route")
+		} else {
+			log.Info().
+				Int32("hops", routeResp.TotalHops).
+				Int64("latency_ms", routeResp.EstimatedLatencyMs).
+				Bool("direct", routeResp.DirectPossible).
+				Msg("route resolved for transfer")
+		}
 	}
 
 	chunkSize := int32(req.ChunkSizeBytes)
@@ -76,7 +99,6 @@ func (h *TransferHandler) InitiateTransfer(ctx context.Context, req *transferv1.
 	}, nil
 }
 
-// SendChunk receives a stream of chunks from the sender and updates progress.
 func (h *TransferHandler) SendChunk(stream transferv1.TransferService_SendChunkServer) error {
 	var transferID string
 	var chunksReceived int32
@@ -107,7 +129,23 @@ func (h *TransferHandler) SendChunk(stream transferv1.TransferService_SendChunkS
 			})
 		}
 
-		// TODO: persist chunk data to object store or local disk.
+		// Persist chunk to storage backend.
+		if h.chunks != nil {
+			storedHash, err := h.chunks.SaveChunk(transferID, chunk.ChunkIndex, chunk.Data)
+			if err != nil {
+				log.Error().Err(err).Str("transfer_id", transferID).Int32("chunk", chunk.ChunkIndex).Msg("failed to persist chunk")
+				return status.Error(codes.Internal, "failed to persist chunk")
+			}
+			// Verify hash if the client provided one.
+			if chunk.ChunkHash != "" && chunk.ChunkHash != storedHash {
+				log.Warn().
+					Str("expected", chunk.ChunkHash).
+					Str("actual", storedHash).
+					Msg("chunk hash mismatch")
+				return status.Error(codes.DataLoss, "chunk hash mismatch")
+			}
+		}
+
 		chunksReceived = chunk.ChunkIndex + 1
 
 		_ = h.queries.UpdateTransferProgress(stream.Context(), repository.UpdateTransferProgressParams{
@@ -141,7 +179,6 @@ func (h *TransferHandler) SendChunk(stream transferv1.TransferService_SendChunkS
 	})
 }
 
-// ReceiveChunks streams chunks to the receiver for a given transfer.
 func (h *TransferHandler) ReceiveChunks(req *transferv1.ReceiveChunksRequest, stream transferv1.TransferService_ReceiveChunksServer) error {
 	if req.TransferId == "" {
 		return status.Error(codes.InvalidArgument, "transfer_id is required")
@@ -160,15 +197,27 @@ func (h *TransferHandler) ReceiveChunks(req *transferv1.ReceiveChunksRequest, st
 		startChunk = 0
 	}
 
-	// TODO: read actual chunk data from object store or local disk.
-	// For now, send placeholder metadata chunks so that the gRPC contract works.
 	for i := startChunk; i < t.TotalChunks; i++ {
 		isLast := i == t.TotalChunks-1
+
+		var data []byte
+		var chunkHash string
+
+		if h.chunks != nil {
+			data, err = h.chunks.LoadChunk(t.TransferID, i)
+			if err != nil {
+				log.Error().Err(err).Str("transfer_id", t.TransferID).Int32("chunk", i).Msg("failed to load chunk")
+				return status.Error(codes.Internal, "failed to load chunk from storage")
+			}
+		} else {
+			chunkHash = fmt.Sprintf("chunk-%d-hash", i)
+		}
+
 		if err := stream.Send(&transferv1.DataChunk{
 			TransferId: t.TransferID,
 			ChunkIndex: i,
-			Data:       nil, // placeholder — actual data comes from storage backend
-			ChunkHash:  fmt.Sprintf("chunk-%d-hash", i),
+			Data:       data,
+			ChunkHash:  chunkHash,
 			IsLast:     isLast,
 		}); err != nil {
 			return status.Error(codes.Internal, "failed to send chunk")
@@ -178,7 +227,6 @@ func (h *TransferHandler) ReceiveChunks(req *transferv1.ReceiveChunksRequest, st
 	return nil
 }
 
-// GetTransferStatus returns the current state of a transfer.
 func (h *TransferHandler) GetTransferStatus(ctx context.Context, req *transferv1.GetTransferStatusRequest) (*transferv1.GetTransferStatusResponse, error) {
 	if req.TransferId == "" {
 		return nil, status.Error(codes.InvalidArgument, "transfer_id is required")
@@ -209,8 +257,6 @@ func (h *TransferHandler) GetTransferStatus(ctx context.Context, req *transferv1
 	}, nil
 }
 
-// ListTransfers returns all transfers associated with a node, optionally
-// filtered by status.
 func (h *TransferHandler) ListTransfers(ctx context.Context, req *transferv1.ListTransfersRequest) (*transferv1.ListTransfersResponse, error) {
 	if req.NodeId == "" {
 		return nil, status.Error(codes.InvalidArgument, "node_id is required")
@@ -238,21 +284,20 @@ func (h *TransferHandler) ListTransfers(ctx context.Context, req *transferv1.Lis
 			progress = (t.ChunksDone * 100) / t.TotalChunks
 		}
 		transfers = append(transfers, &transferv1.TransferInfo{
-			TransferId:     t.TransferID,
-			SenderNodeId:   t.SenderNodeID,
-			ReceiverNodeId: t.ReceiverNodeID,
-			Filename:       t.Filename,
-			TotalSizeBytes: t.TotalSizeBytes,
-			Status:         transferv1.TransferStatus(t.Status),
+			TransferId:      t.TransferID,
+			SenderNodeId:    t.SenderNodeID,
+			ReceiverNodeId:  t.ReceiverNodeID,
+			Filename:        t.Filename,
+			TotalSizeBytes:  t.TotalSizeBytes,
+			Status:          transferv1.TransferStatus(t.Status),
 			ProgressPercent: progress,
-			CreatedAt:      timestamppb.New(t.CreatedAt),
+			CreatedAt:       timestamppb.New(t.CreatedAt),
 		})
 	}
 
 	return &transferv1.ListTransfersResponse{Transfers: transfers}, nil
 }
 
-// CancelTransfer marks a transfer as cancelled.
 func (h *TransferHandler) CancelTransfer(ctx context.Context, req *transferv1.CancelTransferRequest) (*transferv1.CancelTransferResponse, error) {
 	if req.TransferId == "" {
 		return nil, status.Error(codes.InvalidArgument, "transfer_id is required")
@@ -271,6 +316,13 @@ func (h *TransferHandler) CancelTransfer(ctx context.Context, req *transferv1.Ca
 		Status:     int32(transferv1.TransferStatus_TRANSFER_STATUS_CANCELLED),
 	}); err != nil {
 		return nil, status.Error(codes.Internal, "failed to cancel transfer")
+	}
+
+	// Clean up stored chunks on cancellation.
+	if h.chunks != nil {
+		if delErr := h.chunks.DeleteTransfer(req.TransferId); delErr != nil {
+			log.Warn().Err(delErr).Str("transfer_id", req.TransferId).Msg("failed to delete stored chunks")
+		}
 	}
 
 	log.Info().Str("transfer_id", req.TransferId).Str("reason", req.Reason).Msg("transfer cancelled")
