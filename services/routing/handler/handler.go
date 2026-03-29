@@ -50,6 +50,12 @@ func (h *RoutingHandler) FindRoute(ctx context.Context, req *routingv1.FindRoute
 
 	directPossible := err == nil && direct.NextHopID == req.TargetNodeId
 
+	// Build exclusion set for rerouting around failed nodes.
+	excluded := make(map[string]bool, len(req.ExcludeNodeIds))
+	for _, id := range req.ExcludeNodeIds {
+		excluded[id] = true
+	}
+
 	// Walk the hop chain.
 	var hops []*routingv1.RouteHop
 	var totalLatency int64
@@ -61,6 +67,12 @@ func (h *RoutingHandler) FindRoute(ctx context.Context, req *routingv1.FindRoute
 			TargetNodeID: req.TargetNodeId,
 		})
 		if err != nil {
+			break
+		}
+
+		// Skip excluded nodes (failed nodes during rerouting).
+		if excluded[entry.NextHopID] {
+			log.Debug().Str("skipped", entry.NextHopID).Msg("excluded node from route")
 			break
 		}
 
