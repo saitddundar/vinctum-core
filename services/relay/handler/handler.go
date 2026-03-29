@@ -22,13 +22,15 @@ type RelayHandler struct {
 	nodeID      string
 	chunks      storage.ChunkStore
 	relayClient *relay.Client
+	rerouter    *relay.Rerouter
 }
 
-func NewRelayHandler(nodeID string, chunks storage.ChunkStore, relayClient *relay.Client) *RelayHandler {
+func NewRelayHandler(nodeID string, chunks storage.ChunkStore, relayClient *relay.Client, rerouter *relay.Rerouter) *RelayHandler {
 	return &RelayHandler{
 		nodeID:      nodeID,
 		chunks:      chunks,
 		relayClient: relayClient,
+		rerouter:    rerouter,
 	}
 }
 
@@ -82,12 +84,32 @@ func (h *RelayHandler) RelayChunk(ctx context.Context, req *relayv1.RelayChunkRe
 
 	resp, err := h.relayClient.ForwardChunk(ctx, nextHop.NodeId, forwardReq)
 	if err != nil {
-		// Store locally as fallback so data isn't lost.
 		log.Warn().
 			Str("next_hop", nextHop.NodeId).
 			Err(err).
-			Msg("forward failed, storing locally as fallback")
+			Msg("forward failed, attempting reroute")
 
+		// Try rerouting around the failed node.
+		if h.rerouter != nil && len(req.RemainingHops) > 0 {
+			finalDest := req.RemainingHops[len(req.RemainingHops)-1].NodeId
+			newHops, rerouteErr := h.rerouter.FindAlternativeRoute(ctx, h.nodeID, finalDest, nextHop.NodeId)
+			if rerouteErr == nil && len(newHops) > 0 {
+				log.Info().
+					Str("failed_node", nextHop.NodeId).
+					Int("new_hops", len(newHops)).
+					Msg("reroute successful, forwarding via new path")
+
+				forwardReq.RemainingHops = newHops[1:] // Skip self
+				newNext := newHops[0].NodeId
+				resp, err = h.relayClient.ForwardChunk(ctx, newNext, forwardReq)
+				if err == nil {
+					return resp, nil
+				}
+				log.Warn().Err(err).Str("new_next", newNext).Msg("rerouted forward also failed")
+			}
+		}
+
+		// Final fallback: store locally so data isn't lost.
 		_, saveErr := h.chunks.SaveChunk(req.TransferId, req.ChunkIndex, req.Data)
 		if saveErr != nil {
 			return nil, status.Errorf(codes.Internal, "forward and local save both failed: forward=%v, save=%v", err, saveErr)
@@ -96,7 +118,7 @@ func (h *RelayHandler) RelayChunk(ctx context.Context, req *relayv1.RelayChunkRe
 		return &relayv1.RelayChunkResponse{
 			Success:      false,
 			NodeId:       h.nodeID,
-			ErrorMessage: "forwarded to fallback local storage: " + err.Error(),
+			ErrorMessage: "stored locally after forward failure: " + err.Error(),
 		}, nil
 	}
 
