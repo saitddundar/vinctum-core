@@ -7,15 +7,21 @@ import (
 	"os/signal"
 	"syscall"
 
+	"time"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog/log"
 	"github.com/saitddundar/vinctum-core/internal/migrator"
+	"github.com/saitddundar/vinctum-core/internal/relay"
 	"github.com/saitddundar/vinctum-core/pkg/config"
 	"github.com/saitddundar/vinctum-core/pkg/logger"
 	"github.com/saitddundar/vinctum-core/pkg/middleware"
+	discoveryv1 "github.com/saitddundar/vinctum-core/proto/discovery/v1"
+	relayv1 "github.com/saitddundar/vinctum-core/proto/relay/v1"
 	routingv1 "github.com/saitddundar/vinctum-core/proto/routing/v1"
 	transferv1 "github.com/saitddundar/vinctum-core/proto/transfer/v1"
 	migrations "github.com/saitddundar/vinctum-core/scripts/migrations"
+	relayhandler "github.com/saitddundar/vinctum-core/services/relay/handler"
 	transferhandler "github.com/saitddundar/vinctum-core/services/transfer/handler"
 	"github.com/saitddundar/vinctum-core/services/transfer/repository"
 	transferstorage "github.com/saitddundar/vinctum-core/services/transfer/storage"
@@ -77,7 +83,36 @@ func main() {
 	}
 	log.Info().Str("dir", chunkDir).Msg("chunk storage initialised")
 
-	handler := transferhandler.NewTransferHandler(queries, routingClient, chunkStore)
+	// Connect to discovery service for peer resolution.
+	var discoveryClient discoveryv1.DiscoveryServiceClient
+	discoveryAddr := os.Getenv("VINCTUM_DISCOVERY_ADDR")
+	if discoveryAddr == "" {
+		discoveryAddr = "localhost:50052"
+	}
+
+	discoveryConn, err := grpc.NewClient(discoveryAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Warn().Err(err).Str("addr", discoveryAddr).Msg("could not dial discovery service")
+	} else {
+		discoveryClient = discoveryv1.NewDiscoveryServiceClient(discoveryConn)
+		defer discoveryConn.Close()
+		log.Info().Str("addr", discoveryAddr).Msg("connected to discovery service")
+	}
+
+	// Build relay client for inter-node chunk forwarding.
+	var relayClient *relay.Client
+	if discoveryClient != nil {
+		peerPool := relay.NewPeerPool(discoveryClient, 3, 30*time.Second)
+		relayClient = relay.NewClient(peerPool)
+		defer peerPool.Close()
+	}
+
+	nodeID := os.Getenv("VINCTUM_NODE_ID")
+	if nodeID == "" {
+		nodeID = cfg.Service.Name
+	}
+
+	handler := transferhandler.NewTransferHandler(queries, routingClient, chunkStore, relayClient, nodeID)
 
 	lis, err := net.Listen("tcp", cfg.GRPC.Address())
 	if err != nil {
@@ -97,6 +132,11 @@ func main() {
 	)
 
 	transferv1.RegisterTransferServiceServer(srv, handler)
+
+	// Register RelayService so this node can receive relayed chunks.
+	relayHandler := relayhandler.NewRelayHandler(nodeID, chunkStore, relayClient)
+	relayv1.RegisterRelayServiceServer(srv, relayHandler)
+
 	reflection.Register(srv)
 
 	log.Info().Str("addr", cfg.GRPC.Address()).Msg("transfer service starting")

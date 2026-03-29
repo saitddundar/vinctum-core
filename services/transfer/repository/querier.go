@@ -14,6 +14,7 @@ type Querier interface {
 	GetTransfer(ctx context.Context, transferID string) (Transfer, error)
 	ListTransfersByNode(ctx context.Context, senderNodeID string) ([]Transfer, error)
 	ListTransfersByStatus(ctx context.Context, arg ListTransfersByStatusParams) ([]Transfer, error)
+	UpdateRouteHops(ctx context.Context, arg UpdateRouteHopsParams) error
 	UpdateTransferProgress(ctx context.Context, arg UpdateTransferProgressParams) error
 	UpdateTransferStatus(ctx context.Context, arg UpdateTransferStatusParams) error
 }

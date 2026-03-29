@@ -7,10 +7,14 @@ import (
 	"errors"
 	"io"
 
+	"encoding/json"
+
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/rs/zerolog/log"
 	"github.com/saitddundar/vinctum-core/internal/encryption"
+	"github.com/saitddundar/vinctum-core/internal/relay"
+	relayv1 "github.com/saitddundar/vinctum-core/proto/relay/v1"
 	routingv1 "github.com/saitddundar/vinctum-core/proto/routing/v1"
 	transferv1 "github.com/saitddundar/vinctum-core/proto/transfer/v1"
 	"github.com/saitddundar/vinctum-core/services/transfer/repository"
@@ -22,16 +26,17 @@ import (
 
 const defaultChunkSize = 256 * 1024 // 256 KB
 
-// TransferHandler implements the TransferService gRPC server.
 type TransferHandler struct {
 	transferv1.UnimplementedTransferServiceServer
 	queries       repository.Querier
 	routingClient routingv1.RoutingServiceClient // optional — may be nil
 	chunks        storage.ChunkStore             // optional — may be nil
+	relayClient   *relay.Client                  // optional — may be nil
+	nodeID        string
 }
 
-func NewTransferHandler(q repository.Querier, rc routingv1.RoutingServiceClient, cs storage.ChunkStore) *TransferHandler {
-	return &TransferHandler{queries: q, routingClient: rc, chunks: cs}
+func NewTransferHandler(q repository.Querier, rc routingv1.RoutingServiceClient, cs storage.ChunkStore, rc2 *relay.Client, nodeID string) *TransferHandler {
+	return &TransferHandler{queries: q, routingClient: rc, chunks: cs, relayClient: rc2, nodeID: nodeID}
 }
 
 func (h *TransferHandler) InitiateTransfer(ctx context.Context, req *transferv1.InitiateTransferRequest) (*transferv1.InitiateTransferResponse, error) {
@@ -42,6 +47,7 @@ func (h *TransferHandler) InitiateTransfer(ctx context.Context, req *transferv1.
 		return nil, status.Error(codes.InvalidArgument, "total_size_bytes must be positive")
 	}
 
+	var routeHops []*routingv1.RouteHop
 	if h.routingClient != nil {
 		routeResp, err := h.routingClient.FindRoute(ctx, &routingv1.FindRouteRequest{
 			SourceNodeId: req.SenderNodeId,
@@ -49,12 +55,12 @@ func (h *TransferHandler) InitiateTransfer(ctx context.Context, req *transferv1.
 			MaxHops:      10,
 		})
 		if err != nil {
-			// Non-fatal: log and continue without route info.
 			log.Warn().Err(err).
 				Str("sender", req.SenderNodeId).
 				Str("receiver", req.ReceiverNodeId).
 				Msg("route resolution failed, proceeding without route")
 		} else {
+			routeHops = routeResp.Hops
 			log.Info().
 				Int32("hops", routeResp.TotalHops).
 				Int64("latency_ms", routeResp.EstimatedLatencyMs).
@@ -78,17 +84,26 @@ func (h *TransferHandler) InitiateTransfer(ctx context.Context, req *transferv1.
 		}
 	}
 
+	routeJSON, _ := json.Marshal(routeHops)
+
+	replicationFactor := req.ReplicationFactor
+	if replicationFactor <= 0 {
+		replicationFactor = 1
+	}
+
 	t, err := h.queries.CreateTransfer(ctx, repository.CreateTransferParams{
-		TransferID:     transferID,
-		SenderNodeID:   req.SenderNodeId,
-		ReceiverNodeID: req.ReceiverNodeId,
-		Filename:       req.Filename,
-		TotalSizeBytes: req.TotalSizeBytes,
-		ContentHash:    req.ContentHash,
-		ChunkSizeBytes: chunkSize,
-		TotalChunks:    totalChunks,
-		Status:         int32(transferv1.TransferStatus_TRANSFER_STATUS_PENDING),
-		EncryptionKey:  encKey,
+		TransferID:        transferID,
+		SenderNodeID:      req.SenderNodeId,
+		ReceiverNodeID:    req.ReceiverNodeId,
+		Filename:          req.Filename,
+		TotalSizeBytes:    req.TotalSizeBytes,
+		ContentHash:       req.ContentHash,
+		ChunkSizeBytes:    chunkSize,
+		TotalChunks:       totalChunks,
+		Status:            int32(transferv1.TransferStatus_TRANSFER_STATUS_PENDING),
+		EncryptionKey:     encKey,
+		RouteHops:         routeJSON,
+		ReplicationFactor: replicationFactor,
 	})
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to create transfer")
@@ -106,6 +121,7 @@ func (h *TransferHandler) InitiateTransfer(ctx context.Context, req *transferv1.
 		TotalChunks: totalChunks,
 		Status:      transferv1.TransferStatus_TRANSFER_STATUS_PENDING,
 		CreatedAt:   timestamppb.New(t.CreatedAt),
+		RouteHops:   routeHops,
 	}, nil
 }
 
@@ -114,6 +130,8 @@ func (h *TransferHandler) SendChunk(stream transferv1.TransferService_SendChunkS
 	var chunksReceived int32
 	var totalChunks int32
 	var encKeyBytes []byte
+	var storedRouteHops []*routingv1.RouteHop
+	var replicationFactor int32
 
 	for {
 		chunk, err := stream.Recv()
@@ -132,6 +150,7 @@ func (h *TransferHandler) SendChunk(stream transferv1.TransferService_SendChunkS
 				return status.Error(codes.NotFound, "transfer not found")
 			}
 			totalChunks = t.TotalChunks
+			replicationFactor = t.ReplicationFactor
 
 			if t.EncryptionKey != "" {
 				encKeyBytes, err = encryption.DecodeKey(t.EncryptionKey)
@@ -140,7 +159,11 @@ func (h *TransferHandler) SendChunk(stream transferv1.TransferService_SendChunkS
 				}
 			}
 
-			// Mark as in-progress on first chunk.
+			// Deserialize stored route hops.
+			if len(t.RouteHops) > 0 {
+				_ = json.Unmarshal(t.RouteHops, &storedRouteHops)
+			}
+
 			_ = h.queries.UpdateTransferStatus(stream.Context(), repository.UpdateTransferStatusParams{
 				TransferID: transferID,
 				Status:     int32(transferv1.TransferStatus_TRANSFER_STATUS_IN_PROGRESS),
@@ -169,11 +192,48 @@ func (h *TransferHandler) SendChunk(stream transferv1.TransferService_SendChunkS
 			}
 		}
 
-		// Persist chunk to storage backend.
+		// Always persist locally as the sender's copy.
 		if h.chunks != nil {
 			if _, err := h.chunks.SaveChunk(transferID, chunk.ChunkIndex, dataToStore); err != nil {
 				log.Error().Err(err).Str("transfer_id", transferID).Int32("chunk", chunk.ChunkIndex).Msg("failed to persist chunk")
 				return status.Error(codes.Internal, "failed to persist chunk")
+			}
+		}
+
+		// Forward chunk along the route via relay if route hops exist.
+		if h.relayClient != nil && len(storedRouteHops) > 0 {
+			// Skip the first hop (sender = us), forward to remaining hops.
+			remainingHops := h.filterSelfFromHops(storedRouteHops)
+
+			if len(remainingHops) > 0 {
+				encHash := sha256Hex(dataToStore)
+				relayReq := &relayv1.RelayChunkRequest{
+					TransferId:        transferID,
+					ChunkIndex:        chunk.ChunkIndex,
+					Data:              dataToStore,
+					ChunkHash:         encHash,
+					RemainingHops:     remainingHops,
+					ReplicationFactor: replicationFactor,
+					Ttl:               int32(len(remainingHops) + 2),
+					EncryptionKey:     "", // Don't send key to relays — E2E
+				}
+
+				nextNode := remainingHops[0].NodeId
+				resp, relayErr := h.relayClient.ForwardChunk(stream.Context(), nextNode, relayReq)
+				if relayErr != nil {
+					log.Warn().
+						Err(relayErr).
+						Str("transfer_id", transferID).
+						Int32("chunk", chunk.ChunkIndex).
+						Str("next_hop", nextNode).
+						Msg("relay forwarding failed, chunk stored locally only")
+				} else if resp != nil && resp.Success {
+					log.Debug().
+						Str("transfer_id", transferID).
+						Int32("chunk", chunk.ChunkIndex).
+						Str("relayed_to", resp.NodeId).
+						Msg("chunk relayed successfully")
+				}
 			}
 		}
 
@@ -386,8 +446,6 @@ func (h *TransferHandler) CancelTransfer(ctx context.Context, req *transferv1.Ca
 	}, nil
 }
 
-// verifyContentHash reassembles all chunks, decrypts if needed, and verifies
-// the SHA-256 hash of the full content matches what was declared on initiation.
 func (h *TransferHandler) verifyContentHash(ctx context.Context, transferID string, encKey []byte) error {
 	if h.chunks == nil {
 		return nil
@@ -427,4 +485,14 @@ func (h *TransferHandler) verifyContentHash(ctx context.Context, transferID stri
 func sha256Hex(data []byte) string {
 	h := sha256.Sum256(data)
 	return hex.EncodeToString(h[:])
+}
+
+func (h *TransferHandler) filterSelfFromHops(hops []*routingv1.RouteHop) []*routingv1.RouteHop {
+	for i, hop := range hops {
+		if hop.NodeId == h.nodeID {
+			return hops[i+1:]
+		}
+	}
+	// If sender not in hops, return all.
+	return hops
 }

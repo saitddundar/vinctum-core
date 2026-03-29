@@ -46,7 +46,10 @@ sql:
             go_type: "time.Time"
 
   - engine: "postgresql"
-    schema: "scripts/migrations/004_create_transfers.sql"
+    schema:
+      - "scripts/migrations/004_create_transfers.sql"
+      - "scripts/migrations/005_add_encryption_key.sql"
+      - "scripts/migrations/006_add_route_hops.sql"
     queries: "services/transfer/repository/queries.sql"
     gen:
       go:

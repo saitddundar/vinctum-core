@@ -40,7 +40,9 @@ func (f *fakeQuerier) CreateTransfer(_ context.Context, arg repository.CreateTra
 		Status:         arg.Status,
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
-		EncryptionKey:  arg.EncryptionKey,
+		EncryptionKey:     arg.EncryptionKey,
+		RouteHops:         arg.RouteHops,
+		ReplicationFactor: arg.ReplicationFactor,
 	}
 	f.transfers[t.TransferID] = t
 	return t, nil
@@ -108,13 +110,24 @@ func (f *fakeQuerier) CompleteTransfer(_ context.Context, transferID string) err
 	return nil
 }
 
+func (f *fakeQuerier) UpdateRouteHops(_ context.Context, arg repository.UpdateRouteHopsParams) error {
+	t, ok := f.transfers[arg.TransferID]
+	if !ok {
+		return errNotFound
+	}
+	t.RouteHops = arg.RouteHops
+	t.UpdatedAt = time.Now()
+	f.transfers[arg.TransferID] = t
+	return nil
+}
+
 // Compile-time interface check.
 var _ repository.Querier = (*fakeQuerier)(nil)
 
 // ──────────────────── helpers ────────────────────────────
 
 func newTestHandler() *handler.TransferHandler {
-	return handler.NewTransferHandler(newFakeQuerier(), nil, nil)
+	return handler.NewTransferHandler(newFakeQuerier(), nil, nil, nil, "test-node")
 }
 
 func initTransfer(t *testing.T, h *handler.TransferHandler) *transferv1.InitiateTransferResponse {
