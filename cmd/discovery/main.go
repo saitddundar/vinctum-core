@@ -47,7 +47,6 @@ func main() {
 	}
 
 	queries := repository.New(pool)
-	handler := discoveryhandler.NewDiscoveryHandler(queries)
 
 	p2pNode, err := p2p.NewNode(ctx, p2p.NodeConfig{
 		ListenAddrs: cfg.P2P.ListenAddresses,
@@ -55,6 +54,8 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to start p2p node")
 	}
+
+	handler := discoveryhandler.NewDiscoveryHandler(queries, p2pNode)
 
 	lis, err := net.Listen("tcp", cfg.GRPC.Address())
 	if err != nil {
