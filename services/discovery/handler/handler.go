@@ -17,10 +17,16 @@ import (
 type DiscoveryHandler struct {
 	discoveryv1.UnimplementedDiscoveryServiceServer
 	queries repository.Querier
+	p2pNode P2PNode // optional — may be nil
 }
 
-func NewDiscoveryHandler(q repository.Querier) *DiscoveryHandler {
-	return &DiscoveryHandler{queries: q}
+// P2PNode is the subset of p2p.Node that discovery needs.
+type P2PNode interface {
+	Addresses() []string
+}
+
+func NewDiscoveryHandler(q repository.Querier, p2p P2PNode) *DiscoveryHandler {
+	return &DiscoveryHandler{queries: q, p2pNode: p2p}
 }
 
 func (h *DiscoveryHandler) AnnounceNode(ctx context.Context, req *discoveryv1.AnnounceNodeRequest) (*discoveryv1.AnnounceNodeResponse, error) {
@@ -36,6 +42,11 @@ func (h *DiscoveryHandler) AnnounceNode(ctx context.Context, req *discoveryv1.An
 	})
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to store peer")
+	}
+
+	// Log P2P overlay addresses if available.
+	if h.p2pNode != nil {
+		log.Debug().Strs("p2p_addrs", h.p2pNode.Addresses()).Msg("p2p overlay active")
 	}
 
 	log.Info().Str("node_id", req.NodeId).Strs("addrs", req.Addrs).Msg("node announced")
