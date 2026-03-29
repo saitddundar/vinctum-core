@@ -5,6 +5,7 @@ package transfer.v1;
 option go_package = "github.com/saitddundar/vinctum-core/proto/transfer/v1;transferv1";
 
 import "google/protobuf/timestamp.proto";
+import "routing/v1/routing.proto";
 
 service TransferService {
   // Initiates a new file/data transfer session.
@@ -36,6 +37,7 @@ message InitiateTransferRequest {
   string content_hash      = 5; // SHA-256 hash of the entire payload
   string encryption_key    = 6; // E2E encryption key (base64-encoded)
   int32  chunk_size_bytes  = 7; // Size per chunk in bytes (default: 256KB)
+  int32  replication_factor = 8; // Number of copies across the network (default: 1)
 }
 
 message InitiateTransferResponse {
@@ -43,6 +45,7 @@ message InitiateTransferResponse {
   int32  total_chunks = 2;
   TransferStatus status = 3;
   google.protobuf.Timestamp created_at = 4;
+  repeated routing.v1.RouteHop route_hops = 5; // Computed route for this transfer
 }
 
 // ─── SendChunk ───────────────────────────────────────────

@@ -23,12 +23,13 @@ const (
 )
 
 type FindRouteRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	SourceNodeId  string                 `protobuf:"bytes,1,opt,name=source_node_id,json=sourceNodeId,proto3" json:"source_node_id,omitempty"`
-	TargetNodeId  string                 `protobuf:"bytes,2,opt,name=target_node_id,json=targetNodeId,proto3" json:"target_node_id,omitempty"`
-	MaxHops       int32                  `protobuf:"varint,3,opt,name=max_hops,json=maxHops,proto3" json:"max_hops,omitempty"` // Maximum hop count (default: 5)
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	SourceNodeId   string                 `protobuf:"bytes,1,opt,name=source_node_id,json=sourceNodeId,proto3" json:"source_node_id,omitempty"`
+	TargetNodeId   string                 `protobuf:"bytes,2,opt,name=target_node_id,json=targetNodeId,proto3" json:"target_node_id,omitempty"`
+	MaxHops        int32                  `protobuf:"varint,3,opt,name=max_hops,json=maxHops,proto3" json:"max_hops,omitempty"`                       // Maximum hop count (default: 5)
+	ExcludeNodeIds []string               `protobuf:"bytes,4,rep,name=exclude_node_ids,json=excludeNodeIds,proto3" json:"exclude_node_ids,omitempty"` // Nodes to skip (for rerouting around failures)
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *FindRouteRequest) Reset() {
@@ -80,6 +81,13 @@ func (x *FindRouteRequest) GetMaxHops() int32 {
 		return x.MaxHops
 	}
 	return 0
+}
+
+func (x *FindRouteRequest) GetExcludeNodeIds() []string {
+	if x != nil {
+		return x.ExcludeNodeIds
+	}
+	return nil
 }
 
 type FindRouteResponse struct {
@@ -791,11 +799,12 @@ var File_routing_v1_routing_proto protoreflect.FileDescriptor
 const file_routing_v1_routing_proto_rawDesc = "" +
 	"\n" +
 	"\x18routing/v1/routing.proto\x12\n" +
-	"routing.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"y\n" +
+	"routing.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa3\x01\n" +
 	"\x10FindRouteRequest\x12$\n" +
 	"\x0esource_node_id\x18\x01 \x01(\tR\fsourceNodeId\x12$\n" +
 	"\x0etarget_node_id\x18\x02 \x01(\tR\ftargetNodeId\x12\x19\n" +
-	"\bmax_hops\x18\x03 \x01(\x05R\amaxHops\"\xb7\x01\n" +
+	"\bmax_hops\x18\x03 \x01(\x05R\amaxHops\x12(\n" +
+	"\x10exclude_node_ids\x18\x04 \x03(\tR\x0eexcludeNodeIds\"\xb7\x01\n" +
 	"\x11FindRouteResponse\x12(\n" +
 	"\x04hops\x18\x01 \x03(\v2\x14.routing.v1.RouteHopR\x04hops\x12\x1d\n" +
 	"\n" +

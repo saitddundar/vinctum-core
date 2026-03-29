@@ -7,6 +7,7 @@
 package transferv1
 
 import (
+	v1 "github.com/saitddundar/vinctum-core/proto/routing/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -81,16 +82,17 @@ func (TransferStatus) EnumDescriptor() ([]byte, []int) {
 }
 
 type InitiateTransferRequest struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	SenderNodeId   string                 `protobuf:"bytes,1,opt,name=sender_node_id,json=senderNodeId,proto3" json:"sender_node_id,omitempty"`
-	ReceiverNodeId string                 `protobuf:"bytes,2,opt,name=receiver_node_id,json=receiverNodeId,proto3" json:"receiver_node_id,omitempty"`
-	Filename       string                 `protobuf:"bytes,3,opt,name=filename,proto3" json:"filename,omitempty"`
-	TotalSizeBytes int64                  `protobuf:"varint,4,opt,name=total_size_bytes,json=totalSizeBytes,proto3" json:"total_size_bytes,omitempty"`
-	ContentHash    string                 `protobuf:"bytes,5,opt,name=content_hash,json=contentHash,proto3" json:"content_hash,omitempty"`             // SHA-256 hash of the entire payload
-	EncryptionKey  string                 `protobuf:"bytes,6,opt,name=encryption_key,json=encryptionKey,proto3" json:"encryption_key,omitempty"`       // E2E encryption key (base64-encoded)
-	ChunkSizeBytes int32                  `protobuf:"varint,7,opt,name=chunk_size_bytes,json=chunkSizeBytes,proto3" json:"chunk_size_bytes,omitempty"` // Size per chunk in bytes (default: 256KB)
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	SenderNodeId      string                 `protobuf:"bytes,1,opt,name=sender_node_id,json=senderNodeId,proto3" json:"sender_node_id,omitempty"`
+	ReceiverNodeId    string                 `protobuf:"bytes,2,opt,name=receiver_node_id,json=receiverNodeId,proto3" json:"receiver_node_id,omitempty"`
+	Filename          string                 `protobuf:"bytes,3,opt,name=filename,proto3" json:"filename,omitempty"`
+	TotalSizeBytes    int64                  `protobuf:"varint,4,opt,name=total_size_bytes,json=totalSizeBytes,proto3" json:"total_size_bytes,omitempty"`
+	ContentHash       string                 `protobuf:"bytes,5,opt,name=content_hash,json=contentHash,proto3" json:"content_hash,omitempty"`                    // SHA-256 hash of the entire payload
+	EncryptionKey     string                 `protobuf:"bytes,6,opt,name=encryption_key,json=encryptionKey,proto3" json:"encryption_key,omitempty"`              // E2E encryption key (base64-encoded)
+	ChunkSizeBytes    int32                  `protobuf:"varint,7,opt,name=chunk_size_bytes,json=chunkSizeBytes,proto3" json:"chunk_size_bytes,omitempty"`        // Size per chunk in bytes (default: 256KB)
+	ReplicationFactor int32                  `protobuf:"varint,8,opt,name=replication_factor,json=replicationFactor,proto3" json:"replication_factor,omitempty"` // Number of copies across the network (default: 1)
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *InitiateTransferRequest) Reset() {
@@ -172,12 +174,20 @@ func (x *InitiateTransferRequest) GetChunkSizeBytes() int32 {
 	return 0
 }
 
+func (x *InitiateTransferRequest) GetReplicationFactor() int32 {
+	if x != nil {
+		return x.ReplicationFactor
+	}
+	return 0
+}
+
 type InitiateTransferResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	TransferId    string                 `protobuf:"bytes,1,opt,name=transfer_id,json=transferId,proto3" json:"transfer_id,omitempty"`
 	TotalChunks   int32                  `protobuf:"varint,2,opt,name=total_chunks,json=totalChunks,proto3" json:"total_chunks,omitempty"`
 	Status        TransferStatus         `protobuf:"varint,3,opt,name=status,proto3,enum=transfer.v1.TransferStatus" json:"status,omitempty"`
 	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	RouteHops     []*v1.RouteHop         `protobuf:"bytes,5,rep,name=route_hops,json=routeHops,proto3" json:"route_hops,omitempty"` // Computed route for this transfer
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -236,6 +246,13 @@ func (x *InitiateTransferResponse) GetStatus() TransferStatus {
 func (x *InitiateTransferResponse) GetCreatedAt() *timestamppb.Timestamp {
 	if x != nil {
 		return x.CreatedAt
+	}
+	return nil
+}
+
+func (x *InitiateTransferResponse) GetRouteHops() []*v1.RouteHop {
+	if x != nil {
+		return x.RouteHops
 	}
 	return nil
 }
@@ -960,7 +977,7 @@ var File_transfer_v1_transfer_proto protoreflect.FileDescriptor
 
 const file_transfer_v1_transfer_proto_rawDesc = "" +
 	"\n" +
-	"\x1atransfer/v1/transfer.proto\x12\vtransfer.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa3\x02\n" +
+	"\x1atransfer/v1/transfer.proto\x12\vtransfer.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x18routing/v1/routing.proto\"\xd2\x02\n" +
 	"\x17InitiateTransferRequest\x12$\n" +
 	"\x0esender_node_id\x18\x01 \x01(\tR\fsenderNodeId\x12(\n" +
 	"\x10receiver_node_id\x18\x02 \x01(\tR\x0ereceiverNodeId\x12\x1a\n" +
@@ -968,14 +985,17 @@ const file_transfer_v1_transfer_proto_rawDesc = "" +
 	"\x10total_size_bytes\x18\x04 \x01(\x03R\x0etotalSizeBytes\x12!\n" +
 	"\fcontent_hash\x18\x05 \x01(\tR\vcontentHash\x12%\n" +
 	"\x0eencryption_key\x18\x06 \x01(\tR\rencryptionKey\x12(\n" +
-	"\x10chunk_size_bytes\x18\a \x01(\x05R\x0echunkSizeBytes\"\xce\x01\n" +
+	"\x10chunk_size_bytes\x18\a \x01(\x05R\x0echunkSizeBytes\x12-\n" +
+	"\x12replication_factor\x18\b \x01(\x05R\x11replicationFactor\"\x83\x02\n" +
 	"\x18InitiateTransferResponse\x12\x1f\n" +
 	"\vtransfer_id\x18\x01 \x01(\tR\n" +
 	"transferId\x12!\n" +
 	"\ftotal_chunks\x18\x02 \x01(\x05R\vtotalChunks\x123\n" +
 	"\x06status\x18\x03 \x01(\x0e2\x1b.transfer.v1.TransferStatusR\x06status\x129\n" +
 	"\n" +
-	"created_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\x87\x01\n" +
+	"created_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x123\n" +
+	"\n" +
+	"route_hops\x18\x05 \x03(\v2\x14.routing.v1.RouteHopR\trouteHops\"\x87\x01\n" +
 	"\x10SendChunkRequest\x12\x1f\n" +
 	"\vtransfer_id\x18\x01 \x01(\tR\n" +
 	"transferId\x12\x1f\n" +
@@ -1089,35 +1109,37 @@ var file_transfer_v1_transfer_proto_goTypes = []any{
 	(*CancelTransferRequest)(nil),     // 12: transfer.v1.CancelTransferRequest
 	(*CancelTransferResponse)(nil),    // 13: transfer.v1.CancelTransferResponse
 	(*timestamppb.Timestamp)(nil),     // 14: google.protobuf.Timestamp
+	(*v1.RouteHop)(nil),               // 15: routing.v1.RouteHop
 }
 var file_transfer_v1_transfer_proto_depIdxs = []int32{
 	0,  // 0: transfer.v1.InitiateTransferResponse.status:type_name -> transfer.v1.TransferStatus
 	14, // 1: transfer.v1.InitiateTransferResponse.created_at:type_name -> google.protobuf.Timestamp
-	0,  // 2: transfer.v1.SendChunkResponse.status:type_name -> transfer.v1.TransferStatus
-	0,  // 3: transfer.v1.GetTransferStatusResponse.status:type_name -> transfer.v1.TransferStatus
-	14, // 4: transfer.v1.GetTransferStatusResponse.started_at:type_name -> google.protobuf.Timestamp
-	14, // 5: transfer.v1.GetTransferStatusResponse.updated_at:type_name -> google.protobuf.Timestamp
-	0,  // 6: transfer.v1.ListTransfersRequest.filter_status:type_name -> transfer.v1.TransferStatus
-	11, // 7: transfer.v1.ListTransfersResponse.transfers:type_name -> transfer.v1.TransferInfo
-	0,  // 8: transfer.v1.TransferInfo.status:type_name -> transfer.v1.TransferStatus
-	14, // 9: transfer.v1.TransferInfo.created_at:type_name -> google.protobuf.Timestamp
-	1,  // 10: transfer.v1.TransferService.InitiateTransfer:input_type -> transfer.v1.InitiateTransferRequest
-	3,  // 11: transfer.v1.TransferService.SendChunk:input_type -> transfer.v1.SendChunkRequest
-	5,  // 12: transfer.v1.TransferService.ReceiveChunks:input_type -> transfer.v1.ReceiveChunksRequest
-	7,  // 13: transfer.v1.TransferService.GetTransferStatus:input_type -> transfer.v1.GetTransferStatusRequest
-	9,  // 14: transfer.v1.TransferService.ListTransfers:input_type -> transfer.v1.ListTransfersRequest
-	12, // 15: transfer.v1.TransferService.CancelTransfer:input_type -> transfer.v1.CancelTransferRequest
-	2,  // 16: transfer.v1.TransferService.InitiateTransfer:output_type -> transfer.v1.InitiateTransferResponse
-	4,  // 17: transfer.v1.TransferService.SendChunk:output_type -> transfer.v1.SendChunkResponse
-	6,  // 18: transfer.v1.TransferService.ReceiveChunks:output_type -> transfer.v1.DataChunk
-	8,  // 19: transfer.v1.TransferService.GetTransferStatus:output_type -> transfer.v1.GetTransferStatusResponse
-	10, // 20: transfer.v1.TransferService.ListTransfers:output_type -> transfer.v1.ListTransfersResponse
-	13, // 21: transfer.v1.TransferService.CancelTransfer:output_type -> transfer.v1.CancelTransferResponse
-	16, // [16:22] is the sub-list for method output_type
-	10, // [10:16] is the sub-list for method input_type
-	10, // [10:10] is the sub-list for extension type_name
-	10, // [10:10] is the sub-list for extension extendee
-	0,  // [0:10] is the sub-list for field type_name
+	15, // 2: transfer.v1.InitiateTransferResponse.route_hops:type_name -> routing.v1.RouteHop
+	0,  // 3: transfer.v1.SendChunkResponse.status:type_name -> transfer.v1.TransferStatus
+	0,  // 4: transfer.v1.GetTransferStatusResponse.status:type_name -> transfer.v1.TransferStatus
+	14, // 5: transfer.v1.GetTransferStatusResponse.started_at:type_name -> google.protobuf.Timestamp
+	14, // 6: transfer.v1.GetTransferStatusResponse.updated_at:type_name -> google.protobuf.Timestamp
+	0,  // 7: transfer.v1.ListTransfersRequest.filter_status:type_name -> transfer.v1.TransferStatus
+	11, // 8: transfer.v1.ListTransfersResponse.transfers:type_name -> transfer.v1.TransferInfo
+	0,  // 9: transfer.v1.TransferInfo.status:type_name -> transfer.v1.TransferStatus
+	14, // 10: transfer.v1.TransferInfo.created_at:type_name -> google.protobuf.Timestamp
+	1,  // 11: transfer.v1.TransferService.InitiateTransfer:input_type -> transfer.v1.InitiateTransferRequest
+	3,  // 12: transfer.v1.TransferService.SendChunk:input_type -> transfer.v1.SendChunkRequest
+	5,  // 13: transfer.v1.TransferService.ReceiveChunks:input_type -> transfer.v1.ReceiveChunksRequest
+	7,  // 14: transfer.v1.TransferService.GetTransferStatus:input_type -> transfer.v1.GetTransferStatusRequest
+	9,  // 15: transfer.v1.TransferService.ListTransfers:input_type -> transfer.v1.ListTransfersRequest
+	12, // 16: transfer.v1.TransferService.CancelTransfer:input_type -> transfer.v1.CancelTransferRequest
+	2,  // 17: transfer.v1.TransferService.InitiateTransfer:output_type -> transfer.v1.InitiateTransferResponse
+	4,  // 18: transfer.v1.TransferService.SendChunk:output_type -> transfer.v1.SendChunkResponse
+	6,  // 19: transfer.v1.TransferService.ReceiveChunks:output_type -> transfer.v1.DataChunk
+	8,  // 20: transfer.v1.TransferService.GetTransferStatus:output_type -> transfer.v1.GetTransferStatusResponse
+	10, // 21: transfer.v1.TransferService.ListTransfers:output_type -> transfer.v1.ListTransfersResponse
+	13, // 22: transfer.v1.TransferService.CancelTransfer:output_type -> transfer.v1.CancelTransferResponse
+	17, // [17:23] is the sub-list for method output_type
+	11, // [11:17] is the sub-list for method input_type
+	11, // [11:11] is the sub-list for extension type_name
+	11, // [11:11] is the sub-list for extension extendee
+	0,  // [0:11] is the sub-list for field type_name
 }
 
 func init() { file_transfer_v1_transfer_proto_init() }

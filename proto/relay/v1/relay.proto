@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+package relay.v1;
+
+option go_package = "github.com/saitddundar/vinctum-core/proto/relay/v1;relayv1";
+
+import "routing/v1/routing.proto";
+
+service RelayService {
+  // Forwards an encrypted chunk to the next hop in the route.
+  // If this node is the final destination, the chunk is stored locally.
+  rpc RelayChunk(RelayChunkRequest) returns (RelayChunkResponse);
+
+  // Pulls a specific chunk from a peer (used for replication recovery).
+  rpc FetchChunk(FetchChunkRequest) returns (FetchChunkResponse);
+
+  // Health probe used by circuit breaker before forwarding.
+  rpc Ping(PingRequest) returns (PingResponse);
+}
+
+// ─── RelayChunk ─────────────────────────────────────────
+
+message RelayChunkRequest {
+  string transfer_id              = 1;
+  int32  chunk_index              = 2;
+  bytes  data                     = 3; // Encrypted chunk data
+  string chunk_hash               = 4; // SHA-256 of encrypted data
+  repeated routing.v1.RouteHop remaining_hops = 5; // Hops still to traverse
+  int32  replication_factor       = 6; // Number of copies to store (default: 1)
+  int32  ttl                      = 7; // Decremented each hop, drop if 0
+  string encryption_key           = 8; // E2E key for final-destination verification
+}
+
+message RelayChunkResponse {
+  bool   success       = 1;
+  string node_id       = 2; // Node that confirmed storage/relay
+  string error_message = 3;
+}
+
+// ─── FetchChunk ─────────────────────────────────────────
+
+message FetchChunkRequest {
+  string transfer_id = 1;
+  int32  chunk_index = 2;
+}
+
+message FetchChunkResponse {
+  bytes  data       = 1;
+  string chunk_hash = 2;
+}
+
+// ─── Ping ───────────────────────────────────────────────
+
+message PingRequest {
+  string node_id = 1;
+}
+
+message PingResponse {
+  string node_id   = 1;
+  int64  timestamp = 2; // Unix millis
+}

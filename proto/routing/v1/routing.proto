@@ -26,9 +26,10 @@ service RoutingService {
 // ─── FindRoute ───────────────────────────────────────────
 
 message FindRouteRequest {
-  string source_node_id = 1;
-  string target_node_id = 2;
-  int32  max_hops       = 3; // Maximum hop count (default: 5)
+  string source_node_id          = 1;
+  string target_node_id          = 2;
+  int32  max_hops                = 3; // Maximum hop count (default: 5)
+  repeated string exclude_node_ids = 4; // Nodes to skip (for rerouting around failures)
 }
 
 message FindRouteResponse {
