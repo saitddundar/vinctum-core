@@ -23,14 +23,16 @@ type RelayHandler struct {
 	chunks      storage.ChunkStore
 	relayClient *relay.Client
 	rerouter    *relay.Rerouter
+	replicator  *relay.Replicator
 }
 
-func NewRelayHandler(nodeID string, chunks storage.ChunkStore, relayClient *relay.Client, rerouter *relay.Rerouter) *RelayHandler {
+func NewRelayHandler(nodeID string, chunks storage.ChunkStore, relayClient *relay.Client, rerouter *relay.Rerouter, replicator *relay.Replicator) *RelayHandler {
 	return &RelayHandler{
 		nodeID:      nodeID,
 		chunks:      chunks,
 		relayClient: relayClient,
 		rerouter:    rerouter,
+		replicator:  replicator,
 	}
 }
 
@@ -62,6 +64,11 @@ func (h *RelayHandler) RelayChunk(ctx context.Context, req *relayv1.RelayChunkRe
 			Str("transfer_id", req.TransferId).
 			Int32("chunk_index", req.ChunkIndex).
 			Msg("chunk stored at final destination")
+
+		// Replicate to additional peers if replication_factor > 1.
+		if h.replicator != nil && req.ReplicationFactor > 1 {
+			go h.replicator.ReplicateChunk(context.Background(), req.TransferId, req.ChunkIndex, req.Data, req.ChunkHash, req.ReplicationFactor, []string{h.nodeID})
+		}
 
 		return &relayv1.RelayChunkResponse{
 			Success: true,
