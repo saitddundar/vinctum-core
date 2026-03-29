@@ -134,7 +134,8 @@ func main() {
 	transferv1.RegisterTransferServiceServer(srv, handler)
 
 	// Register RelayService so this node can receive relayed chunks.
-	relayHandler := relayhandler.NewRelayHandler(nodeID, chunkStore, relayClient)
+	rerouter := relay.NewRerouter(routingClient)
+	relayHandler := relayhandler.NewRelayHandler(nodeID, chunkStore, relayClient, rerouter)
 	relayv1.RegisterRelayServiceServer(srv, relayHandler)
 
 	reflection.Register(srv)
