@@ -165,3 +165,4 @@ func meanStd(data []float64) (mean, std float64) {
 func clamp(v, lo, hi float64) float64 {
 	return math.Max(lo, math.Min(v, hi))
 }
+

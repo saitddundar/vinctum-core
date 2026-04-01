@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
-	"github.com/saitddundar/vinctum-core/internal/encryption"
 	identityv1 "github.com/saitddundar/vinctum-core/proto/identity/v1"
 	routingv1 "github.com/saitddundar/vinctum-core/proto/routing/v1"
 	transferv1 "github.com/saitddundar/vinctum-core/proto/transfer/v1"
@@ -17,7 +16,6 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-// ServiceAddresses holds the gRPC addresses for each backend service.
 type ServiceAddresses struct {
 	Identity  string
 	Discovery string
@@ -25,7 +23,6 @@ type ServiceAddresses struct {
 	Transfer  string
 }
 
-// GatewayHandler provides HTTP endpoints that proxy to internal gRPC services.
 type GatewayHandler struct {
 	addrs     ServiceAddresses
 	version   string
@@ -40,7 +37,6 @@ type GatewayHandler struct {
 	transferClient  transferv1.TransferServiceClient
 }
 
-// NewGatewayHandler creates a new GatewayHandler and dials backend services.
 func NewGatewayHandler(addrs ServiceAddresses, version string) (*GatewayHandler, error) {
 	h := &GatewayHandler{
 		addrs:     addrs,
@@ -92,7 +88,6 @@ func (h *GatewayHandler) Close() {
 	}
 }
 
-// RegisterRoutes registers all HTTP routes on the given mux.
 func (h *GatewayHandler) RegisterRoutes(mux *http.ServeMux) {
 	// health & meta
 	mux.HandleFunc("GET /health", h.handleHealth)
@@ -108,9 +103,6 @@ func (h *GatewayHandler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/routes/find", h.handleFindRoute)
 	mux.HandleFunc("GET /api/v1/routes/table/{nodeId}", h.handleGetRouteTable)
 	mux.HandleFunc("GET /api/v1/relays", h.handleListRelays)
-
-	// encryption utility
-	mux.HandleFunc("POST /api/v1/encryption/generate-key", h.handleGenerateKey)
 
 	// transfer proxy
 	mux.HandleFunc("POST /api/v1/transfers", h.handleInitiateTransfer)
@@ -382,20 +374,8 @@ func (h *GatewayHandler) handleCancelTransfer(w http.ResponseWriter, r *http.Req
 	writeJSON(w, http.StatusOK, resp)
 }
 
-// ─── Encryption ────────────────────────────────────────────────
-
-func (h *GatewayHandler) handleGenerateKey(w http.ResponseWriter, r *http.Request) {
-	key, err := encryption.GenerateKey()
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to generate key")
-		return
-	}
-	writeJSON(w, http.StatusOK, map[string]string{"encryption_key": key})
-}
-
 // ─── Helpers ────────────────────────────────────────────────
 
-// forwardAuth extracts the Authorization header and passes it as gRPC metadata.
 func forwardAuth(r *http.Request) context.Context {
 	ctx := r.Context()
 	auth := r.Header.Get("Authorization")
