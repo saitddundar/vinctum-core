@@ -113,6 +113,24 @@ func (f *fakeQuerier) GetRelay(_ context.Context, nodeID string) (repository.Rel
 // Compile-time interface check.
 var _ repository.Querier = (*fakeQuerier)(nil)
 
+// ──────────────────── fake intelligence ──────────────────
+
+type fakeIntel struct {
+	anomalous map[string]bool
+	scores    map[string]float64
+}
+
+func (f *fakeIntel) ScoreNode(nodeID string) (float64, bool) {
+	s, ok := f.scores[nodeID]
+	return s, ok
+}
+
+func (f *fakeIntel) IsAnomalous(nodeID string) bool {
+	return f.anomalous[nodeID]
+}
+
+var _ handler.NodeIntelligence = (*fakeIntel)(nil)
+
 // ──────────────────── tests ──────────────────────────────
 
 func newTestHandler() *handler.RoutingHandler {
@@ -220,6 +238,36 @@ func TestFindRoute(t *testing.T) {
 	t.Run("missing fields", func(t *testing.T) {
 		_, err := h.FindRoute(ctx, &routingv1.FindRouteRequest{})
 		assert.Equal(t, codes.InvalidArgument, status.Code(err))
+	})
+
+	t.Run("anomalous node excluded by intelligence", func(t *testing.T) {
+		ih := handler.NewRoutingHandler(newFakeQuerier())
+		ih.SetIntelligence(&fakeIntel{
+			anomalous: map[string]bool{"node-B": true},
+			scores:    map[string]float64{"node-B": 0.1, "node-C": 0.9},
+		})
+
+		// A→C via B, but B is anomalous.
+		_, _ = ih.UpdateRouteTable(ctx, &routingv1.UpdateRouteTableRequest{
+			NodeId: "node-A",
+			Entries: []*routingv1.RouteEntry{
+				{TargetNodeId: "node-C", NextHopId: "node-B", Metric: 2, LatencyMs: 15},
+			},
+		})
+		_, _ = ih.UpdateRouteTable(ctx, &routingv1.UpdateRouteTableRequest{
+			NodeId: "node-B",
+			Entries: []*routingv1.RouteEntry{
+				{TargetNodeId: "node-C", NextHopId: "node-C", Metric: 1, LatencyMs: 10},
+			},
+		})
+
+		resp, err := ih.FindRoute(ctx, &routingv1.FindRouteRequest{
+			SourceNodeId: "node-A",
+			TargetNodeId: "node-C",
+		})
+		require.NoError(t, err)
+		// B is anomalous so it should be excluded, resulting in 0 hops.
+		assert.Equal(t, int32(0), resp.TotalHops)
 	})
 }
 

@@ -8,9 +8,11 @@ import (
 	"syscall"
 
 	"io"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog/log"
+	"github.com/saitddundar/vinctum-core/internal/intelligence"
 	"github.com/saitddundar/vinctum-core/internal/migrator"
 	"github.com/saitddundar/vinctum-core/pkg/config"
 	"github.com/saitddundar/vinctum-core/pkg/logger"
@@ -51,6 +53,13 @@ func main() {
 
 	queries := repository.New(pool)
 	handler := routinghandler.NewRoutingHandler(queries)
+
+	// Wire intelligence module for smart routing decisions.
+	collector := intelligence.NewCollector(10 * time.Minute)
+	scorer := intelligence.NewScorer(collector, intelligence.DefaultWeights())
+	detector := intelligence.NewAnomalyDetector(collector, intelligence.DefaultAnomalyConfig())
+	handler.SetIntelligence(intelligence.NewRouterAdapter(scorer, detector))
+	log.Info().Msg("network intelligence enabled for routing")
 
 	lis, err := net.Listen("tcp", cfg.GRPC.Address())
 	if err != nil {

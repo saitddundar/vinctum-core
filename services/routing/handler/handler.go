@@ -13,21 +13,25 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-// RoutingHandler implements the RoutingService gRPC server.
+type NodeIntelligence interface {
+	ScoreNode(nodeID string) (score float64, ok bool)
+	IsAnomalous(nodeID string) bool
+}
+
 type RoutingHandler struct {
 	routingv1.UnimplementedRoutingServiceServer
 	queries repository.Querier
+	intel   NodeIntelligence
 }
 
-// NewRoutingHandler creates a new RoutingHandler backed by the given Querier.
 func NewRoutingHandler(q repository.Querier) *RoutingHandler {
 	return &RoutingHandler{queries: q}
 }
 
-// FindRoute computes the best route from source to target using the stored
-// routing table. It walks the next-hop chain up to maxHops and returns the
-// list of hops. When the source has a direct entry for the target the
-// response marks direct_possible = true.
+func (h *RoutingHandler) SetIntelligence(ni NodeIntelligence) {
+	h.intel = ni
+}
+
 func (h *RoutingHandler) FindRoute(ctx context.Context, req *routingv1.FindRouteRequest) (*routingv1.FindRouteResponse, error) {
 	if req.SourceNodeId == "" || req.TargetNodeId == "" {
 		return nil, status.Error(codes.InvalidArgument, "source_node_id and target_node_id are required")
@@ -56,6 +60,20 @@ func (h *RoutingHandler) FindRoute(ctx context.Context, req *routingv1.FindRoute
 		excluded[id] = true
 	}
 
+	// Auto-exclude anomalous nodes detected by intelligence.
+	if h.intel != nil {
+		allRoutes, _ := h.queries.GetRoutesByNodeID(ctx, req.SourceNodeId)
+		for _, r := range allRoutes {
+			if excluded[r.NextHopID] {
+				continue
+			}
+			if h.intel.IsAnomalous(r.NextHopID) {
+				excluded[r.NextHopID] = true
+				log.Warn().Str("node", r.NextHopID).Msg("auto-excluded anomalous node from route")
+			}
+		}
+	}
+
 	// Walk the hop chain.
 	var hops []*routingv1.RouteHop
 	var totalLatency int64
@@ -70,10 +88,17 @@ func (h *RoutingHandler) FindRoute(ctx context.Context, req *routingv1.FindRoute
 			break
 		}
 
-		// Skip excluded nodes (failed nodes during rerouting).
+		// Skip excluded nodes (failed or anomalous).
 		if excluded[entry.NextHopID] {
 			log.Debug().Str("skipped", entry.NextHopID).Msg("excluded node from route")
 			break
+		}
+
+		// Log intelligence score for observability.
+		if h.intel != nil {
+			if score, ok := h.intel.ScoreNode(entry.NextHopID); ok {
+				log.Debug().Str("node", entry.NextHopID).Float64("score", score).Msg("hop node score")
+			}
 		}
 
 		hops = append(hops, &routingv1.RouteHop{
@@ -134,7 +159,6 @@ func (h *RoutingHandler) UpdateRouteTable(ctx context.Context, req *routingv1.Up
 	}, nil
 }
 
-// GetRouteTable returns every route entry stored for the given node.
 func (h *RoutingHandler) GetRouteTable(ctx context.Context, req *routingv1.GetRouteTableRequest) (*routingv1.GetRouteTableResponse, error) {
 	if req.NodeId == "" {
 		return nil, status.Error(codes.InvalidArgument, "node_id is required")
@@ -161,7 +185,6 @@ func (h *RoutingHandler) GetRouteTable(ctx context.Context, req *routingv1.GetRo
 	}, nil
 }
 
-// ListRelays returns available relay nodes ordered by latency.
 func (h *RoutingHandler) ListRelays(ctx context.Context, req *routingv1.ListRelaysRequest) (*routingv1.ListRelaysResponse, error) {
 	limit := req.Limit
 	if limit <= 0 {
@@ -188,7 +211,6 @@ func (h *RoutingHandler) ListRelays(ctx context.Context, req *routingv1.ListRela
 	return &routingv1.ListRelaysResponse{Relays: relays}, nil
 }
 
-// RegisterRelay registers or updates a relay node entry.
 func (h *RoutingHandler) RegisterRelay(ctx context.Context, req *routingv1.RegisterRelayRequest) (*routingv1.RegisterRelayResponse, error) {
 	if req.NodeId == "" || req.Address == "" {
 		return nil, status.Error(codes.InvalidArgument, "node_id and address are required")
