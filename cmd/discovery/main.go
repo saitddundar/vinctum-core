@@ -7,7 +7,11 @@ import (
 	"os/signal"
 	"syscall"
 
+	"fmt"
+	"net/http"
+
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog/log"
 	"github.com/saitddundar/vinctum-core/internal/migrator"
 	"github.com/saitddundar/vinctum-core/internal/p2p"
@@ -65,14 +69,26 @@ func main() {
 	rl := middleware.NewRateLimiter(100, 200)
 	srv := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
+			middleware.UnaryMetricsInterceptor(),
 			middleware.UnaryRateLimitInterceptor(rl),
 			middleware.UnaryAuthInterceptor(cfg.Auth.JWTSecret),
 		),
 		grpc.ChainStreamInterceptor(
+			middleware.StreamMetricsInterceptor(),
 			middleware.StreamRateLimitInterceptor(rl),
 			middleware.StreamAuthInterceptor(cfg.Auth.JWTSecret),
 		),
 	)
+
+	go func() {
+		metricsAddr := fmt.Sprintf(":%d", cfg.GRPC.Port+1000)
+		mux := http.NewServeMux()
+		mux.Handle("/metrics", promhttp.Handler())
+		log.Info().Str("addr", metricsAddr).Msg("metrics endpoint starting")
+		if err := http.ListenAndServe(metricsAddr, mux); err != nil {
+			log.Warn().Err(err).Msg("metrics server error")
+		}
+	}()
 	discoveryv1.RegisterDiscoveryServiceServer(srv, handler)
 	reflection.Register(srv)
 
