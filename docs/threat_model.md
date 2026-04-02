@@ -134,18 +134,21 @@ Transfer Service → [E2E Encrypted Chunks] → Target Peer
 - **JWT Authentication** — Access/Refresh token pair, HMAC-SHA256 signed
 - **Token Blacklist** — Redis-based, invalidates tokens after logout
 - **Password Hashing** — bcrypt with cost=12
-- **gRPC Auth Interceptor** — Unary + streaming, public method whitelist
+- **gRPC Auth Interceptor** — Unary + streaming, all services including Discovery
+- **Rate Limiting** — Token-bucket per-peer rate limiting on all gRPC services
+- **E2E Encryption** — AES-256-GCM with SHA-256 chunk integrity verification
+- **mTLS** — TLS 1.3 mutual auth via `pkg/grpcutil`, config-driven
+- **Prometheus Metrics** — gRPC request count, latency, active requests on all services
+- **Network Intelligence** — Z-score anomaly detection, auto-excludes compromised nodes from routing
 - **Parameterized SQL** — sqlc compile-time type-safe queries
 - **Structured Logging** — zerolog with JSON output
-- **TLS Support** — Available in config (tls_enabled, cert_file, key_file)
 
-### Missing (Urgent)
-- Rate limiting (gRPC interceptor)
-- mTLS (inter-service)
+### Remaining
 - Input validation layer
 - Audit logging
-- E2E encryption (transfer layer)
 - Secrets management (Vault/KMS)
+- Refresh token rotation
+- Signed peer announcements
 
 ---
 
