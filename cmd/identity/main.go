@@ -16,6 +16,7 @@ import (
 	"github.com/saitddundar/vinctum-core/internal/auth"
 	"github.com/saitddundar/vinctum-core/internal/migrator"
 	"github.com/saitddundar/vinctum-core/pkg/config"
+	"github.com/saitddundar/vinctum-core/pkg/grpcutil"
 	"github.com/saitddundar/vinctum-core/pkg/logger"
 	"github.com/saitddundar/vinctum-core/pkg/middleware"
 	identityv1 "github.com/saitddundar/vinctum-core/proto/identity/v1"
@@ -61,7 +62,7 @@ func main() {
 	}
 
 	rl := middleware.NewRateLimiter(100, 200)
-	srv := grpc.NewServer(
+	serverOpts := []grpc.ServerOption{
 		grpc.ChainUnaryInterceptor(
 			middleware.UnaryMetricsInterceptor(),
 			middleware.UnaryRateLimitInterceptor(rl),
@@ -72,7 +73,18 @@ func main() {
 			middleware.StreamRateLimitInterceptor(rl),
 			middleware.StreamAuthInterceptor(cfg.Auth.JWTSecret),
 		),
-	)
+	}
+
+	tlsCreds, err := grpcutil.ServerCredentials(cfg.GRPC)
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to load TLS credentials")
+	}
+	if tlsCreds != nil {
+		serverOpts = append(serverOpts, tlsCreds)
+		log.Info().Msg("mTLS enabled")
+	}
+
+	srv := grpc.NewServer(serverOpts...)
 
 	go func() {
 		metricsAddr := fmt.Sprintf(":%d", cfg.GRPC.Port+1000)

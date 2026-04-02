@@ -17,6 +17,7 @@ import (
 	"github.com/saitddundar/vinctum-core/internal/migrator"
 	"github.com/saitddundar/vinctum-core/internal/relay"
 	"github.com/saitddundar/vinctum-core/pkg/config"
+	"github.com/saitddundar/vinctum-core/pkg/grpcutil"
 	"github.com/saitddundar/vinctum-core/pkg/logger"
 	"github.com/saitddundar/vinctum-core/pkg/middleware"
 	discoveryv1 "github.com/saitddundar/vinctum-core/proto/discovery/v1"
@@ -29,7 +30,6 @@ import (
 	"github.com/saitddundar/vinctum-core/services/transfer/repository"
 	transferstorage "github.com/saitddundar/vinctum-core/services/transfer/storage"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
 )
 
@@ -65,7 +65,12 @@ func main() {
 		routingAddr = "localhost:50053"
 	}
 
-	routingConn, err := grpc.NewClient(routingAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	clientCreds, err := grpcutil.ClientCredentials(cfg.GRPC)
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to load client TLS credentials")
+	}
+
+	routingConn, err := grpc.NewClient(routingAddr, clientCreds)
 	if err != nil {
 		log.Warn().Err(err).Str("addr", routingAddr).Msg("could not dial routing service, route resolution disabled")
 	} else {
@@ -93,7 +98,7 @@ func main() {
 		discoveryAddr = "localhost:50052"
 	}
 
-	discoveryConn, err := grpc.NewClient(discoveryAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	discoveryConn, err := grpc.NewClient(discoveryAddr, clientCreds)
 	if err != nil {
 		log.Warn().Err(err).Str("addr", discoveryAddr).Msg("could not dial discovery service")
 	} else {
@@ -123,7 +128,7 @@ func main() {
 	}
 
 	rl := middleware.NewRateLimiter(100, 200)
-	srv := grpc.NewServer(
+	serverOpts := []grpc.ServerOption{
 		grpc.ChainUnaryInterceptor(
 			middleware.UnaryMetricsInterceptor(),
 			middleware.UnaryRateLimitInterceptor(rl),
@@ -134,7 +139,18 @@ func main() {
 			middleware.StreamRateLimitInterceptor(rl),
 			middleware.StreamAuthInterceptor(cfg.Auth.JWTSecret),
 		),
-	)
+	}
+
+	tlsCreds, err := grpcutil.ServerCredentials(cfg.GRPC)
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to load TLS credentials")
+	}
+	if tlsCreds != nil {
+		serverOpts = append(serverOpts, tlsCreds)
+		log.Info().Msg("mTLS enabled")
+	}
+
+	srv := grpc.NewServer(serverOpts...)
 
 	go func() {
 		metricsAddr := fmt.Sprintf(":%d", cfg.GRPC.Port+1000)
