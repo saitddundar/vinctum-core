@@ -130,7 +130,7 @@ Transfer Service → [E2E Encrypted Chunks] → Target Peer
 
 ## 5. Current Security Controls
 
-### ✅ Implemented
+### Implemented
 - **JWT Authentication** — Access/Refresh token pair, HMAC-SHA256 signed
 - **Token Blacklist** — Redis-based, invalidates tokens after logout
 - **Password Hashing** — bcrypt with cost=12
@@ -139,7 +139,7 @@ Transfer Service → [E2E Encrypted Chunks] → Target Peer
 - **Structured Logging** — zerolog with JSON output
 - **TLS Support** — Available in config (tls_enabled, cert_file, key_file)
 
-### ❌ Missing (Urgent)
+### Missing (Urgent)
 - Rate limiting (gRPC interceptor)
 - mTLS (inter-service)
 - Input validation layer
@@ -153,9 +153,9 @@ Transfer Service → [E2E Encrypted Chunks] → Target Peer
 
 | Priority | Action | Target | Related Threat |
 |----------|--------|--------|---------------|
-| P0 | gRPC rate limiting interceptor | All services | D-01, D-04 |
-| P0 | E2E encryption (NaCl/libsodium) | Transfer Service | T-03 |
-| P1 | mTLS for inter-service communication | All services | S-03, E-02 |
+| P0 | ~~gRPC rate limiting interceptor~~ | All services | D-01, D-04 | **DONE** |
+| P0 | ~~E2E encryption (AES-256-GCM)~~ | Transfer Service | T-03 | **DONE** |
+| P1 | ~~mTLS for inter-service communication~~ | All services | S-03, E-02 | **DONE** (pkg/grpcutil) |
 | P1 | Refresh token rotation | Identity Service | S-01 |
 | P1 | Signed peer announcements | Discovery Service | S-02, T-02 |
 | P2 | Audit log table + middleware | Identity Service | R-01 |
@@ -171,7 +171,7 @@ Transfer Service → [E2E Encrypted Chunks] → Target Peer
 | Entry Point | Protocol | Auth | Exposed Data |
 |------------|----------|------|-------------|
 | Identity gRPC (50051) | gRPC + TLS | JWT (public: Register, Login, Refresh) | User info, tokens |
-| Discovery gRPC (50052) | gRPC | None (should be added) | Peer addresses, public keys |
+| Discovery gRPC (50052) | gRPC | JWT (public: FindPeers, GetNodeInfo) | Peer addresses, public keys |
 | Routing gRPC (50053) | gRPC | JWT | Routing tables |
 | Transfer gRPC (50054) | gRPC | JWT | Encrypted data chunks |
 | libp2p (4001/tcp+udp) | TCP/QUIC | Peer ID + Key | DHT records, peer info |
@@ -184,7 +184,9 @@ Transfer Service → [E2E Encrypted Chunks] → Target Peer
 
 The current security controls are **adequate at a foundational level** but the following must be completed **before production deployment**:
 
-1. **Rate limiting** — Without it the system is vulnerable to DoS attacks
-2. **E2E encryption** — Transferred data is readable in transit without it
-3. **mTLS** — Inter-service communication is insecure without it
-4. **Discovery auth** — The discovery service currently requires no authentication, which is a critical gap
+1. ~~**Rate limiting**~~ — **Implemented.** Token-bucket rate limiting on all gRPC services.
+2. ~~**E2E encryption**~~ — **Implemented.** AES-256-GCM encryption with chunk integrity verification.
+3. ~~**mTLS**~~ — **Implemented.** TLS 1.3 with mutual certificate verification via `pkg/grpcutil`.
+4. ~~**Discovery auth**~~ — **Implemented.** JWT auth interceptor added; FindPeers/GetNodeInfo remain public.
+5. **Prometheus observability** — **Implemented.** gRPC metrics interceptors + `/metrics` endpoints on all services.
+6. **Network intelligence** — **Implemented.** Anomaly detection auto-excludes compromised nodes from routes.

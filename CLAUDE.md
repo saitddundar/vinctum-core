@@ -23,8 +23,8 @@ cmd/                  # Service entry points (one main.go per service)
 proto/                # Protobuf definitions (buf.build toolchain)
 services/             # Business logic: handler/ + repository/ per service
   transfer/storage/   # File-based chunk store
-internal/             # Auth (JWT, blacklist), migrator, p2p node
-pkg/                  # Shared: config (viper), logger (zerolog), crypto, middleware
+internal/             # Auth (JWT, blacklist), migrator, p2p node, intelligence
+pkg/                  # Shared: config, logger, crypto, middleware, grpcutil (TLS)
 scripts/migrations/   # SQL schema files (embedded, auto-applied on boot)
 config/               # YAML configs (config.dev.yaml)
 deployments/docker/   # Dockerfiles + docker-compose.yml
@@ -73,7 +73,10 @@ CI (`.github/workflows/ci.yml`) runs lint -> test (with Postgres + Redis) -> bui
 - **Handler tests**: use `fakeQuerier` implementations, no real DB needed.
 - **Config**: Viper with `VINCTUM_` env prefix. Nested keys use `_` separator (e.g., `VINCTUM_AUTH_JWT_SECRET`).
 - **Migrations**: embedded SQL files in `scripts/migrations/`, auto-applied on service startup via `internal/migrator`.
-- **gRPC auth**: `pkg/middleware` interceptors validate JWT on all RPCs except Register/Login/RefreshToken.
+- **gRPC auth**: `pkg/middleware` interceptors validate JWT on all RPCs except Register/Login/RefreshToken/FindPeers/GetNodeInfo.
+- **gRPC metrics**: `pkg/middleware/metrics.go` Prometheus interceptors on all services; metrics at `:grpcPort+1000/metrics` (gateway at `:8080/metrics`).
+- **Intelligence**: `internal/intelligence/` provides node scoring, anomaly detection; wired into routing via `NodeIntelligence` interface.
+- **mTLS**: `pkg/grpcutil/tls.go` loads TLS credentials from config; enabled when `grpc.tls_enabled: true`.
 - **Proto imports**: `buf.build/googleapis/googleapis` is a dependency.
 
 ## Environment Variables (key ones)
@@ -89,10 +92,14 @@ CI (`.github/workflows/ci.yml`) runs lint -> test (with Postgres + Redis) -> bui
 | `VINCTUM_CHUNK_DIR`             | ./data/chunks         | transfer     |
 | `VINCTUM_GATEWAY_*_ADDR`        | localhost:5005x       | gateway      |
 | `VINCTUM_GATEWAY_HTTP_PORT`     | 8080                  | gateway      |
+| `VINCTUM_GRPC_TLS_ENABLED`     | false                 | all gRPC     |
+| `VINCTUM_GRPC_CERT_FILE`       | —                     | all gRPC     |
+| `VINCTUM_GRPC_KEY_FILE`        | —                     | all gRPC     |
+| `VINCTUM_GRPC_CA_FILE`         | —                     | all gRPC     |
 
 ## Security Notes
 
 - JWT uses HMAC-SHA256 (not RSA) -- secret must be strong in prod.
-- Discovery service currently has **no auth interceptor** -- known gap.
-- TLS is supported but disabled in dev (`tls_enabled: false`).
+- All gRPC services have auth interceptors; Discovery allows unauthenticated FindPeers/GetNodeInfo.
+- mTLS supported via `pkg/grpcutil` -- enable with `grpc.tls_enabled: true` + cert/key/CA paths.
 - See `doc/threat_model.md` for full STRIDE analysis and open items.
