@@ -12,6 +12,8 @@ service IdentityService {
   rpc ValidateToken(ValidateTokenRequest) returns (ValidateTokenResponse);
   rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse);
   rpc Logout(LogoutRequest) returns (LogoutResponse);
+  rpc VerifyEmail(VerifyEmailRequest) returns (VerifyEmailResponse);
+  rpc ResendVerification(ResendVerificationRequest) returns (ResendVerificationResponse);
 }
 
 message RegisterRequest {
@@ -73,4 +75,23 @@ message User {
   string username  = 2;
   string email     = 3;
   google.protobuf.Timestamp created_at = 4;
+  bool   email_verified = 5;
+}
+
+message VerifyEmailRequest {
+  string token = 1;
+}
+
+message VerifyEmailResponse {
+  bool   success = 1;
+  string message = 2;
+}
+
+message ResendVerificationRequest {
+  string email = 1;
+}
+
+message ResendVerificationResponse {
+  bool   success = 1;
+  string message = 2;
 }
