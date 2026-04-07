@@ -11,6 +11,123 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const addDeviceToSession = `-- name: AddDeviceToSession :exec
+INSERT INTO peer_session_devices (session_id, device_id) VALUES ($1, $2)
+ON CONFLICT (session_id, device_id) DO UPDATE SET left_at = NULL
+`
+
+type AddDeviceToSessionParams struct {
+	SessionID string `json:"session_id"`
+	DeviceID  string `json:"device_id"`
+}
+
+func (q *Queries) AddDeviceToSession(ctx context.Context, arg AddDeviceToSessionParams) error {
+	_, err := q.db.Exec(ctx, addDeviceToSession, arg.SessionID, arg.DeviceID)
+	return err
+}
+
+const approveDevice = `-- name: ApproveDevice :exec
+UPDATE devices SET is_approved = TRUE, approved_at = NOW(), approved_by = $2::uuid
+WHERE id = $1::uuid
+`
+
+type ApproveDeviceParams struct {
+	Column1 string `json:"column_1"`
+	Column2 string `json:"column_2"`
+}
+
+func (q *Queries) ApproveDevice(ctx context.Context, arg ApproveDeviceParams) error {
+	_, err := q.db.Exec(ctx, approveDevice, arg.Column1, arg.Column2)
+	return err
+}
+
+const closePeerSession = `-- name: ClosePeerSession :exec
+UPDATE peer_sessions SET is_active = FALSE, closed_at = NOW() WHERE id = $1::uuid AND user_id = $2::uuid
+`
+
+type ClosePeerSessionParams struct {
+	Column1 string `json:"column_1"`
+	Column2 string `json:"column_2"`
+}
+
+func (q *Queries) ClosePeerSession(ctx context.Context, arg ClosePeerSessionParams) error {
+	_, err := q.db.Exec(ctx, closePeerSession, arg.Column1, arg.Column2)
+	return err
+}
+
+const createDevice = `-- name: CreateDevice :one
+
+INSERT INTO devices (user_id, name, device_type, node_id, fingerprint, is_approved, approved_at, approved_by)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+RETURNING id, user_id, name, device_type, node_id, fingerprint, is_approved, approved_at, approved_by, last_active, created_at, revoked_at
+`
+
+type CreateDeviceParams struct {
+	UserID      string             `json:"user_id"`
+	Name        string             `json:"name"`
+	DeviceType  string             `json:"device_type"`
+	NodeID      pgtype.Text        `json:"node_id"`
+	Fingerprint string             `json:"fingerprint"`
+	IsApproved  bool               `json:"is_approved"`
+	ApprovedAt  pgtype.Timestamptz `json:"approved_at"`
+	ApprovedBy  pgtype.UUID        `json:"approved_by"`
+}
+
+// ─── Devices ────────────────────────────────────────
+func (q *Queries) CreateDevice(ctx context.Context, arg CreateDeviceParams) (Device, error) {
+	row := q.db.QueryRow(ctx, createDevice,
+		arg.UserID,
+		arg.Name,
+		arg.DeviceType,
+		arg.NodeID,
+		arg.Fingerprint,
+		arg.IsApproved,
+		arg.ApprovedAt,
+		arg.ApprovedBy,
+	)
+	var i Device
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Name,
+		&i.DeviceType,
+		&i.NodeID,
+		&i.Fingerprint,
+		&i.IsApproved,
+		&i.ApprovedAt,
+		&i.ApprovedBy,
+		&i.LastActive,
+		&i.CreatedAt,
+		&i.RevokedAt,
+	)
+	return i, err
+}
+
+const createPeerSession = `-- name: CreatePeerSession :one
+
+INSERT INTO peer_sessions (user_id, name) VALUES ($1, $2) RETURNING id, user_id, name, is_active, created_at, closed_at
+`
+
+type CreatePeerSessionParams struct {
+	UserID string `json:"user_id"`
+	Name   string `json:"name"`
+}
+
+// ─── Peer Sessions ──────────────────────────────────
+func (q *Queries) CreatePeerSession(ctx context.Context, arg CreatePeerSessionParams) (PeerSession, error) {
+	row := q.db.QueryRow(ctx, createPeerSession, arg.UserID, arg.Name)
+	var i PeerSession
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Name,
+		&i.IsActive,
+		&i.CreatedAt,
+		&i.ClosedAt,
+	)
+	return i, err
+}
+
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (username, email, password_hash)
 VALUES ($1, $2, $3)
@@ -35,6 +152,77 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.EmailVerified,
 		&i.VerificationToken,
 		&i.VerificationExpiresAt,
+	)
+	return i, err
+}
+
+const getDeviceByFingerprint = `-- name: GetDeviceByFingerprint :one
+SELECT id, user_id, name, device_type, node_id, fingerprint, is_approved, approved_at, approved_by, last_active, created_at, revoked_at FROM devices WHERE user_id = $1::uuid AND fingerprint = $2 AND revoked_at IS NULL
+`
+
+type GetDeviceByFingerprintParams struct {
+	Column1     string `json:"column_1"`
+	Fingerprint string `json:"fingerprint"`
+}
+
+func (q *Queries) GetDeviceByFingerprint(ctx context.Context, arg GetDeviceByFingerprintParams) (Device, error) {
+	row := q.db.QueryRow(ctx, getDeviceByFingerprint, arg.Column1, arg.Fingerprint)
+	var i Device
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Name,
+		&i.DeviceType,
+		&i.NodeID,
+		&i.Fingerprint,
+		&i.IsApproved,
+		&i.ApprovedAt,
+		&i.ApprovedBy,
+		&i.LastActive,
+		&i.CreatedAt,
+		&i.RevokedAt,
+	)
+	return i, err
+}
+
+const getDeviceByID = `-- name: GetDeviceByID :one
+SELECT id, user_id, name, device_type, node_id, fingerprint, is_approved, approved_at, approved_by, last_active, created_at, revoked_at FROM devices WHERE id = $1::uuid AND revoked_at IS NULL
+`
+
+func (q *Queries) GetDeviceByID(ctx context.Context, dollar_1 string) (Device, error) {
+	row := q.db.QueryRow(ctx, getDeviceByID, dollar_1)
+	var i Device
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Name,
+		&i.DeviceType,
+		&i.NodeID,
+		&i.Fingerprint,
+		&i.IsApproved,
+		&i.ApprovedAt,
+		&i.ApprovedBy,
+		&i.LastActive,
+		&i.CreatedAt,
+		&i.RevokedAt,
+	)
+	return i, err
+}
+
+const getPeerSession = `-- name: GetPeerSession :one
+SELECT id, user_id, name, is_active, created_at, closed_at FROM peer_sessions WHERE id = $1::uuid
+`
+
+func (q *Queries) GetPeerSession(ctx context.Context, dollar_1 string) (PeerSession, error) {
+	row := q.db.QueryRow(ctx, getPeerSession, dollar_1)
+	var i PeerSession
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Name,
+		&i.IsActive,
+		&i.CreatedAt,
+		&i.ClosedAt,
 	)
 	return i, err
 }
@@ -101,6 +289,150 @@ func (q *Queries) GetUserByVerificationToken(ctx context.Context, verificationTo
 	return i, err
 }
 
+const listActivePeerSessions = `-- name: ListActivePeerSessions :many
+SELECT id, user_id, name, is_active, created_at, closed_at FROM peer_sessions WHERE user_id = $1::uuid AND is_active = TRUE ORDER BY created_at DESC
+`
+
+func (q *Queries) ListActivePeerSessions(ctx context.Context, dollar_1 string) ([]PeerSession, error) {
+	rows, err := q.db.Query(ctx, listActivePeerSessions, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []PeerSession
+	for rows.Next() {
+		var i PeerSession
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.Name,
+			&i.IsActive,
+			&i.CreatedAt,
+			&i.ClosedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listDevicesByUser = `-- name: ListDevicesByUser :many
+SELECT id, user_id, name, device_type, node_id, fingerprint, is_approved, approved_at, approved_by, last_active, created_at, revoked_at FROM devices WHERE user_id = $1::uuid AND revoked_at IS NULL ORDER BY created_at DESC
+`
+
+func (q *Queries) ListDevicesByUser(ctx context.Context, dollar_1 string) ([]Device, error) {
+	rows, err := q.db.Query(ctx, listDevicesByUser, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Device
+	for rows.Next() {
+		var i Device
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.Name,
+			&i.DeviceType,
+			&i.NodeID,
+			&i.Fingerprint,
+			&i.IsApproved,
+			&i.ApprovedAt,
+			&i.ApprovedBy,
+			&i.LastActive,
+			&i.CreatedAt,
+			&i.RevokedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listSessionDevices = `-- name: ListSessionDevices :many
+SELECT d.id, d.user_id, d.name, d.device_type, d.node_id, d.fingerprint, d.is_approved, d.approved_at, d.approved_by, d.last_active, d.created_at, d.revoked_at FROM devices d
+JOIN peer_session_devices psd ON d.id = psd.device_id
+WHERE psd.session_id = $1::uuid AND psd.left_at IS NULL AND d.revoked_at IS NULL
+`
+
+func (q *Queries) ListSessionDevices(ctx context.Context, dollar_1 string) ([]Device, error) {
+	rows, err := q.db.Query(ctx, listSessionDevices, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Device
+	for rows.Next() {
+		var i Device
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.Name,
+			&i.DeviceType,
+			&i.NodeID,
+			&i.Fingerprint,
+			&i.IsApproved,
+			&i.ApprovedAt,
+			&i.ApprovedBy,
+			&i.LastActive,
+			&i.CreatedAt,
+			&i.RevokedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const rejectDevice = `-- name: RejectDevice :exec
+UPDATE devices SET revoked_at = NOW() WHERE id = $1::uuid AND is_approved = FALSE
+`
+
+func (q *Queries) RejectDevice(ctx context.Context, dollar_1 string) error {
+	_, err := q.db.Exec(ctx, rejectDevice, dollar_1)
+	return err
+}
+
+const removeDeviceFromSession = `-- name: RemoveDeviceFromSession :exec
+UPDATE peer_session_devices SET left_at = NOW() WHERE session_id = $1::uuid AND device_id = $2::uuid
+`
+
+type RemoveDeviceFromSessionParams struct {
+	Column1 string `json:"column_1"`
+	Column2 string `json:"column_2"`
+}
+
+func (q *Queries) RemoveDeviceFromSession(ctx context.Context, arg RemoveDeviceFromSessionParams) error {
+	_, err := q.db.Exec(ctx, removeDeviceFromSession, arg.Column1, arg.Column2)
+	return err
+}
+
+const revokeDevice = `-- name: RevokeDevice :exec
+UPDATE devices SET revoked_at = NOW() WHERE id = $1::uuid AND user_id = $2::uuid
+`
+
+type RevokeDeviceParams struct {
+	Column1 string `json:"column_1"`
+	Column2 string `json:"column_2"`
+}
+
+func (q *Queries) RevokeDevice(ctx context.Context, arg RevokeDeviceParams) error {
+	_, err := q.db.Exec(ctx, revokeDevice, arg.Column1, arg.Column2)
+	return err
+}
+
 const setVerificationToken = `-- name: SetVerificationToken :exec
 UPDATE users
 SET verification_token = $2, verification_expires_at = $3
@@ -115,6 +447,21 @@ type SetVerificationTokenParams struct {
 
 func (q *Queries) SetVerificationToken(ctx context.Context, arg SetVerificationTokenParams) error {
 	_, err := q.db.Exec(ctx, setVerificationToken, arg.Column1, arg.VerificationToken, arg.VerificationExpiresAt)
+	return err
+}
+
+const updateDeviceActivity = `-- name: UpdateDeviceActivity :exec
+UPDATE devices SET last_active = NOW(), node_id = COALESCE($2, node_id)
+WHERE id = $1::uuid AND revoked_at IS NULL
+`
+
+type UpdateDeviceActivityParams struct {
+	Column1 string      `json:"column_1"`
+	NodeID  pgtype.Text `json:"node_id"`
+}
+
+func (q *Queries) UpdateDeviceActivity(ctx context.Context, arg UpdateDeviceActivityParams) error {
+	_, err := q.db.Exec(ctx, updateDeviceActivity, arg.Column1, arg.NodeID)
 	return err
 }
 

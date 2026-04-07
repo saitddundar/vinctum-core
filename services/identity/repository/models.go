@@ -10,6 +10,37 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type Device struct {
+	ID          string             `json:"id"`
+	UserID      string             `json:"user_id"`
+	Name        string             `json:"name"`
+	DeviceType  string             `json:"device_type"`
+	NodeID      pgtype.Text        `json:"node_id"`
+	Fingerprint string             `json:"fingerprint"`
+	IsApproved  bool               `json:"is_approved"`
+	ApprovedAt  pgtype.Timestamptz `json:"approved_at"`
+	ApprovedBy  pgtype.UUID        `json:"approved_by"`
+	LastActive  time.Time          `json:"last_active"`
+	CreatedAt   time.Time          `json:"created_at"`
+	RevokedAt   pgtype.Timestamptz `json:"revoked_at"`
+}
+
+type PeerSession struct {
+	ID        string             `json:"id"`
+	UserID    string             `json:"user_id"`
+	Name      string             `json:"name"`
+	IsActive  bool               `json:"is_active"`
+	CreatedAt time.Time          `json:"created_at"`
+	ClosedAt  pgtype.Timestamptz `json:"closed_at"`
+}
+
+type PeerSessionDevice struct {
+	SessionID string             `json:"session_id"`
+	DeviceID  string             `json:"device_id"`
+	JoinedAt  time.Time          `json:"joined_at"`
+	LeftAt    pgtype.Timestamptz `json:"left_at"`
+}
+
 type User struct {
 	ID                    string             `json:"id"`
 	Username              string             `json:"username"`

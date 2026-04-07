@@ -5,6 +5,8 @@ sql:
     schema:
       - "scripts/migrations/001_create_users.sql"
       - "scripts/migrations/007_add_email_verification.sql"
+      - "scripts/migrations/008_create_devices.sql"
+      - "scripts/migrations/009_create_peer_sessions.sql"
     queries: "services/identity/repository/queries.sql"
     gen:
       go:
