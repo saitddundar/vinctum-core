@@ -6,12 +6,17 @@ package repository
 
 import (
 	"time"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type User struct {
-	ID           string    `json:"id"`
-	Username     string    `json:"username"`
-	Email        string    `json:"email"`
-	PasswordHash string    `json:"password_hash"`
-	CreatedAt    time.Time `json:"created_at"`
+	ID                    string             `json:"id"`
+	Username              string             `json:"username"`
+	Email                 string             `json:"email"`
+	PasswordHash          string             `json:"password_hash"`
+	CreatedAt             time.Time          `json:"created_at"`
+	EmailVerified         bool               `json:"email_verified"`
+	VerificationToken     pgtype.Text        `json:"verification_token"`
+	VerificationExpiresAt pgtype.Timestamptz `json:"verification_expires_at"`
 }

@@ -6,12 +6,17 @@ package repository
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Querier interface {
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, dollar_1 string) (User, error)
+	GetUserByVerificationToken(ctx context.Context, verificationToken pgtype.Text) (User, error)
+	SetVerificationToken(ctx context.Context, arg SetVerificationTokenParams) error
+	VerifyUserEmail(ctx context.Context, dollar_1 string) error
 }
 
 var _ Querier = (*Queries)(nil)

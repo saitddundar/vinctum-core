@@ -7,12 +7,14 @@ package repository
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (username, email, password_hash)
 VALUES ($1, $2, $3)
-RETURNING id, username, email, password_hash, created_at
+RETURNING id, username, email, password_hash, created_at, email_verified, verification_token, verification_expires_at
 `
 
 type CreateUserParams struct {
@@ -30,12 +32,15 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.Email,
 		&i.PasswordHash,
 		&i.CreatedAt,
+		&i.EmailVerified,
+		&i.VerificationToken,
+		&i.VerificationExpiresAt,
 	)
 	return i, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, username, email, password_hash, created_at FROM users WHERE email = $1
+SELECT id, username, email, password_hash, created_at, email_verified, verification_token, verification_expires_at FROM users WHERE email = $1
 `
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
@@ -47,12 +52,15 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.Email,
 		&i.PasswordHash,
 		&i.CreatedAt,
+		&i.EmailVerified,
+		&i.VerificationToken,
+		&i.VerificationExpiresAt,
 	)
 	return i, err
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, username, email, password_hash, created_at FROM users WHERE id = $1::uuid
+SELECT id, username, email, password_hash, created_at, email_verified, verification_token, verification_expires_at FROM users WHERE id = $1::uuid
 `
 
 func (q *Queries) GetUserByID(ctx context.Context, dollar_1 string) (User, error) {
@@ -64,6 +72,59 @@ func (q *Queries) GetUserByID(ctx context.Context, dollar_1 string) (User, error
 		&i.Email,
 		&i.PasswordHash,
 		&i.CreatedAt,
+		&i.EmailVerified,
+		&i.VerificationToken,
+		&i.VerificationExpiresAt,
 	)
 	return i, err
+}
+
+const getUserByVerificationToken = `-- name: GetUserByVerificationToken :one
+SELECT id, username, email, password_hash, created_at, email_verified, verification_token, verification_expires_at FROM users
+WHERE verification_token = $1
+  AND verification_expires_at > NOW()
+`
+
+func (q *Queries) GetUserByVerificationToken(ctx context.Context, verificationToken pgtype.Text) (User, error) {
+	row := q.db.QueryRow(ctx, getUserByVerificationToken, verificationToken)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.Email,
+		&i.PasswordHash,
+		&i.CreatedAt,
+		&i.EmailVerified,
+		&i.VerificationToken,
+		&i.VerificationExpiresAt,
+	)
+	return i, err
+}
+
+const setVerificationToken = `-- name: SetVerificationToken :exec
+UPDATE users
+SET verification_token = $2, verification_expires_at = $3
+WHERE id = $1::uuid
+`
+
+type SetVerificationTokenParams struct {
+	Column1               string             `json:"column_1"`
+	VerificationToken     pgtype.Text        `json:"verification_token"`
+	VerificationExpiresAt pgtype.Timestamptz `json:"verification_expires_at"`
+}
+
+func (q *Queries) SetVerificationToken(ctx context.Context, arg SetVerificationTokenParams) error {
+	_, err := q.db.Exec(ctx, setVerificationToken, arg.Column1, arg.VerificationToken, arg.VerificationExpiresAt)
+	return err
+}
+
+const verifyUserEmail = `-- name: VerifyUserEmail :exec
+UPDATE users
+SET email_verified = TRUE, verification_token = NULL, verification_expires_at = NULL
+WHERE id = $1::uuid
+`
+
+func (q *Queries) VerifyUserEmail(ctx context.Context, dollar_1 string) error {
+	_, err := q.db.Exec(ctx, verifyUserEmail, dollar_1)
+	return err
 }
