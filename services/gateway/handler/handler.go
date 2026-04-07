@@ -98,6 +98,8 @@ func (h *GatewayHandler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/auth/login", h.handleLogin)
 	mux.HandleFunc("POST /api/v1/auth/refresh", h.handleRefresh)
 	mux.HandleFunc("POST /api/v1/auth/validate", h.handleValidate)
+	mux.HandleFunc("POST /api/v1/auth/verify", h.handleVerifyEmail)
+	mux.HandleFunc("POST /api/v1/auth/resend-verification", h.handleResendVerification)
 
 	// routing proxy
 	mux.HandleFunc("POST /api/v1/routes/find", h.handleFindRoute)
@@ -230,6 +232,46 @@ func (h *GatewayHandler) handleValidate(w http.ResponseWriter, r *http.Request) 
 	}
 
 	resp, err := h.identityClient.ValidateToken(r.Context(), &req)
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+func (h *GatewayHandler) handleVerifyEmail(w http.ResponseWriter, r *http.Request) {
+	if h.identityClient == nil {
+		writeError(w, http.StatusServiceUnavailable, "identity service unavailable")
+		return
+	}
+
+	var req identityv1.VerifyEmailRequest
+	if err := decodeJSON(r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	resp, err := h.identityClient.VerifyEmail(r.Context(), &req)
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+func (h *GatewayHandler) handleResendVerification(w http.ResponseWriter, r *http.Request) {
+	if h.identityClient == nil {
+		writeError(w, http.StatusServiceUnavailable, "identity service unavailable")
+		return
+	}
+
+	var req identityv1.ResendVerificationRequest
+	if err := decodeJSON(r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	resp, err := h.identityClient.ResendVerification(r.Context(), &req)
 	if err != nil {
 		writeGRPCError(w, err)
 		return
