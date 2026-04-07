@@ -17,6 +17,7 @@ import (
 	"github.com/saitddundar/vinctum-core/internal/migrator"
 	"github.com/saitddundar/vinctum-core/pkg/config"
 	"github.com/saitddundar/vinctum-core/pkg/grpcutil"
+	"github.com/saitddundar/vinctum-core/pkg/mailer"
 	"github.com/saitddundar/vinctum-core/pkg/logger"
 	"github.com/saitddundar/vinctum-core/pkg/middleware"
 	identityv1 "github.com/saitddundar/vinctum-core/proto/identity/v1"
@@ -54,7 +55,22 @@ func main() {
 	queries := repository.New(pool)
 	jwtManager := auth.NewManager(cfg.Auth.JWTSecret, cfg.Auth.JWTExpiry, cfg.Auth.RefreshExpiry)
 	blacklist := auth.NewTokenBlacklist(cfg.Redis.Addr)
-	handler := identityhandler.NewIdentityHandler(queries, jwtManager, blacklist, cfg.Auth.BcryptCost)
+	var ml *mailer.Mailer
+	if cfg.SMTP.Host != "" && cfg.SMTP.Username != "" {
+		ml = mailer.New(mailer.Config{
+			Host:     cfg.SMTP.Host,
+			Port:     cfg.SMTP.Port,
+			Username: cfg.SMTP.Username,
+			Password: cfg.SMTP.Password,
+			From:     cfg.SMTP.From,
+			BaseURL:  cfg.SMTP.BaseURL,
+		})
+		log.Info().Str("smtp_host", cfg.SMTP.Host).Msg("mailer configured")
+	} else {
+		log.Warn().Msg("SMTP not configured, verification emails will not be sent")
+	}
+
+	handler := identityhandler.NewIdentityHandler(queries, jwtManager, blacklist, ml, cfg.Auth.BcryptCost)
 
 	lis, err := net.Listen("tcp", cfg.GRPC.Address())
 	if err != nil {
