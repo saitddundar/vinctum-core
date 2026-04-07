@@ -70,7 +70,8 @@ func main() {
 		log.Warn().Msg("SMTP not configured, verification emails will not be sent")
 	}
 
-	handler := identityhandler.NewIdentityHandler(queries, jwtManager, blacklist, ml, cfg.Auth.BcryptCost)
+	pairing := auth.NewPairingStore(cfg.Redis.Addr)
+	handler := identityhandler.NewIdentityHandler(queries, jwtManager, blacklist, pairing, ml, cfg.Auth.BcryptCost)
 
 	lis, err := net.Listen("tcp", cfg.GRPC.Address())
 	if err != nil {
