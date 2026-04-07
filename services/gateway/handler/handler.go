@@ -101,6 +101,25 @@ func (h *GatewayHandler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/auth/verify", h.handleVerifyEmail)
 	mux.HandleFunc("POST /api/v1/auth/resend-verification", h.handleResendVerification)
 
+	// device management
+	mux.HandleFunc("POST /api/v1/devices", h.handleRegisterDevice)
+	mux.HandleFunc("GET /api/v1/devices", h.handleListDevices)
+	mux.HandleFunc("GET /api/v1/devices/{deviceId}", h.handleGetDevice)
+	mux.HandleFunc("DELETE /api/v1/devices/{deviceId}", h.handleRevokeDevice)
+	mux.HandleFunc("PUT /api/v1/devices/{deviceId}/activity", h.handleUpdateDeviceActivity)
+
+	// pairing
+	mux.HandleFunc("POST /api/v1/devices/pairing/generate", h.handleGeneratePairingCode)
+	mux.HandleFunc("POST /api/v1/devices/pairing/redeem", h.handleRedeemPairingCode)
+	mux.HandleFunc("POST /api/v1/devices/pairing/approve", h.handleApprovePairing)
+
+	// peer sessions
+	mux.HandleFunc("POST /api/v1/sessions", h.handleCreatePeerSession)
+	mux.HandleFunc("GET /api/v1/sessions", h.handleListPeerSessions)
+	mux.HandleFunc("POST /api/v1/sessions/{sessionId}/close", h.handleClosePeerSession)
+	mux.HandleFunc("POST /api/v1/sessions/{sessionId}/join", h.handleJoinPeerSession)
+	mux.HandleFunc("POST /api/v1/sessions/{sessionId}/leave", h.handleLeavePeerSession)
+
 	// routing proxy
 	mux.HandleFunc("POST /api/v1/routes/find", h.handleFindRoute)
 	mux.HandleFunc("GET /api/v1/routes/table/{nodeId}", h.handleGetRouteTable)
@@ -272,6 +291,255 @@ func (h *GatewayHandler) handleResendVerification(w http.ResponseWriter, r *http
 	}
 
 	resp, err := h.identityClient.ResendVerification(r.Context(), &req)
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+// ─── Device Management Proxy ───────────────────────────────
+
+func (h *GatewayHandler) handleRegisterDevice(w http.ResponseWriter, r *http.Request) {
+	if h.identityClient == nil {
+		writeError(w, http.StatusServiceUnavailable, "identity service unavailable")
+		return
+	}
+	var req identityv1.RegisterDeviceRequest
+	if err := decodeJSON(r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	ctx := forwardAuth(r)
+	resp, err := h.identityClient.RegisterDevice(ctx, &req)
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, resp)
+}
+
+func (h *GatewayHandler) handleListDevices(w http.ResponseWriter, r *http.Request) {
+	if h.identityClient == nil {
+		writeError(w, http.StatusServiceUnavailable, "identity service unavailable")
+		return
+	}
+	ctx := forwardAuth(r)
+	resp, err := h.identityClient.ListDevices(ctx, &identityv1.ListDevicesRequest{})
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+func (h *GatewayHandler) handleGetDevice(w http.ResponseWriter, r *http.Request) {
+	if h.identityClient == nil {
+		writeError(w, http.StatusServiceUnavailable, "identity service unavailable")
+		return
+	}
+	deviceID := r.PathValue("deviceId")
+	ctx := forwardAuth(r)
+	resp, err := h.identityClient.GetDevice(ctx, &identityv1.GetDeviceRequest{DeviceId: deviceID})
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+func (h *GatewayHandler) handleRevokeDevice(w http.ResponseWriter, r *http.Request) {
+	if h.identityClient == nil {
+		writeError(w, http.StatusServiceUnavailable, "identity service unavailable")
+		return
+	}
+	deviceID := r.PathValue("deviceId")
+	ctx := forwardAuth(r)
+	resp, err := h.identityClient.RevokeDevice(ctx, &identityv1.RevokeDeviceRequest{DeviceId: deviceID})
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+func (h *GatewayHandler) handleUpdateDeviceActivity(w http.ResponseWriter, r *http.Request) {
+	if h.identityClient == nil {
+		writeError(w, http.StatusServiceUnavailable, "identity service unavailable")
+		return
+	}
+	deviceID := r.PathValue("deviceId")
+	var body struct {
+		NodeID string `json:"node_id"`
+	}
+	if err := decodeJSON(r, &body); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	ctx := forwardAuth(r)
+	resp, err := h.identityClient.UpdateDeviceActivity(ctx, &identityv1.UpdateDeviceActivityRequest{
+		DeviceId: deviceID,
+		NodeId:   body.NodeID,
+	})
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+// ─── Pairing Proxy ─────────────────────────────────────────
+
+func (h *GatewayHandler) handleGeneratePairingCode(w http.ResponseWriter, r *http.Request) {
+	if h.identityClient == nil {
+		writeError(w, http.StatusServiceUnavailable, "identity service unavailable")
+		return
+	}
+	var req identityv1.GeneratePairingCodeRequest
+	if err := decodeJSON(r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	ctx := forwardAuth(r)
+	resp, err := h.identityClient.GeneratePairingCode(ctx, &req)
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+func (h *GatewayHandler) handleRedeemPairingCode(w http.ResponseWriter, r *http.Request) {
+	if h.identityClient == nil {
+		writeError(w, http.StatusServiceUnavailable, "identity service unavailable")
+		return
+	}
+	var req identityv1.RedeemPairingCodeRequest
+	if err := decodeJSON(r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	ctx := forwardAuth(r)
+	resp, err := h.identityClient.RedeemPairingCode(ctx, &req)
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+func (h *GatewayHandler) handleApprovePairing(w http.ResponseWriter, r *http.Request) {
+	if h.identityClient == nil {
+		writeError(w, http.StatusServiceUnavailable, "identity service unavailable")
+		return
+	}
+	var req identityv1.ApprovePairingRequest
+	if err := decodeJSON(r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	ctx := forwardAuth(r)
+	resp, err := h.identityClient.ApprovePairing(ctx, &req)
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+// ─── Peer Session Proxy ────────────────────────────────────
+
+func (h *GatewayHandler) handleCreatePeerSession(w http.ResponseWriter, r *http.Request) {
+	if h.identityClient == nil {
+		writeError(w, http.StatusServiceUnavailable, "identity service unavailable")
+		return
+	}
+	var req identityv1.CreatePeerSessionRequest
+	if err := decodeJSON(r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	ctx := forwardAuth(r)
+	resp, err := h.identityClient.CreatePeerSession(ctx, &req)
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, resp)
+}
+
+func (h *GatewayHandler) handleListPeerSessions(w http.ResponseWriter, r *http.Request) {
+	if h.identityClient == nil {
+		writeError(w, http.StatusServiceUnavailable, "identity service unavailable")
+		return
+	}
+	ctx := forwardAuth(r)
+	resp, err := h.identityClient.ListPeerSessions(ctx, &identityv1.ListPeerSessionsRequest{})
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+func (h *GatewayHandler) handleClosePeerSession(w http.ResponseWriter, r *http.Request) {
+	if h.identityClient == nil {
+		writeError(w, http.StatusServiceUnavailable, "identity service unavailable")
+		return
+	}
+	sessionID := r.PathValue("sessionId")
+	ctx := forwardAuth(r)
+	resp, err := h.identityClient.ClosePeerSession(ctx, &identityv1.ClosePeerSessionRequest{SessionId: sessionID})
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+func (h *GatewayHandler) handleJoinPeerSession(w http.ResponseWriter, r *http.Request) {
+	if h.identityClient == nil {
+		writeError(w, http.StatusServiceUnavailable, "identity service unavailable")
+		return
+	}
+	sessionID := r.PathValue("sessionId")
+	var body struct {
+		DeviceID string `json:"device_id"`
+	}
+	if err := decodeJSON(r, &body); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	ctx := forwardAuth(r)
+	resp, err := h.identityClient.JoinPeerSession(ctx, &identityv1.JoinPeerSessionRequest{
+		SessionId: sessionID,
+		DeviceId:  body.DeviceID,
+	})
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+func (h *GatewayHandler) handleLeavePeerSession(w http.ResponseWriter, r *http.Request) {
+	if h.identityClient == nil {
+		writeError(w, http.StatusServiceUnavailable, "identity service unavailable")
+		return
+	}
+	sessionID := r.PathValue("sessionId")
+	var body struct {
+		DeviceID string `json:"device_id"`
+	}
+	if err := decodeJSON(r, &body); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	ctx := forwardAuth(r)
+	resp, err := h.identityClient.LeavePeerSession(ctx, &identityv1.LeavePeerSessionRequest{
+		SessionId: sessionID,
+		DeviceId:  body.DeviceID,
+	})
 	if err != nil {
 		writeGRPCError(w, err)
 		return
