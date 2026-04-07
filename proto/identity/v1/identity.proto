@@ -14,6 +14,25 @@ service IdentityService {
   rpc Logout(LogoutRequest) returns (LogoutResponse);
   rpc VerifyEmail(VerifyEmailRequest) returns (VerifyEmailResponse);
   rpc ResendVerification(ResendVerificationRequest) returns (ResendVerificationResponse);
+
+  // Device Management
+  rpc RegisterDevice(RegisterDeviceRequest) returns (RegisterDeviceResponse);
+  rpc ListDevices(ListDevicesRequest) returns (ListDevicesResponse);
+  rpc GetDevice(GetDeviceRequest) returns (GetDeviceResponse);
+  rpc RevokeDevice(RevokeDeviceRequest) returns (RevokeDeviceResponse);
+  rpc UpdateDeviceActivity(UpdateDeviceActivityRequest) returns (UpdateDeviceActivityResponse);
+
+  // Device Pairing
+  rpc GeneratePairingCode(GeneratePairingCodeRequest) returns (GeneratePairingCodeResponse);
+  rpc RedeemPairingCode(RedeemPairingCodeRequest) returns (RedeemPairingCodeResponse);
+  rpc ApprovePairing(ApprovePairingRequest) returns (ApprovePairingResponse);
+
+  // Peer Sessions
+  rpc CreatePeerSession(CreatePeerSessionRequest) returns (CreatePeerSessionResponse);
+  rpc ListPeerSessions(ListPeerSessionsRequest) returns (ListPeerSessionsResponse);
+  rpc ClosePeerSession(ClosePeerSessionRequest) returns (ClosePeerSessionResponse);
+  rpc JoinPeerSession(JoinPeerSessionRequest) returns (JoinPeerSessionResponse);
+  rpc LeavePeerSession(LeavePeerSessionRequest) returns (LeavePeerSessionResponse);
 }
 
 message RegisterRequest {
@@ -94,4 +113,145 @@ message ResendVerificationRequest {
 message ResendVerificationResponse {
   bool   success = 1;
   string message = 2;
+}
+
+// ─── Device types ──────────────────────────────────
+
+enum DeviceType {
+  DEVICE_TYPE_UNSPECIFIED = 0;
+  DEVICE_TYPE_PC          = 1;
+  DEVICE_TYPE_PHONE       = 2;
+  DEVICE_TYPE_TABLET      = 3;
+}
+
+message Device {
+  string device_id                         = 1;
+  string user_id                           = 2;
+  string name                              = 3;
+  DeviceType device_type                   = 4;
+  string node_id                           = 5;
+  string fingerprint                       = 6;
+  bool   is_approved                       = 7;
+  google.protobuf.Timestamp approved_at    = 8;
+  string approved_by_device_id             = 9;
+  google.protobuf.Timestamp last_active    = 10;
+  google.protobuf.Timestamp created_at     = 11;
+  bool   is_revoked                        = 12;
+}
+
+message RegisterDeviceRequest {
+  string name            = 1;
+  DeviceType device_type = 2;
+  string fingerprint     = 3;
+  string node_id         = 4;
+}
+message RegisterDeviceResponse {
+  Device device = 1;
+}
+
+message ListDevicesRequest {}
+message ListDevicesResponse {
+  repeated Device devices = 1;
+}
+
+message GetDeviceRequest {
+  string device_id = 1;
+}
+message GetDeviceResponse {
+  Device device = 1;
+}
+
+message RevokeDeviceRequest {
+  string device_id = 1;
+}
+message RevokeDeviceResponse {
+  bool success = 1;
+}
+
+message UpdateDeviceActivityRequest {
+  string device_id = 1;
+  string node_id   = 2;
+}
+message UpdateDeviceActivityResponse {
+  bool success = 1;
+}
+
+// ─── Pairing types ─────────────────────────────────
+
+message GeneratePairingCodeRequest {
+  string device_id = 1;
+}
+message GeneratePairingCodeResponse {
+  string pairing_code = 1;
+  int32  expires_in_s = 2;
+}
+
+message RedeemPairingCodeRequest {
+  string pairing_code    = 1;
+  string name            = 2;
+  DeviceType device_type = 3;
+  string fingerprint     = 4;
+  string node_id         = 5;
+}
+message RedeemPairingCodeResponse {
+  string device_id       = 1;
+  string approver_device = 2;
+}
+
+message ApprovePairingRequest {
+  string approver_device_id = 1;
+  string pending_device_id  = 2;
+  bool   approve            = 3;
+}
+message ApprovePairingResponse {
+  bool   success = 1;
+  Device device  = 2;
+}
+
+// ─── Peer Session types ────────────────────────────
+
+message PeerSession {
+  string session_id                        = 1;
+  string user_id                           = 2;
+  string name                              = 3;
+  bool   is_active                         = 4;
+  repeated Device devices                  = 5;
+  google.protobuf.Timestamp created_at     = 6;
+  google.protobuf.Timestamp closed_at      = 7;
+}
+
+message CreatePeerSessionRequest {
+  string name      = 1;
+  string device_id = 2;
+}
+message CreatePeerSessionResponse {
+  PeerSession session = 1;
+}
+
+message ListPeerSessionsRequest {}
+message ListPeerSessionsResponse {
+  repeated PeerSession sessions = 1;
+}
+
+message ClosePeerSessionRequest {
+  string session_id = 1;
+}
+message ClosePeerSessionResponse {
+  bool success = 1;
+}
+
+message JoinPeerSessionRequest {
+  string session_id = 1;
+  string device_id  = 2;
+}
+message JoinPeerSessionResponse {
+  bool success = 1;
+}
+
+message LeavePeerSessionRequest {
+  string session_id = 1;
+  string device_id  = 2;
+}
+message LeavePeerSessionResponse {
+  bool success = 1;
 }

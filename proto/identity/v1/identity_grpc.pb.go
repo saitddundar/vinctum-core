@@ -19,13 +19,26 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	IdentityService_Register_FullMethodName           = "/identity.v1.IdentityService/Register"
-	IdentityService_Login_FullMethodName              = "/identity.v1.IdentityService/Login"
-	IdentityService_ValidateToken_FullMethodName      = "/identity.v1.IdentityService/ValidateToken"
-	IdentityService_RefreshToken_FullMethodName       = "/identity.v1.IdentityService/RefreshToken"
-	IdentityService_Logout_FullMethodName             = "/identity.v1.IdentityService/Logout"
-	IdentityService_VerifyEmail_FullMethodName        = "/identity.v1.IdentityService/VerifyEmail"
-	IdentityService_ResendVerification_FullMethodName = "/identity.v1.IdentityService/ResendVerification"
+	IdentityService_Register_FullMethodName             = "/identity.v1.IdentityService/Register"
+	IdentityService_Login_FullMethodName                = "/identity.v1.IdentityService/Login"
+	IdentityService_ValidateToken_FullMethodName        = "/identity.v1.IdentityService/ValidateToken"
+	IdentityService_RefreshToken_FullMethodName         = "/identity.v1.IdentityService/RefreshToken"
+	IdentityService_Logout_FullMethodName               = "/identity.v1.IdentityService/Logout"
+	IdentityService_VerifyEmail_FullMethodName          = "/identity.v1.IdentityService/VerifyEmail"
+	IdentityService_ResendVerification_FullMethodName   = "/identity.v1.IdentityService/ResendVerification"
+	IdentityService_RegisterDevice_FullMethodName       = "/identity.v1.IdentityService/RegisterDevice"
+	IdentityService_ListDevices_FullMethodName          = "/identity.v1.IdentityService/ListDevices"
+	IdentityService_GetDevice_FullMethodName            = "/identity.v1.IdentityService/GetDevice"
+	IdentityService_RevokeDevice_FullMethodName         = "/identity.v1.IdentityService/RevokeDevice"
+	IdentityService_UpdateDeviceActivity_FullMethodName = "/identity.v1.IdentityService/UpdateDeviceActivity"
+	IdentityService_GeneratePairingCode_FullMethodName  = "/identity.v1.IdentityService/GeneratePairingCode"
+	IdentityService_RedeemPairingCode_FullMethodName    = "/identity.v1.IdentityService/RedeemPairingCode"
+	IdentityService_ApprovePairing_FullMethodName       = "/identity.v1.IdentityService/ApprovePairing"
+	IdentityService_CreatePeerSession_FullMethodName    = "/identity.v1.IdentityService/CreatePeerSession"
+	IdentityService_ListPeerSessions_FullMethodName     = "/identity.v1.IdentityService/ListPeerSessions"
+	IdentityService_ClosePeerSession_FullMethodName     = "/identity.v1.IdentityService/ClosePeerSession"
+	IdentityService_JoinPeerSession_FullMethodName      = "/identity.v1.IdentityService/JoinPeerSession"
+	IdentityService_LeavePeerSession_FullMethodName     = "/identity.v1.IdentityService/LeavePeerSession"
 )
 
 // IdentityServiceClient is the client API for IdentityService service.
@@ -39,6 +52,22 @@ type IdentityServiceClient interface {
 	Logout(ctx context.Context, in *LogoutRequest, opts ...grpc.CallOption) (*LogoutResponse, error)
 	VerifyEmail(ctx context.Context, in *VerifyEmailRequest, opts ...grpc.CallOption) (*VerifyEmailResponse, error)
 	ResendVerification(ctx context.Context, in *ResendVerificationRequest, opts ...grpc.CallOption) (*ResendVerificationResponse, error)
+	// Device Management
+	RegisterDevice(ctx context.Context, in *RegisterDeviceRequest, opts ...grpc.CallOption) (*RegisterDeviceResponse, error)
+	ListDevices(ctx context.Context, in *ListDevicesRequest, opts ...grpc.CallOption) (*ListDevicesResponse, error)
+	GetDevice(ctx context.Context, in *GetDeviceRequest, opts ...grpc.CallOption) (*GetDeviceResponse, error)
+	RevokeDevice(ctx context.Context, in *RevokeDeviceRequest, opts ...grpc.CallOption) (*RevokeDeviceResponse, error)
+	UpdateDeviceActivity(ctx context.Context, in *UpdateDeviceActivityRequest, opts ...grpc.CallOption) (*UpdateDeviceActivityResponse, error)
+	// Device Pairing
+	GeneratePairingCode(ctx context.Context, in *GeneratePairingCodeRequest, opts ...grpc.CallOption) (*GeneratePairingCodeResponse, error)
+	RedeemPairingCode(ctx context.Context, in *RedeemPairingCodeRequest, opts ...grpc.CallOption) (*RedeemPairingCodeResponse, error)
+	ApprovePairing(ctx context.Context, in *ApprovePairingRequest, opts ...grpc.CallOption) (*ApprovePairingResponse, error)
+	// Peer Sessions
+	CreatePeerSession(ctx context.Context, in *CreatePeerSessionRequest, opts ...grpc.CallOption) (*CreatePeerSessionResponse, error)
+	ListPeerSessions(ctx context.Context, in *ListPeerSessionsRequest, opts ...grpc.CallOption) (*ListPeerSessionsResponse, error)
+	ClosePeerSession(ctx context.Context, in *ClosePeerSessionRequest, opts ...grpc.CallOption) (*ClosePeerSessionResponse, error)
+	JoinPeerSession(ctx context.Context, in *JoinPeerSessionRequest, opts ...grpc.CallOption) (*JoinPeerSessionResponse, error)
+	LeavePeerSession(ctx context.Context, in *LeavePeerSessionRequest, opts ...grpc.CallOption) (*LeavePeerSessionResponse, error)
 }
 
 type identityServiceClient struct {
@@ -119,6 +148,136 @@ func (c *identityServiceClient) ResendVerification(ctx context.Context, in *Rese
 	return out, nil
 }
 
+func (c *identityServiceClient) RegisterDevice(ctx context.Context, in *RegisterDeviceRequest, opts ...grpc.CallOption) (*RegisterDeviceResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RegisterDeviceResponse)
+	err := c.cc.Invoke(ctx, IdentityService_RegisterDevice_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) ListDevices(ctx context.Context, in *ListDevicesRequest, opts ...grpc.CallOption) (*ListDevicesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListDevicesResponse)
+	err := c.cc.Invoke(ctx, IdentityService_ListDevices_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) GetDevice(ctx context.Context, in *GetDeviceRequest, opts ...grpc.CallOption) (*GetDeviceResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetDeviceResponse)
+	err := c.cc.Invoke(ctx, IdentityService_GetDevice_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) RevokeDevice(ctx context.Context, in *RevokeDeviceRequest, opts ...grpc.CallOption) (*RevokeDeviceResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RevokeDeviceResponse)
+	err := c.cc.Invoke(ctx, IdentityService_RevokeDevice_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) UpdateDeviceActivity(ctx context.Context, in *UpdateDeviceActivityRequest, opts ...grpc.CallOption) (*UpdateDeviceActivityResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateDeviceActivityResponse)
+	err := c.cc.Invoke(ctx, IdentityService_UpdateDeviceActivity_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) GeneratePairingCode(ctx context.Context, in *GeneratePairingCodeRequest, opts ...grpc.CallOption) (*GeneratePairingCodeResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GeneratePairingCodeResponse)
+	err := c.cc.Invoke(ctx, IdentityService_GeneratePairingCode_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) RedeemPairingCode(ctx context.Context, in *RedeemPairingCodeRequest, opts ...grpc.CallOption) (*RedeemPairingCodeResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RedeemPairingCodeResponse)
+	err := c.cc.Invoke(ctx, IdentityService_RedeemPairingCode_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) ApprovePairing(ctx context.Context, in *ApprovePairingRequest, opts ...grpc.CallOption) (*ApprovePairingResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ApprovePairingResponse)
+	err := c.cc.Invoke(ctx, IdentityService_ApprovePairing_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) CreatePeerSession(ctx context.Context, in *CreatePeerSessionRequest, opts ...grpc.CallOption) (*CreatePeerSessionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreatePeerSessionResponse)
+	err := c.cc.Invoke(ctx, IdentityService_CreatePeerSession_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) ListPeerSessions(ctx context.Context, in *ListPeerSessionsRequest, opts ...grpc.CallOption) (*ListPeerSessionsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListPeerSessionsResponse)
+	err := c.cc.Invoke(ctx, IdentityService_ListPeerSessions_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) ClosePeerSession(ctx context.Context, in *ClosePeerSessionRequest, opts ...grpc.CallOption) (*ClosePeerSessionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ClosePeerSessionResponse)
+	err := c.cc.Invoke(ctx, IdentityService_ClosePeerSession_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) JoinPeerSession(ctx context.Context, in *JoinPeerSessionRequest, opts ...grpc.CallOption) (*JoinPeerSessionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(JoinPeerSessionResponse)
+	err := c.cc.Invoke(ctx, IdentityService_JoinPeerSession_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) LeavePeerSession(ctx context.Context, in *LeavePeerSessionRequest, opts ...grpc.CallOption) (*LeavePeerSessionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(LeavePeerSessionResponse)
+	err := c.cc.Invoke(ctx, IdentityService_LeavePeerSession_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // IdentityServiceServer is the server API for IdentityService service.
 // All implementations should embed UnimplementedIdentityServiceServer
 // for forward compatibility.
@@ -130,6 +289,22 @@ type IdentityServiceServer interface {
 	Logout(context.Context, *LogoutRequest) (*LogoutResponse, error)
 	VerifyEmail(context.Context, *VerifyEmailRequest) (*VerifyEmailResponse, error)
 	ResendVerification(context.Context, *ResendVerificationRequest) (*ResendVerificationResponse, error)
+	// Device Management
+	RegisterDevice(context.Context, *RegisterDeviceRequest) (*RegisterDeviceResponse, error)
+	ListDevices(context.Context, *ListDevicesRequest) (*ListDevicesResponse, error)
+	GetDevice(context.Context, *GetDeviceRequest) (*GetDeviceResponse, error)
+	RevokeDevice(context.Context, *RevokeDeviceRequest) (*RevokeDeviceResponse, error)
+	UpdateDeviceActivity(context.Context, *UpdateDeviceActivityRequest) (*UpdateDeviceActivityResponse, error)
+	// Device Pairing
+	GeneratePairingCode(context.Context, *GeneratePairingCodeRequest) (*GeneratePairingCodeResponse, error)
+	RedeemPairingCode(context.Context, *RedeemPairingCodeRequest) (*RedeemPairingCodeResponse, error)
+	ApprovePairing(context.Context, *ApprovePairingRequest) (*ApprovePairingResponse, error)
+	// Peer Sessions
+	CreatePeerSession(context.Context, *CreatePeerSessionRequest) (*CreatePeerSessionResponse, error)
+	ListPeerSessions(context.Context, *ListPeerSessionsRequest) (*ListPeerSessionsResponse, error)
+	ClosePeerSession(context.Context, *ClosePeerSessionRequest) (*ClosePeerSessionResponse, error)
+	JoinPeerSession(context.Context, *JoinPeerSessionRequest) (*JoinPeerSessionResponse, error)
+	LeavePeerSession(context.Context, *LeavePeerSessionRequest) (*LeavePeerSessionResponse, error)
 }
 
 // UnimplementedIdentityServiceServer should be embedded to have
@@ -159,6 +334,45 @@ func (UnimplementedIdentityServiceServer) VerifyEmail(context.Context, *VerifyEm
 }
 func (UnimplementedIdentityServiceServer) ResendVerification(context.Context, *ResendVerificationRequest) (*ResendVerificationResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ResendVerification not implemented")
+}
+func (UnimplementedIdentityServiceServer) RegisterDevice(context.Context, *RegisterDeviceRequest) (*RegisterDeviceResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RegisterDevice not implemented")
+}
+func (UnimplementedIdentityServiceServer) ListDevices(context.Context, *ListDevicesRequest) (*ListDevicesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListDevices not implemented")
+}
+func (UnimplementedIdentityServiceServer) GetDevice(context.Context, *GetDeviceRequest) (*GetDeviceResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetDevice not implemented")
+}
+func (UnimplementedIdentityServiceServer) RevokeDevice(context.Context, *RevokeDeviceRequest) (*RevokeDeviceResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RevokeDevice not implemented")
+}
+func (UnimplementedIdentityServiceServer) UpdateDeviceActivity(context.Context, *UpdateDeviceActivityRequest) (*UpdateDeviceActivityResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateDeviceActivity not implemented")
+}
+func (UnimplementedIdentityServiceServer) GeneratePairingCode(context.Context, *GeneratePairingCodeRequest) (*GeneratePairingCodeResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GeneratePairingCode not implemented")
+}
+func (UnimplementedIdentityServiceServer) RedeemPairingCode(context.Context, *RedeemPairingCodeRequest) (*RedeemPairingCodeResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RedeemPairingCode not implemented")
+}
+func (UnimplementedIdentityServiceServer) ApprovePairing(context.Context, *ApprovePairingRequest) (*ApprovePairingResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ApprovePairing not implemented")
+}
+func (UnimplementedIdentityServiceServer) CreatePeerSession(context.Context, *CreatePeerSessionRequest) (*CreatePeerSessionResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreatePeerSession not implemented")
+}
+func (UnimplementedIdentityServiceServer) ListPeerSessions(context.Context, *ListPeerSessionsRequest) (*ListPeerSessionsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListPeerSessions not implemented")
+}
+func (UnimplementedIdentityServiceServer) ClosePeerSession(context.Context, *ClosePeerSessionRequest) (*ClosePeerSessionResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ClosePeerSession not implemented")
+}
+func (UnimplementedIdentityServiceServer) JoinPeerSession(context.Context, *JoinPeerSessionRequest) (*JoinPeerSessionResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method JoinPeerSession not implemented")
+}
+func (UnimplementedIdentityServiceServer) LeavePeerSession(context.Context, *LeavePeerSessionRequest) (*LeavePeerSessionResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method LeavePeerSession not implemented")
 }
 func (UnimplementedIdentityServiceServer) testEmbeddedByValue() {}
 
@@ -306,6 +520,240 @@ func _IdentityService_ResendVerification_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
+func _IdentityService_RegisterDevice_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RegisterDeviceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).RegisterDevice(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_RegisterDevice_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).RegisterDevice(ctx, req.(*RegisterDeviceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_ListDevices_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListDevicesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).ListDevices(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_ListDevices_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).ListDevices(ctx, req.(*ListDevicesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_GetDevice_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetDeviceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).GetDevice(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_GetDevice_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).GetDevice(ctx, req.(*GetDeviceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_RevokeDevice_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RevokeDeviceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).RevokeDevice(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_RevokeDevice_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).RevokeDevice(ctx, req.(*RevokeDeviceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_UpdateDeviceActivity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateDeviceActivityRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).UpdateDeviceActivity(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_UpdateDeviceActivity_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).UpdateDeviceActivity(ctx, req.(*UpdateDeviceActivityRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_GeneratePairingCode_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GeneratePairingCodeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).GeneratePairingCode(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_GeneratePairingCode_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).GeneratePairingCode(ctx, req.(*GeneratePairingCodeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_RedeemPairingCode_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RedeemPairingCodeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).RedeemPairingCode(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_RedeemPairingCode_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).RedeemPairingCode(ctx, req.(*RedeemPairingCodeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_ApprovePairing_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ApprovePairingRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).ApprovePairing(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_ApprovePairing_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).ApprovePairing(ctx, req.(*ApprovePairingRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_CreatePeerSession_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreatePeerSessionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).CreatePeerSession(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_CreatePeerSession_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).CreatePeerSession(ctx, req.(*CreatePeerSessionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_ListPeerSessions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListPeerSessionsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).ListPeerSessions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_ListPeerSessions_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).ListPeerSessions(ctx, req.(*ListPeerSessionsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_ClosePeerSession_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ClosePeerSessionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).ClosePeerSession(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_ClosePeerSession_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).ClosePeerSession(ctx, req.(*ClosePeerSessionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_JoinPeerSession_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(JoinPeerSessionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).JoinPeerSession(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_JoinPeerSession_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).JoinPeerSession(ctx, req.(*JoinPeerSessionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_LeavePeerSession_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LeavePeerSessionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).LeavePeerSession(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_LeavePeerSession_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).LeavePeerSession(ctx, req.(*LeavePeerSessionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // IdentityService_ServiceDesc is the grpc.ServiceDesc for IdentityService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -340,6 +788,58 @@ var IdentityService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ResendVerification",
 			Handler:    _IdentityService_ResendVerification_Handler,
+		},
+		{
+			MethodName: "RegisterDevice",
+			Handler:    _IdentityService_RegisterDevice_Handler,
+		},
+		{
+			MethodName: "ListDevices",
+			Handler:    _IdentityService_ListDevices_Handler,
+		},
+		{
+			MethodName: "GetDevice",
+			Handler:    _IdentityService_GetDevice_Handler,
+		},
+		{
+			MethodName: "RevokeDevice",
+			Handler:    _IdentityService_RevokeDevice_Handler,
+		},
+		{
+			MethodName: "UpdateDeviceActivity",
+			Handler:    _IdentityService_UpdateDeviceActivity_Handler,
+		},
+		{
+			MethodName: "GeneratePairingCode",
+			Handler:    _IdentityService_GeneratePairingCode_Handler,
+		},
+		{
+			MethodName: "RedeemPairingCode",
+			Handler:    _IdentityService_RedeemPairingCode_Handler,
+		},
+		{
+			MethodName: "ApprovePairing",
+			Handler:    _IdentityService_ApprovePairing_Handler,
+		},
+		{
+			MethodName: "CreatePeerSession",
+			Handler:    _IdentityService_CreatePeerSession_Handler,
+		},
+		{
+			MethodName: "ListPeerSessions",
+			Handler:    _IdentityService_ListPeerSessions_Handler,
+		},
+		{
+			MethodName: "ClosePeerSession",
+			Handler:    _IdentityService_ClosePeerSession_Handler,
+		},
+		{
+			MethodName: "JoinPeerSession",
+			Handler:    _IdentityService_JoinPeerSession_Handler,
+		},
+		{
+			MethodName: "LeavePeerSession",
+			Handler:    _IdentityService_LeavePeerSession_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

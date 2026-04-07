@@ -22,6 +22,58 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type DeviceType int32
+
+const (
+	DeviceType_DEVICE_TYPE_UNSPECIFIED DeviceType = 0
+	DeviceType_DEVICE_TYPE_PC          DeviceType = 1
+	DeviceType_DEVICE_TYPE_PHONE       DeviceType = 2
+	DeviceType_DEVICE_TYPE_TABLET      DeviceType = 3
+)
+
+// Enum value maps for DeviceType.
+var (
+	DeviceType_name = map[int32]string{
+		0: "DEVICE_TYPE_UNSPECIFIED",
+		1: "DEVICE_TYPE_PC",
+		2: "DEVICE_TYPE_PHONE",
+		3: "DEVICE_TYPE_TABLET",
+	}
+	DeviceType_value = map[string]int32{
+		"DEVICE_TYPE_UNSPECIFIED": 0,
+		"DEVICE_TYPE_PC":          1,
+		"DEVICE_TYPE_PHONE":       2,
+		"DEVICE_TYPE_TABLET":      3,
+	}
+)
+
+func (x DeviceType) Enum() *DeviceType {
+	p := new(DeviceType)
+	*p = x
+	return p
+}
+
+func (x DeviceType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (DeviceType) Descriptor() protoreflect.EnumDescriptor {
+	return file_identity_v1_identity_proto_enumTypes[0].Descriptor()
+}
+
+func (DeviceType) Type() protoreflect.EnumType {
+	return &file_identity_v1_identity_proto_enumTypes[0]
+}
+
+func (x DeviceType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use DeviceType.Descriptor instead.
+func (DeviceType) EnumDescriptor() ([]byte, []int) {
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{0}
+}
+
 type RegisterRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Username      string                 `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
@@ -842,6 +894,1486 @@ func (x *ResendVerificationResponse) GetMessage() string {
 	return ""
 }
 
+type Device struct {
+	state              protoimpl.MessageState `protogen:"open.v1"`
+	DeviceId           string                 `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
+	UserId             string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Name               string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	DeviceType         DeviceType             `protobuf:"varint,4,opt,name=device_type,json=deviceType,proto3,enum=identity.v1.DeviceType" json:"device_type,omitempty"`
+	NodeId             string                 `protobuf:"bytes,5,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
+	Fingerprint        string                 `protobuf:"bytes,6,opt,name=fingerprint,proto3" json:"fingerprint,omitempty"`
+	IsApproved         bool                   `protobuf:"varint,7,opt,name=is_approved,json=isApproved,proto3" json:"is_approved,omitempty"`
+	ApprovedAt         *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=approved_at,json=approvedAt,proto3" json:"approved_at,omitempty"`
+	ApprovedByDeviceId string                 `protobuf:"bytes,9,opt,name=approved_by_device_id,json=approvedByDeviceId,proto3" json:"approved_by_device_id,omitempty"`
+	LastActive         *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=last_active,json=lastActive,proto3" json:"last_active,omitempty"`
+	CreatedAt          *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	IsRevoked          bool                   `protobuf:"varint,12,opt,name=is_revoked,json=isRevoked,proto3" json:"is_revoked,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
+func (x *Device) Reset() {
+	*x = Device{}
+	mi := &file_identity_v1_identity_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Device) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Device) ProtoMessage() {}
+
+func (x *Device) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_identity_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Device.ProtoReflect.Descriptor instead.
+func (*Device) Descriptor() ([]byte, []int) {
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *Device) GetDeviceId() string {
+	if x != nil {
+		return x.DeviceId
+	}
+	return ""
+}
+
+func (x *Device) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *Device) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *Device) GetDeviceType() DeviceType {
+	if x != nil {
+		return x.DeviceType
+	}
+	return DeviceType_DEVICE_TYPE_UNSPECIFIED
+}
+
+func (x *Device) GetNodeId() string {
+	if x != nil {
+		return x.NodeId
+	}
+	return ""
+}
+
+func (x *Device) GetFingerprint() string {
+	if x != nil {
+		return x.Fingerprint
+	}
+	return ""
+}
+
+func (x *Device) GetIsApproved() bool {
+	if x != nil {
+		return x.IsApproved
+	}
+	return false
+}
+
+func (x *Device) GetApprovedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ApprovedAt
+	}
+	return nil
+}
+
+func (x *Device) GetApprovedByDeviceId() string {
+	if x != nil {
+		return x.ApprovedByDeviceId
+	}
+	return ""
+}
+
+func (x *Device) GetLastActive() *timestamppb.Timestamp {
+	if x != nil {
+		return x.LastActive
+	}
+	return nil
+}
+
+func (x *Device) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+func (x *Device) GetIsRevoked() bool {
+	if x != nil {
+		return x.IsRevoked
+	}
+	return false
+}
+
+type RegisterDeviceRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	DeviceType    DeviceType             `protobuf:"varint,2,opt,name=device_type,json=deviceType,proto3,enum=identity.v1.DeviceType" json:"device_type,omitempty"`
+	Fingerprint   string                 `protobuf:"bytes,3,opt,name=fingerprint,proto3" json:"fingerprint,omitempty"`
+	NodeId        string                 `protobuf:"bytes,4,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RegisterDeviceRequest) Reset() {
+	*x = RegisterDeviceRequest{}
+	mi := &file_identity_v1_identity_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RegisterDeviceRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RegisterDeviceRequest) ProtoMessage() {}
+
+func (x *RegisterDeviceRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_identity_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RegisterDeviceRequest.ProtoReflect.Descriptor instead.
+func (*RegisterDeviceRequest) Descriptor() ([]byte, []int) {
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *RegisterDeviceRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *RegisterDeviceRequest) GetDeviceType() DeviceType {
+	if x != nil {
+		return x.DeviceType
+	}
+	return DeviceType_DEVICE_TYPE_UNSPECIFIED
+}
+
+func (x *RegisterDeviceRequest) GetFingerprint() string {
+	if x != nil {
+		return x.Fingerprint
+	}
+	return ""
+}
+
+func (x *RegisterDeviceRequest) GetNodeId() string {
+	if x != nil {
+		return x.NodeId
+	}
+	return ""
+}
+
+type RegisterDeviceResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Device        *Device                `protobuf:"bytes,1,opt,name=device,proto3" json:"device,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RegisterDeviceResponse) Reset() {
+	*x = RegisterDeviceResponse{}
+	mi := &file_identity_v1_identity_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RegisterDeviceResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RegisterDeviceResponse) ProtoMessage() {}
+
+func (x *RegisterDeviceResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_identity_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RegisterDeviceResponse.ProtoReflect.Descriptor instead.
+func (*RegisterDeviceResponse) Descriptor() ([]byte, []int) {
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *RegisterDeviceResponse) GetDevice() *Device {
+	if x != nil {
+		return x.Device
+	}
+	return nil
+}
+
+type ListDevicesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListDevicesRequest) Reset() {
+	*x = ListDevicesRequest{}
+	mi := &file_identity_v1_identity_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListDevicesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListDevicesRequest) ProtoMessage() {}
+
+func (x *ListDevicesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_identity_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListDevicesRequest.ProtoReflect.Descriptor instead.
+func (*ListDevicesRequest) Descriptor() ([]byte, []int) {
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{18}
+}
+
+type ListDevicesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Devices       []*Device              `protobuf:"bytes,1,rep,name=devices,proto3" json:"devices,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListDevicesResponse) Reset() {
+	*x = ListDevicesResponse{}
+	mi := &file_identity_v1_identity_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListDevicesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListDevicesResponse) ProtoMessage() {}
+
+func (x *ListDevicesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_identity_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListDevicesResponse.ProtoReflect.Descriptor instead.
+func (*ListDevicesResponse) Descriptor() ([]byte, []int) {
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *ListDevicesResponse) GetDevices() []*Device {
+	if x != nil {
+		return x.Devices
+	}
+	return nil
+}
+
+type GetDeviceRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DeviceId      string                 `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetDeviceRequest) Reset() {
+	*x = GetDeviceRequest{}
+	mi := &file_identity_v1_identity_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetDeviceRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetDeviceRequest) ProtoMessage() {}
+
+func (x *GetDeviceRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_identity_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetDeviceRequest.ProtoReflect.Descriptor instead.
+func (*GetDeviceRequest) Descriptor() ([]byte, []int) {
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *GetDeviceRequest) GetDeviceId() string {
+	if x != nil {
+		return x.DeviceId
+	}
+	return ""
+}
+
+type GetDeviceResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Device        *Device                `protobuf:"bytes,1,opt,name=device,proto3" json:"device,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetDeviceResponse) Reset() {
+	*x = GetDeviceResponse{}
+	mi := &file_identity_v1_identity_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetDeviceResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetDeviceResponse) ProtoMessage() {}
+
+func (x *GetDeviceResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_identity_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetDeviceResponse.ProtoReflect.Descriptor instead.
+func (*GetDeviceResponse) Descriptor() ([]byte, []int) {
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *GetDeviceResponse) GetDevice() *Device {
+	if x != nil {
+		return x.Device
+	}
+	return nil
+}
+
+type RevokeDeviceRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DeviceId      string                 `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RevokeDeviceRequest) Reset() {
+	*x = RevokeDeviceRequest{}
+	mi := &file_identity_v1_identity_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RevokeDeviceRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RevokeDeviceRequest) ProtoMessage() {}
+
+func (x *RevokeDeviceRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_identity_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RevokeDeviceRequest.ProtoReflect.Descriptor instead.
+func (*RevokeDeviceRequest) Descriptor() ([]byte, []int) {
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *RevokeDeviceRequest) GetDeviceId() string {
+	if x != nil {
+		return x.DeviceId
+	}
+	return ""
+}
+
+type RevokeDeviceResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RevokeDeviceResponse) Reset() {
+	*x = RevokeDeviceResponse{}
+	mi := &file_identity_v1_identity_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RevokeDeviceResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RevokeDeviceResponse) ProtoMessage() {}
+
+func (x *RevokeDeviceResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_identity_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RevokeDeviceResponse.ProtoReflect.Descriptor instead.
+func (*RevokeDeviceResponse) Descriptor() ([]byte, []int) {
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *RevokeDeviceResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+type UpdateDeviceActivityRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DeviceId      string                 `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
+	NodeId        string                 `protobuf:"bytes,2,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateDeviceActivityRequest) Reset() {
+	*x = UpdateDeviceActivityRequest{}
+	mi := &file_identity_v1_identity_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateDeviceActivityRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateDeviceActivityRequest) ProtoMessage() {}
+
+func (x *UpdateDeviceActivityRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_identity_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateDeviceActivityRequest.ProtoReflect.Descriptor instead.
+func (*UpdateDeviceActivityRequest) Descriptor() ([]byte, []int) {
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *UpdateDeviceActivityRequest) GetDeviceId() string {
+	if x != nil {
+		return x.DeviceId
+	}
+	return ""
+}
+
+func (x *UpdateDeviceActivityRequest) GetNodeId() string {
+	if x != nil {
+		return x.NodeId
+	}
+	return ""
+}
+
+type UpdateDeviceActivityResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateDeviceActivityResponse) Reset() {
+	*x = UpdateDeviceActivityResponse{}
+	mi := &file_identity_v1_identity_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateDeviceActivityResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateDeviceActivityResponse) ProtoMessage() {}
+
+func (x *UpdateDeviceActivityResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_identity_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateDeviceActivityResponse.ProtoReflect.Descriptor instead.
+func (*UpdateDeviceActivityResponse) Descriptor() ([]byte, []int) {
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *UpdateDeviceActivityResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+type GeneratePairingCodeRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DeviceId      string                 `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GeneratePairingCodeRequest) Reset() {
+	*x = GeneratePairingCodeRequest{}
+	mi := &file_identity_v1_identity_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GeneratePairingCodeRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GeneratePairingCodeRequest) ProtoMessage() {}
+
+func (x *GeneratePairingCodeRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_identity_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GeneratePairingCodeRequest.ProtoReflect.Descriptor instead.
+func (*GeneratePairingCodeRequest) Descriptor() ([]byte, []int) {
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *GeneratePairingCodeRequest) GetDeviceId() string {
+	if x != nil {
+		return x.DeviceId
+	}
+	return ""
+}
+
+type GeneratePairingCodeResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PairingCode   string                 `protobuf:"bytes,1,opt,name=pairing_code,json=pairingCode,proto3" json:"pairing_code,omitempty"`
+	ExpiresInS    int32                  `protobuf:"varint,2,opt,name=expires_in_s,json=expiresInS,proto3" json:"expires_in_s,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GeneratePairingCodeResponse) Reset() {
+	*x = GeneratePairingCodeResponse{}
+	mi := &file_identity_v1_identity_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GeneratePairingCodeResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GeneratePairingCodeResponse) ProtoMessage() {}
+
+func (x *GeneratePairingCodeResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_identity_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GeneratePairingCodeResponse.ProtoReflect.Descriptor instead.
+func (*GeneratePairingCodeResponse) Descriptor() ([]byte, []int) {
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *GeneratePairingCodeResponse) GetPairingCode() string {
+	if x != nil {
+		return x.PairingCode
+	}
+	return ""
+}
+
+func (x *GeneratePairingCodeResponse) GetExpiresInS() int32 {
+	if x != nil {
+		return x.ExpiresInS
+	}
+	return 0
+}
+
+type RedeemPairingCodeRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PairingCode   string                 `protobuf:"bytes,1,opt,name=pairing_code,json=pairingCode,proto3" json:"pairing_code,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	DeviceType    DeviceType             `protobuf:"varint,3,opt,name=device_type,json=deviceType,proto3,enum=identity.v1.DeviceType" json:"device_type,omitempty"`
+	Fingerprint   string                 `protobuf:"bytes,4,opt,name=fingerprint,proto3" json:"fingerprint,omitempty"`
+	NodeId        string                 `protobuf:"bytes,5,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RedeemPairingCodeRequest) Reset() {
+	*x = RedeemPairingCodeRequest{}
+	mi := &file_identity_v1_identity_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RedeemPairingCodeRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RedeemPairingCodeRequest) ProtoMessage() {}
+
+func (x *RedeemPairingCodeRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_identity_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RedeemPairingCodeRequest.ProtoReflect.Descriptor instead.
+func (*RedeemPairingCodeRequest) Descriptor() ([]byte, []int) {
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{28}
+}
+
+func (x *RedeemPairingCodeRequest) GetPairingCode() string {
+	if x != nil {
+		return x.PairingCode
+	}
+	return ""
+}
+
+func (x *RedeemPairingCodeRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *RedeemPairingCodeRequest) GetDeviceType() DeviceType {
+	if x != nil {
+		return x.DeviceType
+	}
+	return DeviceType_DEVICE_TYPE_UNSPECIFIED
+}
+
+func (x *RedeemPairingCodeRequest) GetFingerprint() string {
+	if x != nil {
+		return x.Fingerprint
+	}
+	return ""
+}
+
+func (x *RedeemPairingCodeRequest) GetNodeId() string {
+	if x != nil {
+		return x.NodeId
+	}
+	return ""
+}
+
+type RedeemPairingCodeResponse struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	DeviceId       string                 `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
+	ApproverDevice string                 `protobuf:"bytes,2,opt,name=approver_device,json=approverDevice,proto3" json:"approver_device,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *RedeemPairingCodeResponse) Reset() {
+	*x = RedeemPairingCodeResponse{}
+	mi := &file_identity_v1_identity_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RedeemPairingCodeResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RedeemPairingCodeResponse) ProtoMessage() {}
+
+func (x *RedeemPairingCodeResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_identity_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RedeemPairingCodeResponse.ProtoReflect.Descriptor instead.
+func (*RedeemPairingCodeResponse) Descriptor() ([]byte, []int) {
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{29}
+}
+
+func (x *RedeemPairingCodeResponse) GetDeviceId() string {
+	if x != nil {
+		return x.DeviceId
+	}
+	return ""
+}
+
+func (x *RedeemPairingCodeResponse) GetApproverDevice() string {
+	if x != nil {
+		return x.ApproverDevice
+	}
+	return ""
+}
+
+type ApprovePairingRequest struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	ApproverDeviceId string                 `protobuf:"bytes,1,opt,name=approver_device_id,json=approverDeviceId,proto3" json:"approver_device_id,omitempty"`
+	PendingDeviceId  string                 `protobuf:"bytes,2,opt,name=pending_device_id,json=pendingDeviceId,proto3" json:"pending_device_id,omitempty"`
+	Approve          bool                   `protobuf:"varint,3,opt,name=approve,proto3" json:"approve,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *ApprovePairingRequest) Reset() {
+	*x = ApprovePairingRequest{}
+	mi := &file_identity_v1_identity_proto_msgTypes[30]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ApprovePairingRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ApprovePairingRequest) ProtoMessage() {}
+
+func (x *ApprovePairingRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_identity_proto_msgTypes[30]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ApprovePairingRequest.ProtoReflect.Descriptor instead.
+func (*ApprovePairingRequest) Descriptor() ([]byte, []int) {
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{30}
+}
+
+func (x *ApprovePairingRequest) GetApproverDeviceId() string {
+	if x != nil {
+		return x.ApproverDeviceId
+	}
+	return ""
+}
+
+func (x *ApprovePairingRequest) GetPendingDeviceId() string {
+	if x != nil {
+		return x.PendingDeviceId
+	}
+	return ""
+}
+
+func (x *ApprovePairingRequest) GetApprove() bool {
+	if x != nil {
+		return x.Approve
+	}
+	return false
+}
+
+type ApprovePairingResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Device        *Device                `protobuf:"bytes,2,opt,name=device,proto3" json:"device,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ApprovePairingResponse) Reset() {
+	*x = ApprovePairingResponse{}
+	mi := &file_identity_v1_identity_proto_msgTypes[31]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ApprovePairingResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ApprovePairingResponse) ProtoMessage() {}
+
+func (x *ApprovePairingResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_identity_proto_msgTypes[31]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ApprovePairingResponse.ProtoReflect.Descriptor instead.
+func (*ApprovePairingResponse) Descriptor() ([]byte, []int) {
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{31}
+}
+
+func (x *ApprovePairingResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *ApprovePairingResponse) GetDevice() *Device {
+	if x != nil {
+		return x.Device
+	}
+	return nil
+}
+
+type PeerSession struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	IsActive      bool                   `protobuf:"varint,4,opt,name=is_active,json=isActive,proto3" json:"is_active,omitempty"`
+	Devices       []*Device              `protobuf:"bytes,5,rep,name=devices,proto3" json:"devices,omitempty"`
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	ClosedAt      *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=closed_at,json=closedAt,proto3" json:"closed_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PeerSession) Reset() {
+	*x = PeerSession{}
+	mi := &file_identity_v1_identity_proto_msgTypes[32]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PeerSession) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PeerSession) ProtoMessage() {}
+
+func (x *PeerSession) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_identity_proto_msgTypes[32]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PeerSession.ProtoReflect.Descriptor instead.
+func (*PeerSession) Descriptor() ([]byte, []int) {
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{32}
+}
+
+func (x *PeerSession) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
+func (x *PeerSession) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *PeerSession) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *PeerSession) GetIsActive() bool {
+	if x != nil {
+		return x.IsActive
+	}
+	return false
+}
+
+func (x *PeerSession) GetDevices() []*Device {
+	if x != nil {
+		return x.Devices
+	}
+	return nil
+}
+
+func (x *PeerSession) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+func (x *PeerSession) GetClosedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ClosedAt
+	}
+	return nil
+}
+
+type CreatePeerSessionRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	DeviceId      string                 `protobuf:"bytes,2,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreatePeerSessionRequest) Reset() {
+	*x = CreatePeerSessionRequest{}
+	mi := &file_identity_v1_identity_proto_msgTypes[33]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreatePeerSessionRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreatePeerSessionRequest) ProtoMessage() {}
+
+func (x *CreatePeerSessionRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_identity_proto_msgTypes[33]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreatePeerSessionRequest.ProtoReflect.Descriptor instead.
+func (*CreatePeerSessionRequest) Descriptor() ([]byte, []int) {
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{33}
+}
+
+func (x *CreatePeerSessionRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *CreatePeerSessionRequest) GetDeviceId() string {
+	if x != nil {
+		return x.DeviceId
+	}
+	return ""
+}
+
+type CreatePeerSessionResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Session       *PeerSession           `protobuf:"bytes,1,opt,name=session,proto3" json:"session,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreatePeerSessionResponse) Reset() {
+	*x = CreatePeerSessionResponse{}
+	mi := &file_identity_v1_identity_proto_msgTypes[34]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreatePeerSessionResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreatePeerSessionResponse) ProtoMessage() {}
+
+func (x *CreatePeerSessionResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_identity_proto_msgTypes[34]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreatePeerSessionResponse.ProtoReflect.Descriptor instead.
+func (*CreatePeerSessionResponse) Descriptor() ([]byte, []int) {
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{34}
+}
+
+func (x *CreatePeerSessionResponse) GetSession() *PeerSession {
+	if x != nil {
+		return x.Session
+	}
+	return nil
+}
+
+type ListPeerSessionsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListPeerSessionsRequest) Reset() {
+	*x = ListPeerSessionsRequest{}
+	mi := &file_identity_v1_identity_proto_msgTypes[35]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListPeerSessionsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListPeerSessionsRequest) ProtoMessage() {}
+
+func (x *ListPeerSessionsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_identity_proto_msgTypes[35]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListPeerSessionsRequest.ProtoReflect.Descriptor instead.
+func (*ListPeerSessionsRequest) Descriptor() ([]byte, []int) {
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{35}
+}
+
+type ListPeerSessionsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Sessions      []*PeerSession         `protobuf:"bytes,1,rep,name=sessions,proto3" json:"sessions,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListPeerSessionsResponse) Reset() {
+	*x = ListPeerSessionsResponse{}
+	mi := &file_identity_v1_identity_proto_msgTypes[36]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListPeerSessionsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListPeerSessionsResponse) ProtoMessage() {}
+
+func (x *ListPeerSessionsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_identity_proto_msgTypes[36]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListPeerSessionsResponse.ProtoReflect.Descriptor instead.
+func (*ListPeerSessionsResponse) Descriptor() ([]byte, []int) {
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{36}
+}
+
+func (x *ListPeerSessionsResponse) GetSessions() []*PeerSession {
+	if x != nil {
+		return x.Sessions
+	}
+	return nil
+}
+
+type ClosePeerSessionRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ClosePeerSessionRequest) Reset() {
+	*x = ClosePeerSessionRequest{}
+	mi := &file_identity_v1_identity_proto_msgTypes[37]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ClosePeerSessionRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ClosePeerSessionRequest) ProtoMessage() {}
+
+func (x *ClosePeerSessionRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_identity_proto_msgTypes[37]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ClosePeerSessionRequest.ProtoReflect.Descriptor instead.
+func (*ClosePeerSessionRequest) Descriptor() ([]byte, []int) {
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{37}
+}
+
+func (x *ClosePeerSessionRequest) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
+type ClosePeerSessionResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ClosePeerSessionResponse) Reset() {
+	*x = ClosePeerSessionResponse{}
+	mi := &file_identity_v1_identity_proto_msgTypes[38]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ClosePeerSessionResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ClosePeerSessionResponse) ProtoMessage() {}
+
+func (x *ClosePeerSessionResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_identity_proto_msgTypes[38]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ClosePeerSessionResponse.ProtoReflect.Descriptor instead.
+func (*ClosePeerSessionResponse) Descriptor() ([]byte, []int) {
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{38}
+}
+
+func (x *ClosePeerSessionResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+type JoinPeerSessionRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	DeviceId      string                 `protobuf:"bytes,2,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *JoinPeerSessionRequest) Reset() {
+	*x = JoinPeerSessionRequest{}
+	mi := &file_identity_v1_identity_proto_msgTypes[39]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *JoinPeerSessionRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*JoinPeerSessionRequest) ProtoMessage() {}
+
+func (x *JoinPeerSessionRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_identity_proto_msgTypes[39]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use JoinPeerSessionRequest.ProtoReflect.Descriptor instead.
+func (*JoinPeerSessionRequest) Descriptor() ([]byte, []int) {
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{39}
+}
+
+func (x *JoinPeerSessionRequest) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
+func (x *JoinPeerSessionRequest) GetDeviceId() string {
+	if x != nil {
+		return x.DeviceId
+	}
+	return ""
+}
+
+type JoinPeerSessionResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *JoinPeerSessionResponse) Reset() {
+	*x = JoinPeerSessionResponse{}
+	mi := &file_identity_v1_identity_proto_msgTypes[40]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *JoinPeerSessionResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*JoinPeerSessionResponse) ProtoMessage() {}
+
+func (x *JoinPeerSessionResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_identity_proto_msgTypes[40]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use JoinPeerSessionResponse.ProtoReflect.Descriptor instead.
+func (*JoinPeerSessionResponse) Descriptor() ([]byte, []int) {
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{40}
+}
+
+func (x *JoinPeerSessionResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+type LeavePeerSessionRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	DeviceId      string                 `protobuf:"bytes,2,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LeavePeerSessionRequest) Reset() {
+	*x = LeavePeerSessionRequest{}
+	mi := &file_identity_v1_identity_proto_msgTypes[41]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LeavePeerSessionRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LeavePeerSessionRequest) ProtoMessage() {}
+
+func (x *LeavePeerSessionRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_identity_proto_msgTypes[41]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LeavePeerSessionRequest.ProtoReflect.Descriptor instead.
+func (*LeavePeerSessionRequest) Descriptor() ([]byte, []int) {
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{41}
+}
+
+func (x *LeavePeerSessionRequest) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
+func (x *LeavePeerSessionRequest) GetDeviceId() string {
+	if x != nil {
+		return x.DeviceId
+	}
+	return ""
+}
+
+type LeavePeerSessionResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LeavePeerSessionResponse) Reset() {
+	*x = LeavePeerSessionResponse{}
+	mi := &file_identity_v1_identity_proto_msgTypes[42]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LeavePeerSessionResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LeavePeerSessionResponse) ProtoMessage() {}
+
+func (x *LeavePeerSessionResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_identity_proto_msgTypes[42]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LeavePeerSessionResponse.ProtoReflect.Descriptor instead.
+func (*LeavePeerSessionResponse) Descriptor() ([]byte, []int) {
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{42}
+}
+
+func (x *LeavePeerSessionResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
 var File_identity_v1_identity_proto protoreflect.FileDescriptor
 
 const file_identity_v1_identity_proto_rawDesc = "" +
@@ -900,7 +2432,115 @@ const file_identity_v1_identity_proto_rawDesc = "" +
 	"\x05email\x18\x01 \x01(\tR\x05email\"P\n" +
 	"\x1aResendVerificationResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage2\xc3\x04\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"\xef\x03\n" +
+	"\x06Device\x12\x1b\n" +
+	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x12\n" +
+	"\x04name\x18\x03 \x01(\tR\x04name\x128\n" +
+	"\vdevice_type\x18\x04 \x01(\x0e2\x17.identity.v1.DeviceTypeR\n" +
+	"deviceType\x12\x17\n" +
+	"\anode_id\x18\x05 \x01(\tR\x06nodeId\x12 \n" +
+	"\vfingerprint\x18\x06 \x01(\tR\vfingerprint\x12\x1f\n" +
+	"\vis_approved\x18\a \x01(\bR\n" +
+	"isApproved\x12;\n" +
+	"\vapproved_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"approvedAt\x121\n" +
+	"\x15approved_by_device_id\x18\t \x01(\tR\x12approvedByDeviceId\x12;\n" +
+	"\vlast_active\x18\n" +
+	" \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"lastActive\x129\n" +
+	"\n" +
+	"created_at\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12\x1d\n" +
+	"\n" +
+	"is_revoked\x18\f \x01(\bR\tisRevoked\"\xa0\x01\n" +
+	"\x15RegisterDeviceRequest\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x128\n" +
+	"\vdevice_type\x18\x02 \x01(\x0e2\x17.identity.v1.DeviceTypeR\n" +
+	"deviceType\x12 \n" +
+	"\vfingerprint\x18\x03 \x01(\tR\vfingerprint\x12\x17\n" +
+	"\anode_id\x18\x04 \x01(\tR\x06nodeId\"E\n" +
+	"\x16RegisterDeviceResponse\x12+\n" +
+	"\x06device\x18\x01 \x01(\v2\x13.identity.v1.DeviceR\x06device\"\x14\n" +
+	"\x12ListDevicesRequest\"D\n" +
+	"\x13ListDevicesResponse\x12-\n" +
+	"\adevices\x18\x01 \x03(\v2\x13.identity.v1.DeviceR\adevices\"/\n" +
+	"\x10GetDeviceRequest\x12\x1b\n" +
+	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\"@\n" +
+	"\x11GetDeviceResponse\x12+\n" +
+	"\x06device\x18\x01 \x01(\v2\x13.identity.v1.DeviceR\x06device\"2\n" +
+	"\x13RevokeDeviceRequest\x12\x1b\n" +
+	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\"0\n" +
+	"\x14RevokeDeviceResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"S\n" +
+	"\x1bUpdateDeviceActivityRequest\x12\x1b\n" +
+	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\x12\x17\n" +
+	"\anode_id\x18\x02 \x01(\tR\x06nodeId\"8\n" +
+	"\x1cUpdateDeviceActivityResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"9\n" +
+	"\x1aGeneratePairingCodeRequest\x12\x1b\n" +
+	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\"b\n" +
+	"\x1bGeneratePairingCodeResponse\x12!\n" +
+	"\fpairing_code\x18\x01 \x01(\tR\vpairingCode\x12 \n" +
+	"\fexpires_in_s\x18\x02 \x01(\x05R\n" +
+	"expiresInS\"\xc6\x01\n" +
+	"\x18RedeemPairingCodeRequest\x12!\n" +
+	"\fpairing_code\x18\x01 \x01(\tR\vpairingCode\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x128\n" +
+	"\vdevice_type\x18\x03 \x01(\x0e2\x17.identity.v1.DeviceTypeR\n" +
+	"deviceType\x12 \n" +
+	"\vfingerprint\x18\x04 \x01(\tR\vfingerprint\x12\x17\n" +
+	"\anode_id\x18\x05 \x01(\tR\x06nodeId\"a\n" +
+	"\x19RedeemPairingCodeResponse\x12\x1b\n" +
+	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\x12'\n" +
+	"\x0fapprover_device\x18\x02 \x01(\tR\x0eapproverDevice\"\x8b\x01\n" +
+	"\x15ApprovePairingRequest\x12,\n" +
+	"\x12approver_device_id\x18\x01 \x01(\tR\x10approverDeviceId\x12*\n" +
+	"\x11pending_device_id\x18\x02 \x01(\tR\x0fpendingDeviceId\x12\x18\n" +
+	"\aapprove\x18\x03 \x01(\bR\aapprove\"_\n" +
+	"\x16ApprovePairingResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12+\n" +
+	"\x06device\x18\x02 \x01(\v2\x13.identity.v1.DeviceR\x06device\"\x99\x02\n" +
+	"\vPeerSession\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x12\n" +
+	"\x04name\x18\x03 \x01(\tR\x04name\x12\x1b\n" +
+	"\tis_active\x18\x04 \x01(\bR\bisActive\x12-\n" +
+	"\adevices\x18\x05 \x03(\v2\x13.identity.v1.DeviceR\adevices\x129\n" +
+	"\n" +
+	"created_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x127\n" +
+	"\tclosed_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\bclosedAt\"K\n" +
+	"\x18CreatePeerSessionRequest\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1b\n" +
+	"\tdevice_id\x18\x02 \x01(\tR\bdeviceId\"O\n" +
+	"\x19CreatePeerSessionResponse\x122\n" +
+	"\asession\x18\x01 \x01(\v2\x18.identity.v1.PeerSessionR\asession\"\x19\n" +
+	"\x17ListPeerSessionsRequest\"P\n" +
+	"\x18ListPeerSessionsResponse\x124\n" +
+	"\bsessions\x18\x01 \x03(\v2\x18.identity.v1.PeerSessionR\bsessions\"8\n" +
+	"\x17ClosePeerSessionRequest\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x01 \x01(\tR\tsessionId\"4\n" +
+	"\x18ClosePeerSessionResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"T\n" +
+	"\x16JoinPeerSessionRequest\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x1b\n" +
+	"\tdevice_id\x18\x02 \x01(\tR\bdeviceId\"3\n" +
+	"\x17JoinPeerSessionResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"U\n" +
+	"\x17LeavePeerSessionRequest\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x1b\n" +
+	"\tdevice_id\x18\x02 \x01(\tR\bdeviceId\"4\n" +
+	"\x18LeavePeerSessionResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess*l\n" +
+	"\n" +
+	"DeviceType\x12\x1b\n" +
+	"\x17DEVICE_TYPE_UNSPECIFIED\x10\x00\x12\x12\n" +
+	"\x0eDEVICE_TYPE_PC\x10\x01\x12\x15\n" +
+	"\x11DEVICE_TYPE_PHONE\x10\x02\x12\x16\n" +
+	"\x12DEVICE_TYPE_TABLET\x10\x032\x8c\x0e\n" +
 	"\x0fIdentityService\x12G\n" +
 	"\bRegister\x12\x1c.identity.v1.RegisterRequest\x1a\x1d.identity.v1.RegisterResponse\x12>\n" +
 	"\x05Login\x12\x19.identity.v1.LoginRequest\x1a\x1a.identity.v1.LoginResponse\x12V\n" +
@@ -908,7 +2548,20 @@ const file_identity_v1_identity_proto_rawDesc = "" +
 	"\fRefreshToken\x12 .identity.v1.RefreshTokenRequest\x1a!.identity.v1.RefreshTokenResponse\x12A\n" +
 	"\x06Logout\x12\x1a.identity.v1.LogoutRequest\x1a\x1b.identity.v1.LogoutResponse\x12P\n" +
 	"\vVerifyEmail\x12\x1f.identity.v1.VerifyEmailRequest\x1a .identity.v1.VerifyEmailResponse\x12e\n" +
-	"\x12ResendVerification\x12&.identity.v1.ResendVerificationRequest\x1a'.identity.v1.ResendVerificationResponseBBZ@github.com/saitddundar/vinctum-core/proto/identity/v1;identityv1b\x06proto3"
+	"\x12ResendVerification\x12&.identity.v1.ResendVerificationRequest\x1a'.identity.v1.ResendVerificationResponse\x12Y\n" +
+	"\x0eRegisterDevice\x12\".identity.v1.RegisterDeviceRequest\x1a#.identity.v1.RegisterDeviceResponse\x12P\n" +
+	"\vListDevices\x12\x1f.identity.v1.ListDevicesRequest\x1a .identity.v1.ListDevicesResponse\x12J\n" +
+	"\tGetDevice\x12\x1d.identity.v1.GetDeviceRequest\x1a\x1e.identity.v1.GetDeviceResponse\x12S\n" +
+	"\fRevokeDevice\x12 .identity.v1.RevokeDeviceRequest\x1a!.identity.v1.RevokeDeviceResponse\x12k\n" +
+	"\x14UpdateDeviceActivity\x12(.identity.v1.UpdateDeviceActivityRequest\x1a).identity.v1.UpdateDeviceActivityResponse\x12h\n" +
+	"\x13GeneratePairingCode\x12'.identity.v1.GeneratePairingCodeRequest\x1a(.identity.v1.GeneratePairingCodeResponse\x12b\n" +
+	"\x11RedeemPairingCode\x12%.identity.v1.RedeemPairingCodeRequest\x1a&.identity.v1.RedeemPairingCodeResponse\x12Y\n" +
+	"\x0eApprovePairing\x12\".identity.v1.ApprovePairingRequest\x1a#.identity.v1.ApprovePairingResponse\x12b\n" +
+	"\x11CreatePeerSession\x12%.identity.v1.CreatePeerSessionRequest\x1a&.identity.v1.CreatePeerSessionResponse\x12_\n" +
+	"\x10ListPeerSessions\x12$.identity.v1.ListPeerSessionsRequest\x1a%.identity.v1.ListPeerSessionsResponse\x12_\n" +
+	"\x10ClosePeerSession\x12$.identity.v1.ClosePeerSessionRequest\x1a%.identity.v1.ClosePeerSessionResponse\x12\\\n" +
+	"\x0fJoinPeerSession\x12#.identity.v1.JoinPeerSessionRequest\x1a$.identity.v1.JoinPeerSessionResponse\x12_\n" +
+	"\x10LeavePeerSession\x12$.identity.v1.LeavePeerSessionRequest\x1a%.identity.v1.LeavePeerSessionResponseBBZ@github.com/saitddundar/vinctum-core/proto/identity/v1;identityv1b\x06proto3"
 
 var (
 	file_identity_v1_identity_proto_rawDescOnce sync.Once
@@ -922,48 +2575,119 @@ func file_identity_v1_identity_proto_rawDescGZIP() []byte {
 	return file_identity_v1_identity_proto_rawDescData
 }
 
-var file_identity_v1_identity_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
+var file_identity_v1_identity_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_identity_v1_identity_proto_msgTypes = make([]protoimpl.MessageInfo, 43)
 var file_identity_v1_identity_proto_goTypes = []any{
-	(*RegisterRequest)(nil),            // 0: identity.v1.RegisterRequest
-	(*RegisterResponse)(nil),           // 1: identity.v1.RegisterResponse
-	(*LoginRequest)(nil),               // 2: identity.v1.LoginRequest
-	(*LoginResponse)(nil),              // 3: identity.v1.LoginResponse
-	(*ValidateTokenRequest)(nil),       // 4: identity.v1.ValidateTokenRequest
-	(*ValidateTokenResponse)(nil),      // 5: identity.v1.ValidateTokenResponse
-	(*RefreshTokenRequest)(nil),        // 6: identity.v1.RefreshTokenRequest
-	(*RefreshTokenResponse)(nil),       // 7: identity.v1.RefreshTokenResponse
-	(*LogoutRequest)(nil),              // 8: identity.v1.LogoutRequest
-	(*LogoutResponse)(nil),             // 9: identity.v1.LogoutResponse
-	(*User)(nil),                       // 10: identity.v1.User
-	(*VerifyEmailRequest)(nil),         // 11: identity.v1.VerifyEmailRequest
-	(*VerifyEmailResponse)(nil),        // 12: identity.v1.VerifyEmailResponse
-	(*ResendVerificationRequest)(nil),  // 13: identity.v1.ResendVerificationRequest
-	(*ResendVerificationResponse)(nil), // 14: identity.v1.ResendVerificationResponse
-	(*timestamppb.Timestamp)(nil),      // 15: google.protobuf.Timestamp
+	(DeviceType)(0),                      // 0: identity.v1.DeviceType
+	(*RegisterRequest)(nil),              // 1: identity.v1.RegisterRequest
+	(*RegisterResponse)(nil),             // 2: identity.v1.RegisterResponse
+	(*LoginRequest)(nil),                 // 3: identity.v1.LoginRequest
+	(*LoginResponse)(nil),                // 4: identity.v1.LoginResponse
+	(*ValidateTokenRequest)(nil),         // 5: identity.v1.ValidateTokenRequest
+	(*ValidateTokenResponse)(nil),        // 6: identity.v1.ValidateTokenResponse
+	(*RefreshTokenRequest)(nil),          // 7: identity.v1.RefreshTokenRequest
+	(*RefreshTokenResponse)(nil),         // 8: identity.v1.RefreshTokenResponse
+	(*LogoutRequest)(nil),                // 9: identity.v1.LogoutRequest
+	(*LogoutResponse)(nil),               // 10: identity.v1.LogoutResponse
+	(*User)(nil),                         // 11: identity.v1.User
+	(*VerifyEmailRequest)(nil),           // 12: identity.v1.VerifyEmailRequest
+	(*VerifyEmailResponse)(nil),          // 13: identity.v1.VerifyEmailResponse
+	(*ResendVerificationRequest)(nil),    // 14: identity.v1.ResendVerificationRequest
+	(*ResendVerificationResponse)(nil),   // 15: identity.v1.ResendVerificationResponse
+	(*Device)(nil),                       // 16: identity.v1.Device
+	(*RegisterDeviceRequest)(nil),        // 17: identity.v1.RegisterDeviceRequest
+	(*RegisterDeviceResponse)(nil),       // 18: identity.v1.RegisterDeviceResponse
+	(*ListDevicesRequest)(nil),           // 19: identity.v1.ListDevicesRequest
+	(*ListDevicesResponse)(nil),          // 20: identity.v1.ListDevicesResponse
+	(*GetDeviceRequest)(nil),             // 21: identity.v1.GetDeviceRequest
+	(*GetDeviceResponse)(nil),            // 22: identity.v1.GetDeviceResponse
+	(*RevokeDeviceRequest)(nil),          // 23: identity.v1.RevokeDeviceRequest
+	(*RevokeDeviceResponse)(nil),         // 24: identity.v1.RevokeDeviceResponse
+	(*UpdateDeviceActivityRequest)(nil),  // 25: identity.v1.UpdateDeviceActivityRequest
+	(*UpdateDeviceActivityResponse)(nil), // 26: identity.v1.UpdateDeviceActivityResponse
+	(*GeneratePairingCodeRequest)(nil),   // 27: identity.v1.GeneratePairingCodeRequest
+	(*GeneratePairingCodeResponse)(nil),  // 28: identity.v1.GeneratePairingCodeResponse
+	(*RedeemPairingCodeRequest)(nil),     // 29: identity.v1.RedeemPairingCodeRequest
+	(*RedeemPairingCodeResponse)(nil),    // 30: identity.v1.RedeemPairingCodeResponse
+	(*ApprovePairingRequest)(nil),        // 31: identity.v1.ApprovePairingRequest
+	(*ApprovePairingResponse)(nil),       // 32: identity.v1.ApprovePairingResponse
+	(*PeerSession)(nil),                  // 33: identity.v1.PeerSession
+	(*CreatePeerSessionRequest)(nil),     // 34: identity.v1.CreatePeerSessionRequest
+	(*CreatePeerSessionResponse)(nil),    // 35: identity.v1.CreatePeerSessionResponse
+	(*ListPeerSessionsRequest)(nil),      // 36: identity.v1.ListPeerSessionsRequest
+	(*ListPeerSessionsResponse)(nil),     // 37: identity.v1.ListPeerSessionsResponse
+	(*ClosePeerSessionRequest)(nil),      // 38: identity.v1.ClosePeerSessionRequest
+	(*ClosePeerSessionResponse)(nil),     // 39: identity.v1.ClosePeerSessionResponse
+	(*JoinPeerSessionRequest)(nil),       // 40: identity.v1.JoinPeerSessionRequest
+	(*JoinPeerSessionResponse)(nil),      // 41: identity.v1.JoinPeerSessionResponse
+	(*LeavePeerSessionRequest)(nil),      // 42: identity.v1.LeavePeerSessionRequest
+	(*LeavePeerSessionResponse)(nil),     // 43: identity.v1.LeavePeerSessionResponse
+	(*timestamppb.Timestamp)(nil),        // 44: google.protobuf.Timestamp
 }
 var file_identity_v1_identity_proto_depIdxs = []int32{
-	15, // 0: identity.v1.RegisterResponse.created_at:type_name -> google.protobuf.Timestamp
-	10, // 1: identity.v1.LoginResponse.user:type_name -> identity.v1.User
-	15, // 2: identity.v1.User.created_at:type_name -> google.protobuf.Timestamp
-	0,  // 3: identity.v1.IdentityService.Register:input_type -> identity.v1.RegisterRequest
-	2,  // 4: identity.v1.IdentityService.Login:input_type -> identity.v1.LoginRequest
-	4,  // 5: identity.v1.IdentityService.ValidateToken:input_type -> identity.v1.ValidateTokenRequest
-	6,  // 6: identity.v1.IdentityService.RefreshToken:input_type -> identity.v1.RefreshTokenRequest
-	8,  // 7: identity.v1.IdentityService.Logout:input_type -> identity.v1.LogoutRequest
-	11, // 8: identity.v1.IdentityService.VerifyEmail:input_type -> identity.v1.VerifyEmailRequest
-	13, // 9: identity.v1.IdentityService.ResendVerification:input_type -> identity.v1.ResendVerificationRequest
-	1,  // 10: identity.v1.IdentityService.Register:output_type -> identity.v1.RegisterResponse
-	3,  // 11: identity.v1.IdentityService.Login:output_type -> identity.v1.LoginResponse
-	5,  // 12: identity.v1.IdentityService.ValidateToken:output_type -> identity.v1.ValidateTokenResponse
-	7,  // 13: identity.v1.IdentityService.RefreshToken:output_type -> identity.v1.RefreshTokenResponse
-	9,  // 14: identity.v1.IdentityService.Logout:output_type -> identity.v1.LogoutResponse
-	12, // 15: identity.v1.IdentityService.VerifyEmail:output_type -> identity.v1.VerifyEmailResponse
-	14, // 16: identity.v1.IdentityService.ResendVerification:output_type -> identity.v1.ResendVerificationResponse
-	10, // [10:17] is the sub-list for method output_type
-	3,  // [3:10] is the sub-list for method input_type
-	3,  // [3:3] is the sub-list for extension type_name
-	3,  // [3:3] is the sub-list for extension extendee
-	0,  // [0:3] is the sub-list for field type_name
+	44, // 0: identity.v1.RegisterResponse.created_at:type_name -> google.protobuf.Timestamp
+	11, // 1: identity.v1.LoginResponse.user:type_name -> identity.v1.User
+	44, // 2: identity.v1.User.created_at:type_name -> google.protobuf.Timestamp
+	0,  // 3: identity.v1.Device.device_type:type_name -> identity.v1.DeviceType
+	44, // 4: identity.v1.Device.approved_at:type_name -> google.protobuf.Timestamp
+	44, // 5: identity.v1.Device.last_active:type_name -> google.protobuf.Timestamp
+	44, // 6: identity.v1.Device.created_at:type_name -> google.protobuf.Timestamp
+	0,  // 7: identity.v1.RegisterDeviceRequest.device_type:type_name -> identity.v1.DeviceType
+	16, // 8: identity.v1.RegisterDeviceResponse.device:type_name -> identity.v1.Device
+	16, // 9: identity.v1.ListDevicesResponse.devices:type_name -> identity.v1.Device
+	16, // 10: identity.v1.GetDeviceResponse.device:type_name -> identity.v1.Device
+	0,  // 11: identity.v1.RedeemPairingCodeRequest.device_type:type_name -> identity.v1.DeviceType
+	16, // 12: identity.v1.ApprovePairingResponse.device:type_name -> identity.v1.Device
+	16, // 13: identity.v1.PeerSession.devices:type_name -> identity.v1.Device
+	44, // 14: identity.v1.PeerSession.created_at:type_name -> google.protobuf.Timestamp
+	44, // 15: identity.v1.PeerSession.closed_at:type_name -> google.protobuf.Timestamp
+	33, // 16: identity.v1.CreatePeerSessionResponse.session:type_name -> identity.v1.PeerSession
+	33, // 17: identity.v1.ListPeerSessionsResponse.sessions:type_name -> identity.v1.PeerSession
+	1,  // 18: identity.v1.IdentityService.Register:input_type -> identity.v1.RegisterRequest
+	3,  // 19: identity.v1.IdentityService.Login:input_type -> identity.v1.LoginRequest
+	5,  // 20: identity.v1.IdentityService.ValidateToken:input_type -> identity.v1.ValidateTokenRequest
+	7,  // 21: identity.v1.IdentityService.RefreshToken:input_type -> identity.v1.RefreshTokenRequest
+	9,  // 22: identity.v1.IdentityService.Logout:input_type -> identity.v1.LogoutRequest
+	12, // 23: identity.v1.IdentityService.VerifyEmail:input_type -> identity.v1.VerifyEmailRequest
+	14, // 24: identity.v1.IdentityService.ResendVerification:input_type -> identity.v1.ResendVerificationRequest
+	17, // 25: identity.v1.IdentityService.RegisterDevice:input_type -> identity.v1.RegisterDeviceRequest
+	19, // 26: identity.v1.IdentityService.ListDevices:input_type -> identity.v1.ListDevicesRequest
+	21, // 27: identity.v1.IdentityService.GetDevice:input_type -> identity.v1.GetDeviceRequest
+	23, // 28: identity.v1.IdentityService.RevokeDevice:input_type -> identity.v1.RevokeDeviceRequest
+	25, // 29: identity.v1.IdentityService.UpdateDeviceActivity:input_type -> identity.v1.UpdateDeviceActivityRequest
+	27, // 30: identity.v1.IdentityService.GeneratePairingCode:input_type -> identity.v1.GeneratePairingCodeRequest
+	29, // 31: identity.v1.IdentityService.RedeemPairingCode:input_type -> identity.v1.RedeemPairingCodeRequest
+	31, // 32: identity.v1.IdentityService.ApprovePairing:input_type -> identity.v1.ApprovePairingRequest
+	34, // 33: identity.v1.IdentityService.CreatePeerSession:input_type -> identity.v1.CreatePeerSessionRequest
+	36, // 34: identity.v1.IdentityService.ListPeerSessions:input_type -> identity.v1.ListPeerSessionsRequest
+	38, // 35: identity.v1.IdentityService.ClosePeerSession:input_type -> identity.v1.ClosePeerSessionRequest
+	40, // 36: identity.v1.IdentityService.JoinPeerSession:input_type -> identity.v1.JoinPeerSessionRequest
+	42, // 37: identity.v1.IdentityService.LeavePeerSession:input_type -> identity.v1.LeavePeerSessionRequest
+	2,  // 38: identity.v1.IdentityService.Register:output_type -> identity.v1.RegisterResponse
+	4,  // 39: identity.v1.IdentityService.Login:output_type -> identity.v1.LoginResponse
+	6,  // 40: identity.v1.IdentityService.ValidateToken:output_type -> identity.v1.ValidateTokenResponse
+	8,  // 41: identity.v1.IdentityService.RefreshToken:output_type -> identity.v1.RefreshTokenResponse
+	10, // 42: identity.v1.IdentityService.Logout:output_type -> identity.v1.LogoutResponse
+	13, // 43: identity.v1.IdentityService.VerifyEmail:output_type -> identity.v1.VerifyEmailResponse
+	15, // 44: identity.v1.IdentityService.ResendVerification:output_type -> identity.v1.ResendVerificationResponse
+	18, // 45: identity.v1.IdentityService.RegisterDevice:output_type -> identity.v1.RegisterDeviceResponse
+	20, // 46: identity.v1.IdentityService.ListDevices:output_type -> identity.v1.ListDevicesResponse
+	22, // 47: identity.v1.IdentityService.GetDevice:output_type -> identity.v1.GetDeviceResponse
+	24, // 48: identity.v1.IdentityService.RevokeDevice:output_type -> identity.v1.RevokeDeviceResponse
+	26, // 49: identity.v1.IdentityService.UpdateDeviceActivity:output_type -> identity.v1.UpdateDeviceActivityResponse
+	28, // 50: identity.v1.IdentityService.GeneratePairingCode:output_type -> identity.v1.GeneratePairingCodeResponse
+	30, // 51: identity.v1.IdentityService.RedeemPairingCode:output_type -> identity.v1.RedeemPairingCodeResponse
+	32, // 52: identity.v1.IdentityService.ApprovePairing:output_type -> identity.v1.ApprovePairingResponse
+	35, // 53: identity.v1.IdentityService.CreatePeerSession:output_type -> identity.v1.CreatePeerSessionResponse
+	37, // 54: identity.v1.IdentityService.ListPeerSessions:output_type -> identity.v1.ListPeerSessionsResponse
+	39, // 55: identity.v1.IdentityService.ClosePeerSession:output_type -> identity.v1.ClosePeerSessionResponse
+	41, // 56: identity.v1.IdentityService.JoinPeerSession:output_type -> identity.v1.JoinPeerSessionResponse
+	43, // 57: identity.v1.IdentityService.LeavePeerSession:output_type -> identity.v1.LeavePeerSessionResponse
+	38, // [38:58] is the sub-list for method output_type
+	18, // [18:38] is the sub-list for method input_type
+	18, // [18:18] is the sub-list for extension type_name
+	18, // [18:18] is the sub-list for extension extendee
+	0,  // [0:18] is the sub-list for field type_name
 }
 
 func init() { file_identity_v1_identity_proto_init() }
@@ -976,13 +2700,14 @@ func file_identity_v1_identity_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_identity_v1_identity_proto_rawDesc), len(file_identity_v1_identity_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   15,
+			NumEnums:      1,
+			NumMessages:   43,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_identity_v1_identity_proto_goTypes,
 		DependencyIndexes: file_identity_v1_identity_proto_depIdxs,
+		EnumInfos:         file_identity_v1_identity_proto_enumTypes,
 		MessageInfos:      file_identity_v1_identity_proto_msgTypes,
 	}.Build()
 	File_identity_v1_identity_proto = out.File
