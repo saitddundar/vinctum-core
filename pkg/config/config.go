@@ -14,6 +14,7 @@ type Config struct {
 	Database  DatabaseConfig  `mapstructure:"database"`
 	Redis     RedisConfig     `mapstructure:"redis"`
 	Auth      AuthConfig      `mapstructure:"auth"`
+	SMTP      SMTPConfig      `mapstructure:"smtp"`
 	P2P       P2PConfig       `mapstructure:"p2p"`
 	WireGuard WireGuardConfig `mapstructure:"wireguard"`
 }
@@ -61,6 +62,15 @@ type AuthConfig struct {
 	JWTExpiry     time.Duration `mapstructure:"jwt_expiry"`
 	RefreshExpiry time.Duration `mapstructure:"refresh_expiry"`
 	BcryptCost    int           `mapstructure:"bcrypt_cost"`
+}
+
+type SMTPConfig struct {
+	Host     string `mapstructure:"host"`
+	Port     int    `mapstructure:"port"`
+	Username string `mapstructure:"username"`
+	Password string `mapstructure:"password"`
+	From     string `mapstructure:"from"`
+	BaseURL  string `mapstructure:"base_url"`
 }
 
 type P2PConfig struct {
@@ -145,6 +155,12 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("wireguard.interface", "wg0")
 	v.SetDefault("wireguard.listen_port", 51820)
 	v.SetDefault("wireguard.dry_run", true)
+
+	// SMTP
+	v.SetDefault("smtp.host", "localhost")
+	v.SetDefault("smtp.port", 587)
+	v.SetDefault("smtp.from", "noreply@vinctum.app")
+	v.SetDefault("smtp.base_url", "http://localhost:3000")
 
 	v.SetDefault("database.driver", "postgres")
 	v.SetDefault("database.max_open_conns", 25)
