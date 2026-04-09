@@ -2,9 +2,10 @@ package auth
 
 import (
 	"context"
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
-	"math/rand"
+	"math/big"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -66,7 +67,11 @@ func (p *PairingStore) RedeemCode(ctx context.Context, code string) (*PairingDat
 func randomCode() string {
 	b := make([]byte, codeLength)
 	for i := range b {
-		b[i] = codeChars[rand.Intn(len(codeChars))]
+		n, err := rand.Int(rand.Reader, big.NewInt(int64(len(codeChars))))
+		if err != nil {
+			panic("crypto/rand failed: " + err.Error())
+		}
+		b[i] = codeChars[n.Int64()]
 	}
 	return string(b)
 }
