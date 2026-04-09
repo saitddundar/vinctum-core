@@ -700,7 +700,10 @@ func (h *GatewayHandler) handleCancelTransfer(w http.ResponseWriter, r *http.Req
 	var body struct {
 		Reason string `json:"reason"`
 	}
-	_ = json.NewDecoder(r.Body).Decode(&body)
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
 
 	resp, err := h.transferClient.CancelTransfer(ctx, &transferv1.CancelTransferRequest{
 		TransferId: transferID,

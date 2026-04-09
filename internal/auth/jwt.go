@@ -24,12 +24,15 @@ type Manager struct {
 	refreshExpiry time.Duration
 }
 
-func NewManager(secret string, accessExpiry, refreshExpiry time.Duration) *Manager {
+func NewManager(secret string, accessExpiry, refreshExpiry time.Duration) (*Manager, error) {
+	if len(secret) < 32 {
+		return nil, fmt.Errorf("jwt secret must be at least 32 characters, got %d", len(secret))
+	}
 	return &Manager{
 		secret:        []byte(secret),
 		accessExpiry:  accessExpiry,
 		refreshExpiry: refreshExpiry,
-	}
+	}, nil
 }
 
 func (m *Manager) Issue(userID, email string) (*TokenPair, error) {

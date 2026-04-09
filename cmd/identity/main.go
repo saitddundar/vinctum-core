@@ -53,7 +53,10 @@ func main() {
 	}
 
 	queries := repository.New(pool)
-	jwtManager := auth.NewManager(cfg.Auth.JWTSecret, cfg.Auth.JWTExpiry, cfg.Auth.RefreshExpiry)
+	jwtManager, err := auth.NewManager(cfg.Auth.JWTSecret, cfg.Auth.JWTExpiry, cfg.Auth.RefreshExpiry)
+	if err != nil {
+		log.Fatal().Err(err).Msg("invalid JWT configuration")
+	}
 	blacklist := auth.NewTokenBlacklist(cfg.Redis.Addr)
 	var ml *mailer.Mailer
 	if cfg.SMTP.Host != "" && cfg.SMTP.Username != "" {

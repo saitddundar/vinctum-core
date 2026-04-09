@@ -60,7 +60,7 @@ func (f *fakeQuerier) GetUserByID(_ context.Context, id string) (repository.User
 }
 
 func newTestHandler() *handler.IdentityHandler {
-	jwt := auth.NewManager("test-secret", time.Hour, 7*24*time.Hour)
+	jwt, _ := auth.NewManager("test-secret-must-be-at-least-32-chars!!", time.Hour, 7*24*time.Hour)
 	bl := auth.NewTokenBlacklist("localhost:6379")
 	return handler.NewIdentityHandler(newFakeQuerier(), jwt, bl, 4)
 }
