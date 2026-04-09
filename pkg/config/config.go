@@ -17,6 +17,12 @@ type Config struct {
 	SMTP      SMTPConfig      `mapstructure:"smtp"`
 	P2P       P2PConfig       `mapstructure:"p2p"`
 	WireGuard WireGuardConfig `mapstructure:"wireguard"`
+	ML        MLConfig        `mapstructure:"ml"`
+}
+
+type MLConfig struct {
+	APIURL string `mapstructure:"api_url"`
+	APIKey string `mapstructure:"api_key"`
 }
 
 type ServiceConfig struct {
@@ -161,6 +167,10 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("smtp.port", 587)
 	v.SetDefault("smtp.from", "noreply@vinctum.app")
 	v.SetDefault("smtp.base_url", "http://localhost:3000")
+
+	// ML
+	v.SetDefault("ml.api_url", "")
+	v.SetDefault("ml.api_key", "")
 
 	v.SetDefault("database.driver", "postgres")
 	v.SetDefault("database.max_open_conns", 25)

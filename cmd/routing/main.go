@@ -61,8 +61,16 @@ func main() {
 	collector := intelligence.NewCollector(10 * time.Minute)
 	scorer := intelligence.NewScorer(collector, intelligence.DefaultWeights())
 	detector := intelligence.NewAnomalyDetector(collector, intelligence.DefaultAnomalyConfig())
-	handler.SetIntelligence(intelligence.NewRouterAdapter(scorer, detector))
-	log.Info().Msg("network intelligence enabled for routing")
+	localAdapter := intelligence.NewRouterAdapter(scorer, detector)
+
+	if cfg.ML.APIURL != "" {
+		mlClient := intelligence.NewMLClient(cfg.ML.APIURL, cfg.ML.APIKey)
+		handler.SetIntelligence(intelligence.NewMLRouterAdapter(mlClient, collector, localAdapter))
+		log.Info().Str("ml_url", cfg.ML.APIURL).Msg("ML-backed intelligence enabled for routing")
+	} else {
+		handler.SetIntelligence(localAdapter)
+		log.Info().Msg("local intelligence enabled for routing")
+	}
 
 	lis, err := net.Listen("tcp", cfg.GRPC.Address())
 	if err != nil {
