@@ -30,6 +30,7 @@ func main() {
 		Discovery: envOrDefault("VINCTUM_GATEWAY_DISCOVERY_ADDR", "localhost:50052"),
 		Routing:   envOrDefault("VINCTUM_GATEWAY_ROUTING_ADDR", "localhost:50053"),
 		Transfer:  envOrDefault("VINCTUM_GATEWAY_TRANSFER_ADDR", "localhost:50054"),
+		ML:        envOrDefault("VINCTUM_GATEWAY_ML_ADDR", ""),
 	}
 
 	gw, err := gatewayhandler.NewGatewayHandler(addrs, cfg.Service.Version)
@@ -37,6 +38,10 @@ func main() {
 		log.Fatal().Err(err).Msg("failed to create gateway handler")
 	}
 	defer gw.Close()
+
+	if cfg.ML.APIKey != "" {
+		gw.SetMLAPIKey(cfg.ML.APIKey)
+	}
 
 	mux := http.NewServeMux()
 	mux.Handle("/metrics", promhttp.Handler())

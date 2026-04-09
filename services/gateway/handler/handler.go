@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 
@@ -21,6 +22,7 @@ type ServiceAddresses struct {
 	Discovery string
 	Routing   string
 	Transfer  string
+	ML        string
 }
 
 type GatewayHandler struct {
@@ -35,6 +37,8 @@ type GatewayHandler struct {
 	identityClient  identityv1.IdentityServiceClient
 	routingClient   routingv1.RoutingServiceClient
 	transferClient  transferv1.TransferServiceClient
+
+	mlAPIKey string
 }
 
 func NewGatewayHandler(addrs ServiceAddresses, version string) (*GatewayHandler, error) {
@@ -88,6 +92,10 @@ func (h *GatewayHandler) Close() {
 	}
 }
 
+func (h *GatewayHandler) SetMLAPIKey(key string) {
+	h.mlAPIKey = key
+}
+
 func (h *GatewayHandler) RegisterRoutes(mux *http.ServeMux) {
 	// health & meta
 	mux.HandleFunc("GET /health", h.handleHealth)
@@ -124,6 +132,12 @@ func (h *GatewayHandler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/routes/find", h.handleFindRoute)
 	mux.HandleFunc("GET /api/v1/routes/table/{nodeId}", h.handleGetRouteTable)
 	mux.HandleFunc("GET /api/v1/relays", h.handleListRelays)
+
+	// ml proxy
+	mux.HandleFunc("GET /api/v1/ml/health", h.handleMLHealth)
+	mux.HandleFunc("POST /api/v1/ml/score", h.handleMLScore)
+	mux.HandleFunc("POST /api/v1/ml/anomaly", h.handleMLAnomaly)
+	mux.HandleFunc("POST /api/v1/ml/route", h.handleMLRoute)
 
 	// transfer proxy
 	mux.HandleFunc("POST /api/v1/transfers", h.handleInitiateTransfer)
@@ -172,6 +186,21 @@ func (h *GatewayHandler) handleServiceStatus(w http.ResponseWriter, r *http.Requ
 		check("identity", h.addrs.Identity, h.identityConn),
 		check("routing", h.addrs.Routing, h.routingConn),
 		check("transfer", h.addrs.Transfer, h.transferConn),
+	}
+
+	// ML service check (HTTP, not gRPC).
+	if h.addrs.ML != "" {
+		mlStatus := svcStatus{Name: "ml", Address: h.addrs.ML}
+		start := time.Now()
+		mlReq, _ := http.NewRequestWithContext(r.Context(), "GET", h.addrs.ML+"/health", nil)
+		if mlReq != nil {
+			if resp, err := http.DefaultClient.Do(mlReq); err == nil {
+				resp.Body.Close()
+				mlStatus.Healthy = resp.StatusCode == http.StatusOK
+			}
+		}
+		mlStatus.LatencyMs = time.Since(start).Milliseconds()
+		statuses = append(statuses, mlStatus)
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"services": statuses})
 }
@@ -682,6 +711,60 @@ func (h *GatewayHandler) handleCancelTransfer(w http.ResponseWriter, r *http.Req
 		return
 	}
 	writeJSON(w, http.StatusOK, resp)
+}
+
+// ─── ML Proxy ───────────────────────────────────────────────
+
+func (h *GatewayHandler) proxyML(w http.ResponseWriter, r *http.Request, method, path string) {
+	if h.addrs.ML == "" {
+		writeError(w, http.StatusServiceUnavailable, "ml service unavailable")
+		return
+	}
+
+	var bodyReader io.Reader
+	if r.Body != nil {
+		bodyReader = r.Body
+		defer r.Body.Close()
+	}
+
+	url := h.addrs.ML + path
+	req, err := http.NewRequestWithContext(r.Context(), method, url, bodyReader)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to create ml request")
+		return
+	}
+	req.Header.Set("Content-Type", "application/json")
+	if h.mlAPIKey != "" {
+		req.Header.Set("X-API-Key", h.mlAPIKey)
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		log.Warn().Err(err).Str("path", path).Msg("ml proxy error")
+		writeError(w, http.StatusBadGateway, "ml service unreachable")
+		return
+	}
+	defer resp.Body.Close()
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(resp.StatusCode)
+	io.Copy(w, resp.Body)
+}
+
+func (h *GatewayHandler) handleMLHealth(w http.ResponseWriter, r *http.Request) {
+	h.proxyML(w, r, "GET", "/health")
+}
+
+func (h *GatewayHandler) handleMLScore(w http.ResponseWriter, r *http.Request) {
+	h.proxyML(w, r, "POST", "/score")
+}
+
+func (h *GatewayHandler) handleMLAnomaly(w http.ResponseWriter, r *http.Request) {
+	h.proxyML(w, r, "POST", "/anomaly")
+}
+
+func (h *GatewayHandler) handleMLRoute(w http.ResponseWriter, r *http.Request) {
+	h.proxyML(w, r, "POST", "/route")
 }
 
 // ─── Helpers ────────────────────────────────────────────────
