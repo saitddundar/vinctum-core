@@ -646,6 +646,15 @@ func (h *GatewayHandler) handleInitiateTransfer(w http.ResponseWriter, r *http.R
 	}
 
 	ctx := forwardAuth(r)
+
+	// Verify sender node belongs to authenticated user.
+	if req.SenderNodeId != "" {
+		if !h.userOwnsNode(ctx, req.SenderNodeId) {
+			writeError(w, http.StatusForbidden, "sender node does not belong to you")
+			return
+		}
+	}
+
 	resp, err := h.transferClient.InitiateTransfer(ctx, &req)
 	if err != nil {
 		writeGRPCError(w, err)
@@ -679,6 +688,12 @@ func (h *GatewayHandler) handleListTransfers(w http.ResponseWriter, r *http.Requ
 
 	nodeID := r.PathValue("nodeId")
 	ctx := forwardAuth(r)
+
+	// Verify requested node belongs to authenticated user.
+	if !h.userOwnsNode(ctx, nodeID) {
+		writeError(w, http.StatusForbidden, "node does not belong to you")
+		return
+	}
 
 	resp, err := h.transferClient.ListTransfers(ctx, &transferv1.ListTransfersRequest{NodeId: nodeID})
 	if err != nil {
@@ -771,6 +786,23 @@ func (h *GatewayHandler) handleMLRoute(w http.ResponseWriter, r *http.Request) {
 }
 
 // ─── Helpers ────────────────────────────────────────────────
+
+// userOwnsNode checks if the authenticated user has a device with the given node_id.
+func (h *GatewayHandler) userOwnsNode(ctx context.Context, nodeID string) bool {
+	if h.identityClient == nil || nodeID == "" {
+		return false
+	}
+	resp, err := h.identityClient.ListDevices(ctx, &identityv1.ListDevicesRequest{})
+	if err != nil {
+		return false
+	}
+	for _, d := range resp.Devices {
+		if d.NodeId == nodeID {
+			return true
+		}
+	}
+	return false
+}
 
 func forwardAuth(r *http.Request) context.Context {
 	ctx := r.Context()

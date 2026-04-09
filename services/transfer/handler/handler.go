@@ -170,8 +170,11 @@ func (h *TransferHandler) SendChunk(stream transferv1.TransferService_SendChunkS
 			})
 		}
 
-		// Verify chunk hash against plaintext data before encryption.
-		if chunk.ChunkHash != "" {
+		// Verify chunk hash (mandatory).
+		if chunk.ChunkHash == "" {
+			return status.Error(codes.InvalidArgument, "chunk_hash is required for integrity verification")
+		}
+		{
 			plaintextHash := sha256Hex(chunk.Data)
 			if chunk.ChunkHash != plaintextHash {
 				log.Warn().
