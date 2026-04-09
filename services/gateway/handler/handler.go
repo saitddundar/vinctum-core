@@ -144,6 +144,10 @@ func (h *GatewayHandler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/transfers/{transferId}", h.handleGetTransferStatus)
 	mux.HandleFunc("GET /api/v1/transfers/node/{nodeId}", h.handleListTransfers)
 	mux.HandleFunc("POST /api/v1/transfers/{transferId}/cancel", h.handleCancelTransfer)
+
+	// chunk upload/download (bridges HTTP to gRPC streaming)
+	mux.HandleFunc("POST /api/v1/transfers/{transferId}/chunks", h.handleUploadChunk)
+	mux.HandleFunc("GET /api/v1/transfers/{transferId}/chunks", h.handleDownloadChunks)
 }
 
 // ─── Health ─────────────────────────────────────────────────
@@ -729,6 +733,135 @@ func (h *GatewayHandler) handleCancelTransfer(w http.ResponseWriter, r *http.Req
 		return
 	}
 	writeJSON(w, http.StatusOK, resp)
+}
+
+// ─── Chunk Upload/Download (HTTP ↔ gRPC Streaming Bridge) ──
+
+func (h *GatewayHandler) handleUploadChunk(w http.ResponseWriter, r *http.Request) {
+	if h.transferClient == nil {
+		writeError(w, http.StatusServiceUnavailable, "transfer service unavailable")
+		return
+	}
+
+	transferID := r.PathValue("transferId")
+	ctx := forwardAuth(r)
+
+	// Parse multipart form (max 10MB per chunk + overhead)
+	if err := r.ParseMultipartForm(10 << 20); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid multipart form")
+		return
+	}
+
+	chunkIndexStr := r.FormValue("chunk_index")
+	chunkHash := r.FormValue("chunk_hash")
+
+	var chunkIndex int
+	if _, err := fmt.Sscanf(chunkIndexStr, "%d", &chunkIndex); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid chunk_index")
+		return
+	}
+
+	file, _, err := r.FormFile("data")
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "missing data file in multipart form")
+		return
+	}
+	defer file.Close()
+
+	data, err := io.ReadAll(io.LimitReader(file, 10<<20))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "failed to read chunk data")
+		return
+	}
+
+	// Open gRPC stream and send single chunk
+	stream, err := h.transferClient.SendChunk(ctx)
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+
+	if err := stream.Send(&transferv1.SendChunkRequest{
+		TransferId: transferID,
+		ChunkIndex: int32(chunkIndex),
+		Data:       data,
+		ChunkHash:  chunkHash,
+	}); err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+
+	resp, err := stream.CloseAndRecv()
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, resp)
+}
+
+func (h *GatewayHandler) handleDownloadChunks(w http.ResponseWriter, r *http.Request) {
+	if h.transferClient == nil {
+		writeError(w, http.StatusServiceUnavailable, "transfer service unavailable")
+		return
+	}
+
+	transferID := r.PathValue("transferId")
+	ctx := forwardAuth(r)
+
+	startChunk := int32(0)
+	if sc := r.URL.Query().Get("start_chunk"); sc != "" {
+		var n int
+		if _, err := fmt.Sscanf(sc, "%d", &n); err == nil {
+			startChunk = int32(n)
+		}
+	}
+
+	receiverNodeID := r.URL.Query().Get("receiver_node_id")
+
+	stream, err := h.transferClient.ReceiveChunks(ctx, &transferv1.ReceiveChunksRequest{
+		TransferId:     transferID,
+		StartChunk:     startChunk,
+		ReceiverNodeId: receiverNodeID,
+	})
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+
+	// Stream chunks as NDJSON (newline-delimited JSON)
+	w.Header().Set("Content-Type", "application/x-ndjson")
+	w.Header().Set("Transfer-Encoding", "chunked")
+	w.WriteHeader(http.StatusOK)
+
+	flusher, canFlush := w.(http.Flusher)
+	encoder := json.NewEncoder(w)
+
+	for {
+		chunk, err := stream.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			// Write error as final NDJSON line
+			encoder.Encode(map[string]string{"error": err.Error()})
+			break
+		}
+
+		chunkResp := map[string]any{
+			"transfer_id": chunk.TransferId,
+			"chunk_index": chunk.ChunkIndex,
+			"data":        chunk.Data, // base64 encoded by json.Marshal
+			"chunk_hash":  chunk.ChunkHash,
+			"is_last":     chunk.IsLast,
+		}
+		if err := encoder.Encode(chunkResp); err != nil {
+			break
+		}
+		if canFlush {
+			flusher.Flush()
+		}
+	}
 }
 
 // ─── ML Proxy ───────────────────────────────────────────────
