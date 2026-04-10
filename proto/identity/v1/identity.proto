@@ -34,6 +34,11 @@ service IdentityService {
   rpc JoinPeerSession(JoinPeerSessionRequest) returns (JoinPeerSessionResponse);
   rpc LeavePeerSession(LeavePeerSessionRequest) returns (LeavePeerSessionResponse);
   rpc ListSessionDevices(ListSessionDevicesRequest) returns (ListSessionDevicesResponse);
+
+  // Device Keys (E2E key exchange)
+  rpc UploadDeviceKey(UploadDeviceKeyRequest) returns (UploadDeviceKeyResponse);
+  rpc GetDeviceKey(GetDeviceKeyRequest) returns (GetDeviceKeyResponse);
+  rpc GetSessionDeviceKeys(GetSessionDeviceKeysRequest) returns (GetSessionDeviceKeysResponse);
 }
 
 message RegisterRequest {
@@ -262,4 +267,37 @@ message ListSessionDevicesRequest {
 }
 message ListSessionDevicesResponse {
   repeated Device devices = 1;
+}
+
+// ─── Device Key types ──────────────────────────────
+
+message DeviceKey {
+  string device_id                      = 1;
+  string kex_algo                       = 2;  // e.g. "x25519"
+  bytes  kex_public_key                 = 3;
+  google.protobuf.Timestamp created_at  = 4;
+  google.protobuf.Timestamp rotated_at  = 5;
+}
+
+message UploadDeviceKeyRequest {
+  string device_id      = 1;
+  string kex_algo       = 2;  // optional, defaults to "x25519"
+  bytes  kex_public_key = 3;
+}
+message UploadDeviceKeyResponse {
+  DeviceKey key = 1;
+}
+
+message GetDeviceKeyRequest {
+  string device_id = 1;
+}
+message GetDeviceKeyResponse {
+  DeviceKey key = 1;
+}
+
+message GetSessionDeviceKeysRequest {
+  string session_id = 1;
+}
+message GetSessionDeviceKeysResponse {
+  repeated DeviceKey keys = 1;
 }

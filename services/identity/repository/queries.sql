@@ -79,3 +79,23 @@ UPDATE peer_session_devices SET left_at = NOW() WHERE session_id = $1::uuid AND 
 SELECT d.* FROM devices d
 JOIN peer_session_devices psd ON d.id = psd.device_id
 WHERE psd.session_id = $1::uuid AND psd.left_at IS NULL AND d.revoked_at IS NULL;
+
+-- ─── Device Keys ────────────────────────────────────
+
+-- name: UpsertDeviceKey :one
+INSERT INTO device_keys (device_id, kex_algo, kex_public_key)
+VALUES ($1::uuid, $2, $3)
+ON CONFLICT (device_id) DO UPDATE
+    SET kex_algo       = EXCLUDED.kex_algo,
+        kex_public_key = EXCLUDED.kex_public_key,
+        rotated_at     = NOW()
+RETURNING *;
+
+-- name: GetDeviceKey :one
+SELECT * FROM device_keys WHERE device_id = $1::uuid;
+
+-- name: ListSessionDeviceKeys :many
+SELECT dk.* FROM device_keys dk
+JOIN peer_session_devices psd ON dk.device_id = psd.device_id
+JOIN devices d ON d.id = dk.device_id
+WHERE psd.session_id = $1::uuid AND psd.left_at IS NULL AND d.revoked_at IS NULL;

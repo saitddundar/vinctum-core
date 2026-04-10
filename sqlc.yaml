@@ -7,6 +7,7 @@ sql:
       - "scripts/migrations/007_add_email_verification.sql"
       - "scripts/migrations/008_create_devices.sql"
       - "scripts/migrations/009_create_peer_sessions.sql"
+      - "scripts/migrations/010_create_device_keys.sql"
     queries: "services/identity/repository/queries.sql"
     gen:
       go:

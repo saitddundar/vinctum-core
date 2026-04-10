@@ -21,18 +21,22 @@ type Querier interface {
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	GetDeviceByFingerprint(ctx context.Context, arg GetDeviceByFingerprintParams) (Device, error)
 	GetDeviceByID(ctx context.Context, dollar_1 string) (Device, error)
+	GetDeviceKey(ctx context.Context, dollar_1 string) (DeviceKey, error)
 	GetPeerSession(ctx context.Context, dollar_1 string) (PeerSession, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, dollar_1 string) (User, error)
 	GetUserByVerificationToken(ctx context.Context, verificationToken pgtype.Text) (User, error)
 	ListActivePeerSessions(ctx context.Context, dollar_1 string) ([]PeerSession, error)
 	ListDevicesByUser(ctx context.Context, dollar_1 string) ([]Device, error)
+	ListSessionDeviceKeys(ctx context.Context, dollar_1 string) ([]DeviceKey, error)
 	ListSessionDevices(ctx context.Context, dollar_1 string) ([]Device, error)
 	RejectDevice(ctx context.Context, dollar_1 string) error
 	RemoveDeviceFromSession(ctx context.Context, arg RemoveDeviceFromSessionParams) error
 	RevokeDevice(ctx context.Context, arg RevokeDeviceParams) error
 	SetVerificationToken(ctx context.Context, arg SetVerificationTokenParams) error
 	UpdateDeviceActivity(ctx context.Context, arg UpdateDeviceActivityParams) error
+	// ─── Device Keys ────────────────────────────────────
+	UpsertDeviceKey(ctx context.Context, arg UpsertDeviceKeyParams) (DeviceKey, error)
 	VerifyUserEmail(ctx context.Context, dollar_1 string) error
 }
 

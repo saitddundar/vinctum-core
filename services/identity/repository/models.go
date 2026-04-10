@@ -25,6 +25,14 @@ type Device struct {
 	RevokedAt   pgtype.Timestamptz `json:"revoked_at"`
 }
 
+type DeviceKey struct {
+	DeviceID     string             `json:"device_id"`
+	KexAlgo      string             `json:"kex_algo"`
+	KexPublicKey []byte             `json:"kex_public_key"`
+	CreatedAt    time.Time          `json:"created_at"`
+	RotatedAt    pgtype.Timestamptz `json:"rotated_at"`
+}
+
 type PeerSession struct {
 	ID        string             `json:"id"`
 	UserID    string             `json:"user_id"`

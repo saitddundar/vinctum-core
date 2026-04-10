@@ -40,6 +40,9 @@ const (
 	IdentityService_JoinPeerSession_FullMethodName      = "/identity.v1.IdentityService/JoinPeerSession"
 	IdentityService_LeavePeerSession_FullMethodName     = "/identity.v1.IdentityService/LeavePeerSession"
 	IdentityService_ListSessionDevices_FullMethodName   = "/identity.v1.IdentityService/ListSessionDevices"
+	IdentityService_UploadDeviceKey_FullMethodName      = "/identity.v1.IdentityService/UploadDeviceKey"
+	IdentityService_GetDeviceKey_FullMethodName         = "/identity.v1.IdentityService/GetDeviceKey"
+	IdentityService_GetSessionDeviceKeys_FullMethodName = "/identity.v1.IdentityService/GetSessionDeviceKeys"
 )
 
 // IdentityServiceClient is the client API for IdentityService service.
@@ -70,6 +73,10 @@ type IdentityServiceClient interface {
 	JoinPeerSession(ctx context.Context, in *JoinPeerSessionRequest, opts ...grpc.CallOption) (*JoinPeerSessionResponse, error)
 	LeavePeerSession(ctx context.Context, in *LeavePeerSessionRequest, opts ...grpc.CallOption) (*LeavePeerSessionResponse, error)
 	ListSessionDevices(ctx context.Context, in *ListSessionDevicesRequest, opts ...grpc.CallOption) (*ListSessionDevicesResponse, error)
+	// Device Keys (E2E key exchange)
+	UploadDeviceKey(ctx context.Context, in *UploadDeviceKeyRequest, opts ...grpc.CallOption) (*UploadDeviceKeyResponse, error)
+	GetDeviceKey(ctx context.Context, in *GetDeviceKeyRequest, opts ...grpc.CallOption) (*GetDeviceKeyResponse, error)
+	GetSessionDeviceKeys(ctx context.Context, in *GetSessionDeviceKeysRequest, opts ...grpc.CallOption) (*GetSessionDeviceKeysResponse, error)
 }
 
 type identityServiceClient struct {
@@ -290,6 +297,36 @@ func (c *identityServiceClient) ListSessionDevices(ctx context.Context, in *List
 	return out, nil
 }
 
+func (c *identityServiceClient) UploadDeviceKey(ctx context.Context, in *UploadDeviceKeyRequest, opts ...grpc.CallOption) (*UploadDeviceKeyResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UploadDeviceKeyResponse)
+	err := c.cc.Invoke(ctx, IdentityService_UploadDeviceKey_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) GetDeviceKey(ctx context.Context, in *GetDeviceKeyRequest, opts ...grpc.CallOption) (*GetDeviceKeyResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetDeviceKeyResponse)
+	err := c.cc.Invoke(ctx, IdentityService_GetDeviceKey_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) GetSessionDeviceKeys(ctx context.Context, in *GetSessionDeviceKeysRequest, opts ...grpc.CallOption) (*GetSessionDeviceKeysResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetSessionDeviceKeysResponse)
+	err := c.cc.Invoke(ctx, IdentityService_GetSessionDeviceKeys_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // IdentityServiceServer is the server API for IdentityService service.
 // All implementations should embed UnimplementedIdentityServiceServer
 // for forward compatibility.
@@ -318,6 +355,10 @@ type IdentityServiceServer interface {
 	JoinPeerSession(context.Context, *JoinPeerSessionRequest) (*JoinPeerSessionResponse, error)
 	LeavePeerSession(context.Context, *LeavePeerSessionRequest) (*LeavePeerSessionResponse, error)
 	ListSessionDevices(context.Context, *ListSessionDevicesRequest) (*ListSessionDevicesResponse, error)
+	// Device Keys (E2E key exchange)
+	UploadDeviceKey(context.Context, *UploadDeviceKeyRequest) (*UploadDeviceKeyResponse, error)
+	GetDeviceKey(context.Context, *GetDeviceKeyRequest) (*GetDeviceKeyResponse, error)
+	GetSessionDeviceKeys(context.Context, *GetSessionDeviceKeysRequest) (*GetSessionDeviceKeysResponse, error)
 }
 
 // UnimplementedIdentityServiceServer should be embedded to have
@@ -389,6 +430,15 @@ func (UnimplementedIdentityServiceServer) LeavePeerSession(context.Context, *Lea
 }
 func (UnimplementedIdentityServiceServer) ListSessionDevices(context.Context, *ListSessionDevicesRequest) (*ListSessionDevicesResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListSessionDevices not implemented")
+}
+func (UnimplementedIdentityServiceServer) UploadDeviceKey(context.Context, *UploadDeviceKeyRequest) (*UploadDeviceKeyResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UploadDeviceKey not implemented")
+}
+func (UnimplementedIdentityServiceServer) GetDeviceKey(context.Context, *GetDeviceKeyRequest) (*GetDeviceKeyResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetDeviceKey not implemented")
+}
+func (UnimplementedIdentityServiceServer) GetSessionDeviceKeys(context.Context, *GetSessionDeviceKeysRequest) (*GetSessionDeviceKeysResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetSessionDeviceKeys not implemented")
 }
 func (UnimplementedIdentityServiceServer) testEmbeddedByValue() {}
 
@@ -788,6 +838,60 @@ func _IdentityService_ListSessionDevices_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
+func _IdentityService_UploadDeviceKey_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UploadDeviceKeyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).UploadDeviceKey(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_UploadDeviceKey_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).UploadDeviceKey(ctx, req.(*UploadDeviceKeyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_GetDeviceKey_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetDeviceKeyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).GetDeviceKey(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_GetDeviceKey_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).GetDeviceKey(ctx, req.(*GetDeviceKeyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_GetSessionDeviceKeys_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetSessionDeviceKeysRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).GetSessionDeviceKeys(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_GetSessionDeviceKeys_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).GetSessionDeviceKeys(ctx, req.(*GetSessionDeviceKeysRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // IdentityService_ServiceDesc is the grpc.ServiceDesc for IdentityService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -878,6 +982,18 @@ var IdentityService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListSessionDevices",
 			Handler:    _IdentityService_ListSessionDevices_Handler,
+		},
+		{
+			MethodName: "UploadDeviceKey",
+			Handler:    _IdentityService_UploadDeviceKey_Handler,
+		},
+		{
+			MethodName: "GetDeviceKey",
+			Handler:    _IdentityService_GetDeviceKey_Handler,
+		},
+		{
+			MethodName: "GetSessionDeviceKeys",
+			Handler:    _IdentityService_GetSessionDeviceKeys_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

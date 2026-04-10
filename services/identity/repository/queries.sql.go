@@ -209,6 +209,23 @@ func (q *Queries) GetDeviceByID(ctx context.Context, dollar_1 string) (Device, e
 	return i, err
 }
 
+const getDeviceKey = `-- name: GetDeviceKey :one
+SELECT device_id, kex_algo, kex_public_key, created_at, rotated_at FROM device_keys WHERE device_id = $1::uuid
+`
+
+func (q *Queries) GetDeviceKey(ctx context.Context, dollar_1 string) (DeviceKey, error) {
+	row := q.db.QueryRow(ctx, getDeviceKey, dollar_1)
+	var i DeviceKey
+	err := row.Scan(
+		&i.DeviceID,
+		&i.KexAlgo,
+		&i.KexPublicKey,
+		&i.CreatedAt,
+		&i.RotatedAt,
+	)
+	return i, err
+}
+
 const getPeerSession = `-- name: GetPeerSession :one
 SELECT id, user_id, name, is_active, created_at, closed_at FROM peer_sessions WHERE id = $1::uuid
 `
@@ -357,6 +374,39 @@ func (q *Queries) ListDevicesByUser(ctx context.Context, dollar_1 string) ([]Dev
 	return items, nil
 }
 
+const listSessionDeviceKeys = `-- name: ListSessionDeviceKeys :many
+SELECT dk.device_id, dk.kex_algo, dk.kex_public_key, dk.created_at, dk.rotated_at FROM device_keys dk
+JOIN peer_session_devices psd ON dk.device_id = psd.device_id
+JOIN devices d ON d.id = dk.device_id
+WHERE psd.session_id = $1::uuid AND psd.left_at IS NULL AND d.revoked_at IS NULL
+`
+
+func (q *Queries) ListSessionDeviceKeys(ctx context.Context, dollar_1 string) ([]DeviceKey, error) {
+	rows, err := q.db.Query(ctx, listSessionDeviceKeys, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []DeviceKey
+	for rows.Next() {
+		var i DeviceKey
+		if err := rows.Scan(
+			&i.DeviceID,
+			&i.KexAlgo,
+			&i.KexPublicKey,
+			&i.CreatedAt,
+			&i.RotatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listSessionDevices = `-- name: ListSessionDevices :many
 SELECT d.id, d.user_id, d.name, d.device_type, d.node_id, d.fingerprint, d.is_approved, d.approved_at, d.approved_by, d.last_active, d.created_at, d.revoked_at FROM devices d
 JOIN peer_session_devices psd ON d.id = psd.device_id
@@ -463,6 +513,37 @@ type UpdateDeviceActivityParams struct {
 func (q *Queries) UpdateDeviceActivity(ctx context.Context, arg UpdateDeviceActivityParams) error {
 	_, err := q.db.Exec(ctx, updateDeviceActivity, arg.Column1, arg.NodeID)
 	return err
+}
+
+const upsertDeviceKey = `-- name: UpsertDeviceKey :one
+
+INSERT INTO device_keys (device_id, kex_algo, kex_public_key)
+VALUES ($1::uuid, $2, $3)
+ON CONFLICT (device_id) DO UPDATE
+    SET kex_algo       = EXCLUDED.kex_algo,
+        kex_public_key = EXCLUDED.kex_public_key,
+        rotated_at     = NOW()
+RETURNING device_id, kex_algo, kex_public_key, created_at, rotated_at
+`
+
+type UpsertDeviceKeyParams struct {
+	Column1      string `json:"column_1"`
+	KexAlgo      string `json:"kex_algo"`
+	KexPublicKey []byte `json:"kex_public_key"`
+}
+
+// ─── Device Keys ────────────────────────────────────
+func (q *Queries) UpsertDeviceKey(ctx context.Context, arg UpsertDeviceKeyParams) (DeviceKey, error) {
+	row := q.db.QueryRow(ctx, upsertDeviceKey, arg.Column1, arg.KexAlgo, arg.KexPublicKey)
+	var i DeviceKey
+	err := row.Scan(
+		&i.DeviceID,
+		&i.KexAlgo,
+		&i.KexPublicKey,
+		&i.CreatedAt,
+		&i.RotatedAt,
+	)
+	return i, err
 }
 
 const verifyUserEmail = `-- name: VerifyUserEmail :exec
