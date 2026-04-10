@@ -703,6 +703,114 @@ func (h *IdentityHandler) LeavePeerSession(ctx context.Context, req *identityv1.
 	return &identityv1.LeavePeerSessionResponse{Success: true}, nil
 }
 
+// ─── Device Key RPCs ───────────────────────────────
+
+// x25519 public keys are exactly 32 bytes.
+const x25519PublicKeySize = 32
+
+func (h *IdentityHandler) UploadDeviceKey(ctx context.Context, req *identityv1.UploadDeviceKeyRequest) (*identityv1.UploadDeviceKeyResponse, error) {
+	userID, ok := middleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "not authenticated")
+	}
+
+	if req.DeviceId == "" || len(req.KexPublicKey) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "device_id and kex_public_key are required")
+	}
+
+	algo := req.KexAlgo
+	if algo == "" {
+		algo = "x25519"
+	}
+	if algo == "x25519" && len(req.KexPublicKey) != x25519PublicKeySize {
+		return nil, status.Error(codes.InvalidArgument, "x25519 public key must be 32 bytes")
+	}
+
+	device, err := h.queries.GetDeviceByID(ctx, req.DeviceId)
+	if err != nil {
+		return nil, status.Error(codes.NotFound, "device not found")
+	}
+	if device.UserID != userID {
+		return nil, status.Error(codes.PermissionDenied, "device does not belong to you")
+	}
+	if !device.IsApproved {
+		return nil, status.Error(codes.FailedPrecondition, "device is not approved")
+	}
+
+	key, err := h.queries.UpsertDeviceKey(ctx, repository.UpsertDeviceKeyParams{
+		Column1:      req.DeviceId,
+		KexAlgo:      algo,
+		KexPublicKey: req.KexPublicKey,
+	})
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to store device key")
+	}
+
+	log.Info().Str("user_id", userID).Str("device_id", req.DeviceId).Str("algo", algo).Msg("device key uploaded")
+
+	return &identityv1.UploadDeviceKeyResponse{Key: deviceKeyToProto(key)}, nil
+}
+
+func (h *IdentityHandler) GetDeviceKey(ctx context.Context, req *identityv1.GetDeviceKeyRequest) (*identityv1.GetDeviceKeyResponse, error) {
+	userID, ok := middleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "not authenticated")
+	}
+
+	if req.DeviceId == "" {
+		return nil, status.Error(codes.InvalidArgument, "device_id is required")
+	}
+
+	device, err := h.queries.GetDeviceByID(ctx, req.DeviceId)
+	if err != nil {
+		return nil, status.Error(codes.NotFound, "device not found")
+	}
+	if device.UserID != userID {
+		return nil, status.Error(codes.PermissionDenied, "device does not belong to you")
+	}
+
+	key, err := h.queries.GetDeviceKey(ctx, req.DeviceId)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, status.Error(codes.NotFound, "device key not found")
+		}
+		return nil, status.Error(codes.Internal, "failed to fetch device key")
+	}
+
+	return &identityv1.GetDeviceKeyResponse{Key: deviceKeyToProto(key)}, nil
+}
+
+func (h *IdentityHandler) GetSessionDeviceKeys(ctx context.Context, req *identityv1.GetSessionDeviceKeysRequest) (*identityv1.GetSessionDeviceKeysResponse, error) {
+	userID, ok := middleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "not authenticated")
+	}
+
+	if req.SessionId == "" {
+		return nil, status.Error(codes.InvalidArgument, "session_id is required")
+	}
+
+	session, err := h.queries.GetPeerSession(ctx, req.SessionId)
+	if err != nil {
+		return nil, status.Error(codes.NotFound, "session not found")
+	}
+	if session.UserID != userID {
+		return nil, status.Error(codes.PermissionDenied, "session does not belong to you")
+	}
+
+	keys, err := h.queries.ListSessionDeviceKeys(ctx, req.SessionId)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to list session device keys")
+	}
+
+	pbKeys := make([]*identityv1.DeviceKey, len(keys))
+	for i, k := range keys {
+		pbKeys[i] = deviceKeyToProto(k)
+	}
+
+	return &identityv1.GetSessionDeviceKeysResponse{Keys: pbKeys}, nil
+}
+
 // ─── Helpers ────────────────────────────────────────
 
 func deviceToProto(d repository.Device) *identityv1.Device {
@@ -743,6 +851,19 @@ func sessionToProto(s repository.PeerSession, devices []repository.Device) *iden
 	}
 	for _, d := range devices {
 		pb.Devices = append(pb.Devices, deviceToProto(d))
+	}
+	return pb
+}
+
+func deviceKeyToProto(k repository.DeviceKey) *identityv1.DeviceKey {
+	pb := &identityv1.DeviceKey{
+		DeviceId:     k.DeviceID,
+		KexAlgo:      k.KexAlgo,
+		KexPublicKey: k.KexPublicKey,
+		CreatedAt:    timestamppb.New(k.CreatedAt),
+	}
+	if k.RotatedAt.Valid {
+		pb.RotatedAt = timestamppb.New(k.RotatedAt.Time)
 	}
 	return pb
 }
