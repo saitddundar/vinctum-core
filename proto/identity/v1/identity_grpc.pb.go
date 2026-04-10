@@ -39,6 +39,7 @@ const (
 	IdentityService_ClosePeerSession_FullMethodName     = "/identity.v1.IdentityService/ClosePeerSession"
 	IdentityService_JoinPeerSession_FullMethodName      = "/identity.v1.IdentityService/JoinPeerSession"
 	IdentityService_LeavePeerSession_FullMethodName     = "/identity.v1.IdentityService/LeavePeerSession"
+	IdentityService_ListSessionDevices_FullMethodName   = "/identity.v1.IdentityService/ListSessionDevices"
 )
 
 // IdentityServiceClient is the client API for IdentityService service.
@@ -68,6 +69,7 @@ type IdentityServiceClient interface {
 	ClosePeerSession(ctx context.Context, in *ClosePeerSessionRequest, opts ...grpc.CallOption) (*ClosePeerSessionResponse, error)
 	JoinPeerSession(ctx context.Context, in *JoinPeerSessionRequest, opts ...grpc.CallOption) (*JoinPeerSessionResponse, error)
 	LeavePeerSession(ctx context.Context, in *LeavePeerSessionRequest, opts ...grpc.CallOption) (*LeavePeerSessionResponse, error)
+	ListSessionDevices(ctx context.Context, in *ListSessionDevicesRequest, opts ...grpc.CallOption) (*ListSessionDevicesResponse, error)
 }
 
 type identityServiceClient struct {
@@ -278,6 +280,16 @@ func (c *identityServiceClient) LeavePeerSession(ctx context.Context, in *LeaveP
 	return out, nil
 }
 
+func (c *identityServiceClient) ListSessionDevices(ctx context.Context, in *ListSessionDevicesRequest, opts ...grpc.CallOption) (*ListSessionDevicesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListSessionDevicesResponse)
+	err := c.cc.Invoke(ctx, IdentityService_ListSessionDevices_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // IdentityServiceServer is the server API for IdentityService service.
 // All implementations should embed UnimplementedIdentityServiceServer
 // for forward compatibility.
@@ -305,6 +317,7 @@ type IdentityServiceServer interface {
 	ClosePeerSession(context.Context, *ClosePeerSessionRequest) (*ClosePeerSessionResponse, error)
 	JoinPeerSession(context.Context, *JoinPeerSessionRequest) (*JoinPeerSessionResponse, error)
 	LeavePeerSession(context.Context, *LeavePeerSessionRequest) (*LeavePeerSessionResponse, error)
+	ListSessionDevices(context.Context, *ListSessionDevicesRequest) (*ListSessionDevicesResponse, error)
 }
 
 // UnimplementedIdentityServiceServer should be embedded to have
@@ -373,6 +386,9 @@ func (UnimplementedIdentityServiceServer) JoinPeerSession(context.Context, *Join
 }
 func (UnimplementedIdentityServiceServer) LeavePeerSession(context.Context, *LeavePeerSessionRequest) (*LeavePeerSessionResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method LeavePeerSession not implemented")
+}
+func (UnimplementedIdentityServiceServer) ListSessionDevices(context.Context, *ListSessionDevicesRequest) (*ListSessionDevicesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListSessionDevices not implemented")
 }
 func (UnimplementedIdentityServiceServer) testEmbeddedByValue() {}
 
@@ -754,6 +770,24 @@ func _IdentityService_LeavePeerSession_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _IdentityService_ListSessionDevices_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListSessionDevicesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).ListSessionDevices(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_ListSessionDevices_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).ListSessionDevices(ctx, req.(*ListSessionDevicesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // IdentityService_ServiceDesc is the grpc.ServiceDesc for IdentityService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -840,6 +874,10 @@ var IdentityService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "LeavePeerSession",
 			Handler:    _IdentityService_LeavePeerSession_Handler,
+		},
+		{
+			MethodName: "ListSessionDevices",
+			Handler:    _IdentityService_ListSessionDevices_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

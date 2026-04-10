@@ -652,6 +652,33 @@ func (h *IdentityHandler) JoinPeerSession(ctx context.Context, req *identityv1.J
 	return &identityv1.JoinPeerSessionResponse{Success: true}, nil
 }
 
+func (h *IdentityHandler) ListSessionDevices(ctx context.Context, req *identityv1.ListSessionDevicesRequest) (*identityv1.ListSessionDevicesResponse, error) {
+	userID, ok := middleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "not authenticated")
+	}
+
+	session, err := h.queries.GetPeerSession(ctx, req.SessionId)
+	if err != nil {
+		return nil, status.Error(codes.NotFound, "session not found")
+	}
+	if session.UserID != userID {
+		return nil, status.Error(codes.PermissionDenied, "session does not belong to you")
+	}
+
+	devices, err := h.queries.ListSessionDevices(ctx, req.SessionId)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to list session devices")
+	}
+
+	pbDevices := make([]*identityv1.Device, len(devices))
+	for i, d := range devices {
+		pbDevices[i] = deviceToProto(d)
+	}
+
+	return &identityv1.ListSessionDevicesResponse{Devices: pbDevices}, nil
+}
+
 func (h *IdentityHandler) LeavePeerSession(ctx context.Context, req *identityv1.LeavePeerSessionRequest) (*identityv1.LeavePeerSessionResponse, error) {
 	userID, ok := middleware.UserIDFromContext(ctx)
 	if !ok {

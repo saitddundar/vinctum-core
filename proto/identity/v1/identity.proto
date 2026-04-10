@@ -33,6 +33,7 @@ service IdentityService {
   rpc ClosePeerSession(ClosePeerSessionRequest) returns (ClosePeerSessionResponse);
   rpc JoinPeerSession(JoinPeerSessionRequest) returns (JoinPeerSessionResponse);
   rpc LeavePeerSession(LeavePeerSessionRequest) returns (LeavePeerSessionResponse);
+  rpc ListSessionDevices(ListSessionDevicesRequest) returns (ListSessionDevicesResponse);
 }
 
 message RegisterRequest {
@@ -254,4 +255,11 @@ message LeavePeerSessionRequest {
 }
 message LeavePeerSessionResponse {
   bool success = 1;
+}
+
+message ListSessionDevicesRequest {
+  string session_id = 1;
+}
+message ListSessionDevicesResponse {
+  repeated Device devices = 1;
 }

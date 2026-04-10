@@ -127,6 +127,7 @@ func (h *GatewayHandler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/sessions/{sessionId}/close", h.handleClosePeerSession)
 	mux.HandleFunc("POST /api/v1/sessions/{sessionId}/join", h.handleJoinPeerSession)
 	mux.HandleFunc("POST /api/v1/sessions/{sessionId}/leave", h.handleLeavePeerSession)
+	mux.HandleFunc("GET /api/v1/sessions/{sessionId}/devices", h.handleListSessionDevices)
 
 	// routing proxy
 	mux.HandleFunc("POST /api/v1/routes/find", h.handleFindRoute)
@@ -547,6 +548,23 @@ func (h *GatewayHandler) handleJoinPeerSession(w http.ResponseWriter, r *http.Re
 	resp, err := h.identityClient.JoinPeerSession(ctx, &identityv1.JoinPeerSessionRequest{
 		SessionId: sessionID,
 		DeviceId:  body.DeviceID,
+	})
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+func (h *GatewayHandler) handleListSessionDevices(w http.ResponseWriter, r *http.Request) {
+	if h.identityClient == nil {
+		writeError(w, http.StatusServiceUnavailable, "identity service unavailable")
+		return
+	}
+	sessionID := r.PathValue("sessionId")
+	ctx := forwardAuth(r)
+	resp, err := h.identityClient.ListSessionDevices(ctx, &identityv1.ListSessionDevicesRequest{
+		SessionId: sessionID,
 	})
 	if err != nil {
 		writeGRPCError(w, err)
