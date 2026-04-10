@@ -149,6 +149,9 @@ func (h *GatewayHandler) RegisterRoutes(mux *http.ServeMux) {
 	// chunk upload/download (bridges HTTP to gRPC streaming)
 	mux.HandleFunc("POST /api/v1/transfers/{transferId}/chunks", h.handleUploadChunk)
 	mux.HandleFunc("GET /api/v1/transfers/{transferId}/chunks", h.handleDownloadChunks)
+
+	// transfer watch (long-lived NDJSON stream of transfer events)
+	mux.HandleFunc("GET /api/v1/transfers/watch", h.handleWatchTransfers)
 }
 
 // ─── Health ─────────────────────────────────────────────────
@@ -875,6 +878,68 @@ func (h *GatewayHandler) handleDownloadChunks(w http.ResponseWriter, r *http.Req
 		}
 		if err := encoder.Encode(chunkResp); err != nil {
 			break
+		}
+		if canFlush {
+			flusher.Flush()
+		}
+	}
+}
+
+func (h *GatewayHandler) handleWatchTransfers(w http.ResponseWriter, r *http.Request) {
+	if h.transferClient == nil {
+		writeError(w, http.StatusServiceUnavailable, "transfer service unavailable")
+		return
+	}
+
+	nodeID := r.URL.Query().Get("node_id")
+	if nodeID == "" {
+		writeError(w, http.StatusBadRequest, "node_id query parameter is required")
+		return
+	}
+
+	ctx := forwardAuth(r)
+
+	// Verify the watched node belongs to the authenticated user. Watching
+	// someone else's transfers would leak filenames and traffic patterns.
+	if !h.userOwnsNode(ctx, nodeID) {
+		writeError(w, http.StatusForbidden, "node does not belong to you")
+		return
+	}
+
+	receiverOnly := r.URL.Query().Get("receiver_only") == "true"
+
+	stream, err := h.transferClient.WatchTransfers(ctx, &transferv1.WatchTransfersRequest{
+		NodeId:       nodeID,
+		ReceiverOnly: receiverOnly,
+	})
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/x-ndjson")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Transfer-Encoding", "chunked")
+	w.WriteHeader(http.StatusOK)
+
+	flusher, canFlush := w.(http.Flusher)
+	encoder := json.NewEncoder(w)
+
+	for {
+		event, err := stream.Recv()
+		if err == io.EOF {
+			return
+		}
+		if err != nil {
+			encoder.Encode(map[string]string{"error": err.Error()})
+			if canFlush {
+				flusher.Flush()
+			}
+			return
+		}
+
+		if err := encoder.Encode(event); err != nil {
+			return
 		}
 		if canFlush {
 			flusher.Flush()

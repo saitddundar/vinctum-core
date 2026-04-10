@@ -25,6 +25,7 @@ const (
 	TransferService_GetTransferStatus_FullMethodName = "/transfer.v1.TransferService/GetTransferStatus"
 	TransferService_ListTransfers_FullMethodName     = "/transfer.v1.TransferService/ListTransfers"
 	TransferService_CancelTransfer_FullMethodName    = "/transfer.v1.TransferService/CancelTransfer"
+	TransferService_WatchTransfers_FullMethodName    = "/transfer.v1.TransferService/WatchTransfers"
 )
 
 // TransferServiceClient is the client API for TransferService service.
@@ -43,6 +44,9 @@ type TransferServiceClient interface {
 	ListTransfers(ctx context.Context, in *ListTransfersRequest, opts ...grpc.CallOption) (*ListTransfersResponse, error)
 	// Cancels an in-progress transfer.
 	CancelTransfer(ctx context.Context, in *CancelTransferRequest, opts ...grpc.CallOption) (*CancelTransferResponse, error)
+	// Streams transfer events (new/updated/completed) for a given node so
+	// receivers can react to incoming transfers without polling.
+	WatchTransfers(ctx context.Context, in *WatchTransfersRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[TransferEvent], error)
 }
 
 type transferServiceClient struct {
@@ -125,6 +129,25 @@ func (c *transferServiceClient) CancelTransfer(ctx context.Context, in *CancelTr
 	return out, nil
 }
 
+func (c *transferServiceClient) WatchTransfers(ctx context.Context, in *WatchTransfersRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[TransferEvent], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &TransferService_ServiceDesc.Streams[2], TransferService_WatchTransfers_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[WatchTransfersRequest, TransferEvent]{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type TransferService_WatchTransfersClient = grpc.ServerStreamingClient[TransferEvent]
+
 // TransferServiceServer is the server API for TransferService service.
 // All implementations should embed UnimplementedTransferServiceServer
 // for forward compatibility.
@@ -141,6 +164,9 @@ type TransferServiceServer interface {
 	ListTransfers(context.Context, *ListTransfersRequest) (*ListTransfersResponse, error)
 	// Cancels an in-progress transfer.
 	CancelTransfer(context.Context, *CancelTransferRequest) (*CancelTransferResponse, error)
+	// Streams transfer events (new/updated/completed) for a given node so
+	// receivers can react to incoming transfers without polling.
+	WatchTransfers(*WatchTransfersRequest, grpc.ServerStreamingServer[TransferEvent]) error
 }
 
 // UnimplementedTransferServiceServer should be embedded to have
@@ -167,6 +193,9 @@ func (UnimplementedTransferServiceServer) ListTransfers(context.Context, *ListTr
 }
 func (UnimplementedTransferServiceServer) CancelTransfer(context.Context, *CancelTransferRequest) (*CancelTransferResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CancelTransfer not implemented")
+}
+func (UnimplementedTransferServiceServer) WatchTransfers(*WatchTransfersRequest, grpc.ServerStreamingServer[TransferEvent]) error {
+	return status.Error(codes.Unimplemented, "method WatchTransfers not implemented")
 }
 func (UnimplementedTransferServiceServer) testEmbeddedByValue() {}
 
@@ -278,6 +307,17 @@ func _TransferService_CancelTransfer_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TransferService_WatchTransfers_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(WatchTransfersRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(TransferServiceServer).WatchTransfers(m, &grpc.GenericServerStream[WatchTransfersRequest, TransferEvent]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type TransferService_WatchTransfersServer = grpc.ServerStreamingServer[TransferEvent]
+
 // TransferService_ServiceDesc is the grpc.ServiceDesc for TransferService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -311,6 +351,11 @@ var TransferService_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "ReceiveChunks",
 			Handler:       _TransferService_ReceiveChunks_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "WatchTransfers",
+			Handler:       _TransferService_WatchTransfers_Handler,
 			ServerStreams: true,
 		},
 	},

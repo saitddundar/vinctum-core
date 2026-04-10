@@ -25,6 +25,10 @@ service TransferService {
 
   // Cancels an in-progress transfer.
   rpc CancelTransfer(CancelTransferRequest) returns (CancelTransferResponse);
+
+  // Streams transfer events (new/updated/completed) for a given node so
+  // receivers can react to incoming transfers without polling.
+  rpc WatchTransfers(WatchTransfersRequest) returns (stream TransferEvent);
 }
 
 // ─── InitiateTransfer ────────────────────────────────────
@@ -129,6 +133,29 @@ message CancelTransferRequest {
 message CancelTransferResponse {
   bool   success = 1;
   string message = 2;
+}
+
+// ─── WatchTransfers ─────────────────────────────────────
+
+message WatchTransfersRequest {
+  string node_id = 1; // Watch transfers where this node is sender or receiver
+  // If true, only events where this node is the receiver will be emitted.
+  // Useful for receivers that only care about incoming transfers.
+  bool   receiver_only = 2;
+}
+
+message TransferEvent {
+  EventType type = 1;
+  TransferInfo transfer = 2;
+  google.protobuf.Timestamp timestamp = 3;
+
+  enum EventType {
+    EVENT_TYPE_UNSPECIFIED = 0;
+    EVENT_TYPE_NEW         = 1; // First time we see this transfer
+    EVENT_TYPE_UPDATED     = 2; // Status or progress changed
+    EVENT_TYPE_COMPLETED   = 3; // Reached terminal completed state
+    EVENT_TYPE_CANCELLED   = 4; // Reached terminal cancelled/failed state
+  }
 }
 
 // ─── Enums ──────────────────────────────────────────────

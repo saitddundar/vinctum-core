@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"io"
+	"time"
 
 	"encoding/json"
 
@@ -409,6 +410,100 @@ func (h *TransferHandler) CancelTransfer(ctx context.Context, req *transferv1.Ca
 		Success: true,
 		Message: "transfer cancelled",
 	}, nil
+}
+
+// WatchTransfers streams transfer events for a given node so the receiver can
+// react to incoming transfers without polling. The implementation polls the
+// database on a short interval and emits diffs (NEW / UPDATED / COMPLETED /
+// CANCELLED). This mirrors the StreamPeerUpdates pattern in the discovery
+// service and avoids the need for a separate pub/sub broker.
+func (h *TransferHandler) WatchTransfers(req *transferv1.WatchTransfersRequest, stream transferv1.TransferService_WatchTransfersServer) error {
+	if req.NodeId == "" {
+		return status.Error(codes.InvalidArgument, "node_id is required")
+	}
+
+	type snapshot struct {
+		status     int32
+		chunksDone int32
+	}
+	known := make(map[string]snapshot)
+	first := true
+
+	ticker := time.NewTicker(2 * time.Second)
+	defer ticker.Stop()
+
+	emit := func(t repository.Transfer, eventType transferv1.TransferEvent_EventType) error {
+		if req.ReceiverOnly && t.ReceiverNodeID != req.NodeId {
+			return nil
+		}
+		progress := int32(0)
+		if t.TotalChunks > 0 {
+			progress = (t.ChunksDone * 100) / t.TotalChunks
+		}
+		return stream.Send(&transferv1.TransferEvent{
+			Type: eventType,
+			Transfer: &transferv1.TransferInfo{
+				TransferId:      t.TransferID,
+				SenderNodeId:    t.SenderNodeID,
+				ReceiverNodeId:  t.ReceiverNodeID,
+				Filename:        t.Filename,
+				TotalSizeBytes:  t.TotalSizeBytes,
+				Status:          transferv1.TransferStatus(t.Status),
+				ProgressPercent: progress,
+				CreatedAt:       timestamppb.New(t.CreatedAt),
+			},
+			Timestamp: timestamppb.Now(),
+		})
+	}
+
+	for {
+		select {
+		case <-stream.Context().Done():
+			return nil
+		case <-ticker.C:
+			rows, err := h.queries.ListTransfersByNode(stream.Context(), req.NodeId)
+			if err != nil {
+				log.Warn().Err(err).Str("node_id", req.NodeId).Msg("watch transfers query failed")
+				continue
+			}
+
+			current := make(map[string]snapshot, len(rows))
+			for _, t := range rows {
+				current[t.TransferID] = snapshot{status: t.Status, chunksDone: t.ChunksDone}
+
+				prev, exists := known[t.TransferID]
+				if !exists {
+					// On the very first tick, send each transfer as NEW so a
+					// freshly subscribed receiver can backfill its inbox.
+					if err := emit(t, transferv1.TransferEvent_EVENT_TYPE_NEW); err != nil {
+						return err
+					}
+					continue
+				}
+
+				if prev.status == t.Status && prev.chunksDone == t.ChunksDone {
+					continue
+				}
+
+				eventType := transferv1.TransferEvent_EVENT_TYPE_UPDATED
+				switch transferv1.TransferStatus(t.Status) {
+				case transferv1.TransferStatus_TRANSFER_STATUS_COMPLETED:
+					eventType = transferv1.TransferEvent_EVENT_TYPE_COMPLETED
+				case transferv1.TransferStatus_TRANSFER_STATUS_CANCELLED,
+					transferv1.TransferStatus_TRANSFER_STATUS_FAILED:
+					eventType = transferv1.TransferEvent_EVENT_TYPE_CANCELLED
+				}
+
+				if err := emit(t, eventType); err != nil {
+					return err
+				}
+			}
+
+			known = current
+			_ = first
+			first = false
+		}
+	}
 }
 
 func sha256Hex(data []byte) string {
