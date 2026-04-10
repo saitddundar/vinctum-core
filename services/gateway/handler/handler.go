@@ -129,6 +129,11 @@ func (h *GatewayHandler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/sessions/{sessionId}/leave", h.handleLeavePeerSession)
 	mux.HandleFunc("GET /api/v1/sessions/{sessionId}/devices", h.handleListSessionDevices)
 
+	// device keys (E2E key exchange)
+	mux.HandleFunc("POST /api/v1/devices/{deviceId}/key", h.handleUploadDeviceKey)
+	mux.HandleFunc("GET /api/v1/devices/{deviceId}/key", h.handleGetDeviceKey)
+	mux.HandleFunc("GET /api/v1/sessions/{sessionId}/keys", h.handleGetSessionDeviceKeys)
+
 	// routing proxy
 	mux.HandleFunc("POST /api/v1/routes/find", h.handleFindRoute)
 	mux.HandleFunc("GET /api/v1/routes/table/{nodeId}", h.handleGetRouteTable)
@@ -593,6 +598,69 @@ func (h *GatewayHandler) handleLeavePeerSession(w http.ResponseWriter, r *http.R
 	resp, err := h.identityClient.LeavePeerSession(ctx, &identityv1.LeavePeerSessionRequest{
 		SessionId: sessionID,
 		DeviceId:  body.DeviceID,
+	})
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+// ─── Device Keys ────────────────────────────────────────────
+
+func (h *GatewayHandler) handleUploadDeviceKey(w http.ResponseWriter, r *http.Request) {
+	if h.identityClient == nil {
+		writeError(w, http.StatusServiceUnavailable, "identity service unavailable")
+		return
+	}
+	deviceID := r.PathValue("deviceId")
+	var body struct {
+		KexAlgo      string `json:"kex_algo"`
+		KexPublicKey []byte `json:"kex_public_key"`
+	}
+	if err := decodeJSON(r, &body); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	ctx := forwardAuth(r)
+	resp, err := h.identityClient.UploadDeviceKey(ctx, &identityv1.UploadDeviceKeyRequest{
+		DeviceId:     deviceID,
+		KexAlgo:      body.KexAlgo,
+		KexPublicKey: body.KexPublicKey,
+	})
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+func (h *GatewayHandler) handleGetDeviceKey(w http.ResponseWriter, r *http.Request) {
+	if h.identityClient == nil {
+		writeError(w, http.StatusServiceUnavailable, "identity service unavailable")
+		return
+	}
+	deviceID := r.PathValue("deviceId")
+	ctx := forwardAuth(r)
+	resp, err := h.identityClient.GetDeviceKey(ctx, &identityv1.GetDeviceKeyRequest{
+		DeviceId: deviceID,
+	})
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+func (h *GatewayHandler) handleGetSessionDeviceKeys(w http.ResponseWriter, r *http.Request) {
+	if h.identityClient == nil {
+		writeError(w, http.StatusServiceUnavailable, "identity service unavailable")
+		return
+	}
+	sessionID := r.PathValue("sessionId")
+	ctx := forwardAuth(r)
+	resp, err := h.identityClient.GetSessionDeviceKeys(ctx, &identityv1.GetSessionDeviceKeysRequest{
+		SessionId: sessionID,
 	})
 	if err != nil {
 		writeGRPCError(w, err)
