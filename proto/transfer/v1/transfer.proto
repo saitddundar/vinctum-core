@@ -35,7 +35,7 @@ message InitiateTransferRequest {
   string filename          = 3;
   int64  total_size_bytes  = 4;
   string content_hash      = 5; // SHA-256 hash of the entire payload
-  string encryption_key    = 6; // E2E encryption key (base64-encoded)
+  string encryption_key    = 6 [deprecated = true]; // DEPRECATED: must be empty. Chunks are E2E encrypted client-side; the server rejects requests that include a key.
   int32  chunk_size_bytes  = 7; // Size per chunk in bytes (default: 256KB)
   int32  replication_factor = 8; // Number of copies across the network (default: 1)
 }
@@ -53,8 +53,8 @@ message InitiateTransferResponse {
 message SendChunkRequest {
   string transfer_id = 1;
   int32  chunk_index = 2;
-  bytes  data        = 3; // Encrypted chunk data
-  string chunk_hash  = 4; // SHA-256 hash of this chunk
+  bytes  data        = 3; // Ciphertext chunk (client-side AES-256-GCM); the server never sees plaintext.
+  string chunk_hash  = 4; // SHA-256 of the ciphertext for transport integrity.
 }
 
 message SendChunkResponse {

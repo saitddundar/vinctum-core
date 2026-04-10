@@ -12,7 +12,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/rs/zerolog/log"
-	"github.com/saitddundar/vinctum-core/internal/encryption"
 	"github.com/saitddundar/vinctum-core/internal/relay"
 	relayv1 "github.com/saitddundar/vinctum-core/proto/relay/v1"
 	routingv1 "github.com/saitddundar/vinctum-core/proto/routing/v1"
@@ -77,11 +76,13 @@ func (h *TransferHandler) InitiateTransfer(ctx context.Context, req *transferv1.
 	totalChunks := int32((req.TotalSizeBytes + int64(chunkSize) - 1) / int64(chunkSize))
 	transferID := uuid.NewString()
 
-	encKey := req.EncryptionKey
-	if encKey != "" {
-		if _, err := encryption.DecodeKey(encKey); err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "invalid encryption_key: %v", err)
-		}
+	// E2E enforcement: encryption keys must never reach the server. Clients
+	// must encrypt chunks locally before SendChunk and decrypt locally after
+	// ReceiveChunks. The encryption_key field is kept in the proto only for
+	// backwards compatibility and is rejected here.
+	if req.EncryptionKey != "" {
+		return nil, status.Error(codes.InvalidArgument,
+			"encryption_key must not be sent to server; encrypt chunks client-side")
 	}
 
 	routeJSON, _ := json.Marshal(routeHops)
@@ -101,7 +102,7 @@ func (h *TransferHandler) InitiateTransfer(ctx context.Context, req *transferv1.
 		ChunkSizeBytes:    chunkSize,
 		TotalChunks:       totalChunks,
 		Status:            int32(transferv1.TransferStatus_TRANSFER_STATUS_PENDING),
-		EncryptionKey:     encKey,
+		EncryptionKey:     "", // never stored; chunks are E2E encrypted client-side
 		RouteHops:         routeJSON,
 		ReplicationFactor: replicationFactor,
 	})
@@ -129,7 +130,6 @@ func (h *TransferHandler) SendChunk(stream transferv1.TransferService_SendChunkS
 	var transferID string
 	var chunksReceived int32
 	var totalChunks int32
-	var encKeyBytes []byte
 	var storedRouteHops []*routingv1.RouteHop
 	var replicationFactor int32
 
@@ -152,13 +152,6 @@ func (h *TransferHandler) SendChunk(stream transferv1.TransferService_SendChunkS
 			totalChunks = t.TotalChunks
 			replicationFactor = t.ReplicationFactor
 
-			if t.EncryptionKey != "" {
-				encKeyBytes, err = encryption.DecodeKey(t.EncryptionKey)
-				if err != nil {
-					return status.Errorf(codes.Internal, "invalid stored encryption key: %v", err)
-				}
-			}
-
 			// Deserialize stored route hops.
 			if len(t.RouteHops) > 0 {
 				_ = json.Unmarshal(t.RouteHops, &storedRouteHops)
@@ -170,55 +163,43 @@ func (h *TransferHandler) SendChunk(stream transferv1.TransferService_SendChunkS
 			})
 		}
 
-		// Verify chunk hash (mandatory).
+		// Verify transport integrity: chunk_hash must match the bytes we
+		// actually received. Chunks are E2E encrypted by the client, so this
+		// hash is over the ciphertext, not plaintext.
 		if chunk.ChunkHash == "" {
 			return status.Error(codes.InvalidArgument, "chunk_hash is required for integrity verification")
 		}
-		{
-			plaintextHash := sha256Hex(chunk.Data)
-			if chunk.ChunkHash != plaintextHash {
-				log.Warn().
-					Str("expected", chunk.ChunkHash).
-					Str("actual", plaintextHash).
-					Msg("chunk hash mismatch")
-				return status.Error(codes.DataLoss, "chunk hash mismatch")
-			}
+		if h := sha256Hex(chunk.Data); h != chunk.ChunkHash {
+			log.Warn().
+				Str("expected", chunk.ChunkHash).
+				Str("actual", h).
+				Msg("chunk hash mismatch")
+			return status.Error(codes.DataLoss, "chunk hash mismatch")
 		}
 
-		// Encrypt chunk data before persisting if E2E key is set.
-		dataToStore := chunk.Data
-		if encKeyBytes != nil {
-			dataToStore, err = encryption.Encrypt(encKeyBytes, chunk.Data)
-			if err != nil {
-				log.Error().Err(err).Str("transfer_id", transferID).Int32("chunk", chunk.ChunkIndex).Msg("failed to encrypt chunk")
-				return status.Error(codes.Internal, "failed to encrypt chunk")
-			}
-		}
-
-		// Always persist locally as the sender's copy.
+		// Persist the opaque ciphertext as the sender's copy.
 		if h.chunks != nil {
-			if _, err := h.chunks.SaveChunk(transferID, chunk.ChunkIndex, dataToStore); err != nil {
+			if _, err := h.chunks.SaveChunk(transferID, chunk.ChunkIndex, chunk.Data); err != nil {
 				log.Error().Err(err).Str("transfer_id", transferID).Int32("chunk", chunk.ChunkIndex).Msg("failed to persist chunk")
 				return status.Error(codes.Internal, "failed to persist chunk")
 			}
 		}
 
-		// Forward chunk along the route via relay if route hops exist.
+		// Forward ciphertext along the route via relay if route hops exist.
 		if h.relayClient != nil && len(storedRouteHops) > 0 {
 			// Skip the first hop (sender = us), forward to remaining hops.
 			remainingHops := h.filterSelfFromHops(storedRouteHops)
 
 			if len(remainingHops) > 0 {
-				encHash := sha256Hex(dataToStore)
 				relayReq := &relayv1.RelayChunkRequest{
 					TransferId:        transferID,
 					ChunkIndex:        chunk.ChunkIndex,
-					Data:              dataToStore,
-					ChunkHash:         encHash,
+					Data:              chunk.Data,
+					ChunkHash:         chunk.ChunkHash,
 					RemainingHops:     remainingHops,
 					ReplicationFactor: replicationFactor,
 					Ttl:               int32(len(remainingHops) + 2),
-					EncryptionKey:     "", // Don't send key to relays — E2E
+					EncryptionKey:     "", // never sent — E2E
 				}
 
 				nextNode := remainingHops[0].NodeId
@@ -253,16 +234,11 @@ func (h *TransferHandler) SendChunk(stream transferv1.TransferService_SendChunkS
 			Msg("chunk received")
 	}
 
-	// Complete if all chunks received; verify content hash if provided.
+	// Complete if all chunks received. The plaintext content hash cannot be
+	// verified by the server because chunks are E2E encrypted; the receiver
+	// verifies it after decrypting the full payload.
 	finalStatus := transferv1.TransferStatus_TRANSFER_STATUS_IN_PROGRESS
 	if chunksReceived >= totalChunks {
-		if err := h.verifyContentHash(stream.Context(), transferID, encKeyBytes); err != nil {
-			_ = h.queries.UpdateTransferStatus(stream.Context(), repository.UpdateTransferStatusParams{
-				TransferID: transferID,
-				Status:     int32(transferv1.TransferStatus_TRANSFER_STATUS_FAILED),
-			})
-			return err
-		}
 		_ = h.queries.CompleteTransfer(stream.Context(), transferID)
 		finalStatus = transferv1.TransferStatus_TRANSFER_STATUS_COMPLETED
 	}
@@ -293,14 +269,6 @@ func (h *TransferHandler) ReceiveChunks(req *transferv1.ReceiveChunksRequest, st
 		return status.Error(codes.Internal, "failed to fetch transfer")
 	}
 
-	var encKeyBytes []byte
-	if t.EncryptionKey != "" {
-		encKeyBytes, err = encryption.DecodeKey(t.EncryptionKey)
-		if err != nil {
-			return status.Errorf(codes.Internal, "invalid stored encryption key: %v", err)
-		}
-	}
-
 	startChunk := req.StartChunk
 	if startChunk < 0 {
 		startChunk = 0
@@ -318,14 +286,8 @@ func (h *TransferHandler) ReceiveChunks(req *transferv1.ReceiveChunksRequest, st
 				log.Error().Err(err).Str("transfer_id", t.TransferID).Int32("chunk", i).Msg("failed to load chunk")
 				return status.Error(codes.Internal, "failed to load chunk from storage")
 			}
-			// Decrypt if E2E key is set.
-			if encKeyBytes != nil {
-				data, err = encryption.Decrypt(encKeyBytes, data)
-				if err != nil {
-					log.Error().Err(err).Str("transfer_id", t.TransferID).Int32("chunk", i).Msg("failed to decrypt chunk")
-					return status.Error(codes.Internal, "failed to decrypt chunk")
-				}
-			}
+			// Hash is over the opaque ciphertext; the receiver decrypts and
+			// verifies the plaintext content hash locally.
 			chunkHash = sha256Hex(data)
 		}
 
@@ -447,42 +409,6 @@ func (h *TransferHandler) CancelTransfer(ctx context.Context, req *transferv1.Ca
 		Success: true,
 		Message: "transfer cancelled",
 	}, nil
-}
-
-func (h *TransferHandler) verifyContentHash(ctx context.Context, transferID string, encKey []byte) error {
-	if h.chunks == nil {
-		return nil
-	}
-	t, err := h.queries.GetTransfer(ctx, transferID)
-	if err != nil || t.ContentHash == "" {
-		return nil // nothing to verify
-	}
-
-	hasher := sha256.New()
-	for i := int32(0); i < t.TotalChunks; i++ {
-		data, err := h.chunks.LoadChunk(transferID, i)
-		if err != nil {
-			return status.Error(codes.Internal, "failed to load chunk for verification")
-		}
-		if encKey != nil {
-			data, err = encryption.Decrypt(encKey, data)
-			if err != nil {
-				return status.Error(codes.Internal, "failed to decrypt chunk for verification")
-			}
-		}
-		hasher.Write(data)
-	}
-
-	actualHash := hex.EncodeToString(hasher.Sum(nil))
-	if actualHash != t.ContentHash {
-		log.Error().
-			Str("transfer_id", transferID).
-			Str("expected", t.ContentHash).
-			Str("actual", actualHash).
-			Msg("content hash mismatch after transfer")
-		return status.Error(codes.DataLoss, "content hash mismatch")
-	}
-	return nil
 }
 
 func sha256Hex(data []byte) string {

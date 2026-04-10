@@ -184,6 +184,17 @@ func TestInitiateTransfer(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, int32(2), resp.TotalChunks)
 	})
+
+	t.Run("rejects server-side encryption_key", func(t *testing.T) {
+		_, err := h.InitiateTransfer(ctx, &transferv1.InitiateTransferRequest{
+			SenderNodeId:   "sender-3",
+			ReceiverNodeId: "receiver-3",
+			TotalSizeBytes: 1024,
+			EncryptionKey:  "anything-non-empty",
+		})
+		require.Error(t, err)
+		assert.Equal(t, codes.InvalidArgument, status.Code(err))
+	})
 }
 
 func TestGetTransferStatus(t *testing.T) {

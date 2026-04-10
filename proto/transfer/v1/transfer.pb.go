@@ -82,15 +82,16 @@ func (TransferStatus) EnumDescriptor() ([]byte, []int) {
 }
 
 type InitiateTransferRequest struct {
-	state             protoimpl.MessageState `protogen:"open.v1"`
-	SenderNodeId      string                 `protobuf:"bytes,1,opt,name=sender_node_id,json=senderNodeId,proto3" json:"sender_node_id,omitempty"`
-	ReceiverNodeId    string                 `protobuf:"bytes,2,opt,name=receiver_node_id,json=receiverNodeId,proto3" json:"receiver_node_id,omitempty"`
-	Filename          string                 `protobuf:"bytes,3,opt,name=filename,proto3" json:"filename,omitempty"`
-	TotalSizeBytes    int64                  `protobuf:"varint,4,opt,name=total_size_bytes,json=totalSizeBytes,proto3" json:"total_size_bytes,omitempty"`
-	ContentHash       string                 `protobuf:"bytes,5,opt,name=content_hash,json=contentHash,proto3" json:"content_hash,omitempty"`                    // SHA-256 hash of the entire payload
-	EncryptionKey     string                 `protobuf:"bytes,6,opt,name=encryption_key,json=encryptionKey,proto3" json:"encryption_key,omitempty"`              // E2E encryption key (base64-encoded)
-	ChunkSizeBytes    int32                  `protobuf:"varint,7,opt,name=chunk_size_bytes,json=chunkSizeBytes,proto3" json:"chunk_size_bytes,omitempty"`        // Size per chunk in bytes (default: 256KB)
-	ReplicationFactor int32                  `protobuf:"varint,8,opt,name=replication_factor,json=replicationFactor,proto3" json:"replication_factor,omitempty"` // Number of copies across the network (default: 1)
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	SenderNodeId   string                 `protobuf:"bytes,1,opt,name=sender_node_id,json=senderNodeId,proto3" json:"sender_node_id,omitempty"`
+	ReceiverNodeId string                 `protobuf:"bytes,2,opt,name=receiver_node_id,json=receiverNodeId,proto3" json:"receiver_node_id,omitempty"`
+	Filename       string                 `protobuf:"bytes,3,opt,name=filename,proto3" json:"filename,omitempty"`
+	TotalSizeBytes int64                  `protobuf:"varint,4,opt,name=total_size_bytes,json=totalSizeBytes,proto3" json:"total_size_bytes,omitempty"`
+	ContentHash    string                 `protobuf:"bytes,5,opt,name=content_hash,json=contentHash,proto3" json:"content_hash,omitempty"` // SHA-256 hash of the entire payload
+	// Deprecated: Marked as deprecated in transfer/v1/transfer.proto.
+	EncryptionKey     string `protobuf:"bytes,6,opt,name=encryption_key,json=encryptionKey,proto3" json:"encryption_key,omitempty"`              // DEPRECATED: must be empty. Chunks are E2E encrypted client-side; the server rejects requests that include a key.
+	ChunkSizeBytes    int32  `protobuf:"varint,7,opt,name=chunk_size_bytes,json=chunkSizeBytes,proto3" json:"chunk_size_bytes,omitempty"`        // Size per chunk in bytes (default: 256KB)
+	ReplicationFactor int32  `protobuf:"varint,8,opt,name=replication_factor,json=replicationFactor,proto3" json:"replication_factor,omitempty"` // Number of copies across the network (default: 1)
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -160,6 +161,7 @@ func (x *InitiateTransferRequest) GetContentHash() string {
 	return ""
 }
 
+// Deprecated: Marked as deprecated in transfer/v1/transfer.proto.
 func (x *InitiateTransferRequest) GetEncryptionKey() string {
 	if x != nil {
 		return x.EncryptionKey
@@ -261,8 +263,8 @@ type SendChunkRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	TransferId    string                 `protobuf:"bytes,1,opt,name=transfer_id,json=transferId,proto3" json:"transfer_id,omitempty"`
 	ChunkIndex    int32                  `protobuf:"varint,2,opt,name=chunk_index,json=chunkIndex,proto3" json:"chunk_index,omitempty"`
-	Data          []byte                 `protobuf:"bytes,3,opt,name=data,proto3" json:"data,omitempty"`                            // Encrypted chunk data
-	ChunkHash     string                 `protobuf:"bytes,4,opt,name=chunk_hash,json=chunkHash,proto3" json:"chunk_hash,omitempty"` // SHA-256 hash of this chunk
+	Data          []byte                 `protobuf:"bytes,3,opt,name=data,proto3" json:"data,omitempty"`                            // Ciphertext chunk (client-side AES-256-GCM); the server never sees plaintext.
+	ChunkHash     string                 `protobuf:"bytes,4,opt,name=chunk_hash,json=chunkHash,proto3" json:"chunk_hash,omitempty"` // SHA-256 of the ciphertext for transport integrity.
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -977,14 +979,14 @@ var File_transfer_v1_transfer_proto protoreflect.FileDescriptor
 
 const file_transfer_v1_transfer_proto_rawDesc = "" +
 	"\n" +
-	"\x1atransfer/v1/transfer.proto\x12\vtransfer.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x18routing/v1/routing.proto\"\xd2\x02\n" +
+	"\x1atransfer/v1/transfer.proto\x12\vtransfer.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x18routing/v1/routing.proto\"\xd6\x02\n" +
 	"\x17InitiateTransferRequest\x12$\n" +
 	"\x0esender_node_id\x18\x01 \x01(\tR\fsenderNodeId\x12(\n" +
 	"\x10receiver_node_id\x18\x02 \x01(\tR\x0ereceiverNodeId\x12\x1a\n" +
 	"\bfilename\x18\x03 \x01(\tR\bfilename\x12(\n" +
 	"\x10total_size_bytes\x18\x04 \x01(\x03R\x0etotalSizeBytes\x12!\n" +
-	"\fcontent_hash\x18\x05 \x01(\tR\vcontentHash\x12%\n" +
-	"\x0eencryption_key\x18\x06 \x01(\tR\rencryptionKey\x12(\n" +
+	"\fcontent_hash\x18\x05 \x01(\tR\vcontentHash\x12)\n" +
+	"\x0eencryption_key\x18\x06 \x01(\tB\x02\x18\x01R\rencryptionKey\x12(\n" +
 	"\x10chunk_size_bytes\x18\a \x01(\x05R\x0echunkSizeBytes\x12-\n" +
 	"\x12replication_factor\x18\b \x01(\x05R\x11replicationFactor\"\x83\x02\n" +
 	"\x18InitiateTransferResponse\x12\x1f\n" +
