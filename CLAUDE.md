@@ -102,4 +102,6 @@ CI (`.github/workflows/ci.yml`) runs lint -> test (with Postgres + Redis) -> bui
 - JWT uses HMAC-SHA256 (not RSA) -- secret must be strong in prod.
 - All gRPC services have auth interceptors; Discovery allows unauthenticated FindPeers/GetNodeInfo.
 - mTLS supported via `pkg/grpcutil` -- enable with `grpc.tls_enabled: true` + cert/key/CA paths.
+- E2E key exchange: each device registers a static X25519 public key with Identity (`device_keys` table, migration 010). `UploadDeviceKey`/`GetDeviceKey`/`GetSessionDeviceKeys` RPCs expose them; gateway endpoints under `/api/v1/devices/{id}/key` and `/api/v1/sessions/{id}/keys`. Per-transfer symmetric keys are derived via sender-ephemeral X25519 + ECDH + HKDF (transfer-side wiring is the next phase).
+- Server holds only ciphertext for transfers (commit a9a5771) -- never reintroduce server-side key escrow.
 - See `doc/threat_model.md` for full STRIDE analysis and open items.
