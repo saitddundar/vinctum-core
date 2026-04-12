@@ -1103,7 +1103,7 @@ func writeJSON(w http.ResponseWriter, code int, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
 	if msg, ok := v.(proto.Message); ok {
-		b, err := protojson.MarshalOptions{EmitUnpopulated: true}.Marshal(msg)
+		b, err := protojson.MarshalOptions{EmitUnpopulated: true, UseProtoNames: true}.Marshal(msg)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to encode proto response")
 			return
@@ -1133,7 +1133,7 @@ func decodeJSON(r *http.Request, v any) error {
 		if err != nil {
 			return err
 		}
-		return protojson.UnmarshalOptions{DiscardUnknown: true}.Unmarshal(body, msg)
+		return protojson.UnmarshalOptions{DiscardUnknown: true, AllowPartial: true}.Unmarshal(body, msg)
 	}
 	return json.NewDecoder(r.Body).Decode(v)
 }
