@@ -42,6 +42,7 @@ message InitiateTransferRequest {
   string encryption_key    = 6 [deprecated = true]; // DEPRECATED: must be empty. Chunks are E2E encrypted client-side; the server rejects requests that include a key.
   int32  chunk_size_bytes  = 7; // Size per chunk in bytes (default: 256KB)
   int32  replication_factor = 8; // Number of copies across the network (default: 1)
+  bytes  sender_ephemeral_pubkey = 9; // Sender's ephemeral X25519 public key (32 bytes) for ECDH key agreement
 }
 
 message InitiateTransferResponse {
@@ -50,6 +51,7 @@ message InitiateTransferResponse {
   TransferStatus status = 3;
   google.protobuf.Timestamp created_at = 4;
   repeated routing.v1.RouteHop route_hops = 5; // Computed route for this transfer
+  bytes  sender_ephemeral_pubkey = 6; // Echo back so sender can verify storage
 }
 
 // ─── SendChunk ───────────────────────────────────────────
@@ -99,6 +101,7 @@ message GetTransferStatusResponse {
   int64  total_bytes        = 6;
   google.protobuf.Timestamp started_at  = 7;
   google.protobuf.Timestamp updated_at  = 8;
+  bytes  sender_ephemeral_pubkey = 9; // Ephemeral pubkey for receiver-side key derivation
 }
 
 // ─── ListTransfers ───────────────────────────────────────
@@ -121,6 +124,8 @@ message TransferInfo {
   TransferStatus status    = 6;
   int32  progress_percent  = 7;
   google.protobuf.Timestamp created_at = 8;
+  bytes  sender_ephemeral_pubkey = 9; // Ephemeral X25519 pubkey; receiver needs this to derive the decryption key
+  string content_hash = 10; // Content hash covering the ephemeral pubkey (MITM binding)
 }
 
 // ─── CancelTransfer ─────────────────────────────────────

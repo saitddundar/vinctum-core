@@ -11,6 +11,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	vcrypto "github.com/saitddundar/vinctum-core/pkg/crypto"
 	transferv1 "github.com/saitddundar/vinctum-core/proto/transfer/v1"
 	"github.com/saitddundar/vinctum-core/services/transfer/handler"
 	"github.com/saitddundar/vinctum-core/services/transfer/repository"
@@ -40,9 +41,10 @@ func (f *fakeQuerier) CreateTransfer(_ context.Context, arg repository.CreateTra
 		Status:         arg.Status,
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
-		EncryptionKey:     arg.EncryptionKey,
-		RouteHops:         arg.RouteHops,
-		ReplicationFactor: arg.ReplicationFactor,
+		EncryptionKey:         arg.EncryptionKey,
+		RouteHops:             arg.RouteHops,
+		ReplicationFactor:     arg.ReplicationFactor,
+		SenderEphemeralPubkey: arg.SenderEphemeralPubkey,
 	}
 	f.transfers[t.TransferID] = t
 	return t, nil
@@ -132,13 +134,16 @@ func newTestHandler() *handler.TransferHandler {
 
 func initTransfer(t *testing.T, h *handler.TransferHandler) *transferv1.InitiateTransferResponse {
 	t.Helper()
+	_, pub, err := vcrypto.GenerateX25519KeyPair()
+	require.NoError(t, err)
 	resp, err := h.InitiateTransfer(context.Background(), &transferv1.InitiateTransferRequest{
-		SenderNodeId:   "sender-1",
-		ReceiverNodeId: "receiver-1",
-		Filename:       "document.pdf",
-		TotalSizeBytes: 1024 * 1024, // 1 MB
-		ContentHash:    "sha256-abc123",
-		ChunkSizeBytes: 256 * 1024, // 256 KB
+		SenderNodeId:          "sender-1",
+		ReceiverNodeId:        "receiver-1",
+		Filename:              "document.pdf",
+		TotalSizeBytes:        1024 * 1024, // 1 MB
+		ContentHash:           "sha256-abc123",
+		ChunkSizeBytes:        256 * 1024, // 256 KB
+		SenderEphemeralPubkey: pub,
 	})
 	require.NoError(t, err)
 	return resp
@@ -175,10 +180,12 @@ func TestInitiateTransfer(t *testing.T) {
 	})
 
 	t.Run("default chunk size", func(t *testing.T) {
+		_, pub, _ := vcrypto.GenerateX25519KeyPair()
 		resp, err := h.InitiateTransfer(ctx, &transferv1.InitiateTransferRequest{
-			SenderNodeId:   "sender-2",
-			ReceiverNodeId: "receiver-2",
-			TotalSizeBytes: 512 * 1024, // 512 KB
+			SenderNodeId:          "sender-2",
+			ReceiverNodeId:        "receiver-2",
+			TotalSizeBytes:        512 * 1024, // 512 KB
+			SenderEphemeralPubkey: pub,
 			// no ChunkSizeBytes → defaults to 256KB
 		})
 		require.NoError(t, err)
@@ -186,15 +193,62 @@ func TestInitiateTransfer(t *testing.T) {
 	})
 
 	t.Run("rejects server-side encryption_key", func(t *testing.T) {
+		_, pub, _ := vcrypto.GenerateX25519KeyPair()
 		_, err := h.InitiateTransfer(ctx, &transferv1.InitiateTransferRequest{
-			SenderNodeId:   "sender-3",
-			ReceiverNodeId: "receiver-3",
-			TotalSizeBytes: 1024,
-			EncryptionKey:  "anything-non-empty",
+			SenderNodeId:          "sender-3",
+			ReceiverNodeId:        "receiver-3",
+			TotalSizeBytes:        1024,
+			EncryptionKey:         "anything-non-empty",
+			SenderEphemeralPubkey: pub,
 		})
 		require.Error(t, err)
 		assert.Equal(t, codes.InvalidArgument, status.Code(err))
 	})
+
+	t.Run("rejects missing ephemeral pubkey", func(t *testing.T) {
+		_, err := h.InitiateTransfer(ctx, &transferv1.InitiateTransferRequest{
+			SenderNodeId:   "sender-4",
+			ReceiverNodeId: "receiver-4",
+			TotalSizeBytes: 1024,
+		})
+		require.Error(t, err)
+		assert.Equal(t, codes.InvalidArgument, status.Code(err))
+	})
+
+	t.Run("rejects wrong length ephemeral pubkey", func(t *testing.T) {
+		_, err := h.InitiateTransfer(ctx, &transferv1.InitiateTransferRequest{
+			SenderNodeId:          "sender-5",
+			ReceiverNodeId:        "receiver-5",
+			TotalSizeBytes:        1024,
+			SenderEphemeralPubkey: []byte("too-short"),
+		})
+		require.Error(t, err)
+		assert.Equal(t, codes.InvalidArgument, status.Code(err))
+	})
+
+	t.Run("returns ephemeral pubkey in response", func(t *testing.T) {
+		_, pub, _ := vcrypto.GenerateX25519KeyPair()
+		resp, err := h.InitiateTransfer(ctx, &transferv1.InitiateTransferRequest{
+			SenderNodeId:          "sender-6",
+			ReceiverNodeId:        "receiver-6",
+			TotalSizeBytes:        1024,
+			SenderEphemeralPubkey: pub,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, pub, resp.SenderEphemeralPubkey)
+	})
+}
+
+func TestGetTransferStatus_EphemeralPubkey(t *testing.T) {
+	h := newTestHandler()
+	ctx := context.Background()
+	resp := initTransfer(t, h)
+
+	sr, err := h.GetTransferStatus(ctx, &transferv1.GetTransferStatusRequest{
+		TransferId: resp.TransferId,
+	})
+	require.NoError(t, err)
+	assert.Len(t, sr.SenderEphemeralPubkey, 32)
 }
 
 func TestGetTransferStatus(t *testing.T) {

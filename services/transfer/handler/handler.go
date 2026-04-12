@@ -86,6 +86,11 @@ func (h *TransferHandler) InitiateTransfer(ctx context.Context, req *transferv1.
 			"encryption_key must not be sent to server; encrypt chunks client-side")
 	}
 
+	if len(req.SenderEphemeralPubkey) != 32 {
+		return nil, status.Error(codes.InvalidArgument,
+			"sender_ephemeral_pubkey must be exactly 32 bytes (X25519 public key)")
+	}
+
 	routeJSON, _ := json.Marshal(routeHops)
 
 	replicationFactor := req.ReplicationFactor
@@ -105,7 +110,8 @@ func (h *TransferHandler) InitiateTransfer(ctx context.Context, req *transferv1.
 		Status:            int32(transferv1.TransferStatus_TRANSFER_STATUS_PENDING),
 		EncryptionKey:     "", // never stored; chunks are E2E encrypted client-side
 		RouteHops:         routeJSON,
-		ReplicationFactor: replicationFactor,
+		ReplicationFactor:     replicationFactor,
+		SenderEphemeralPubkey: req.SenderEphemeralPubkey,
 	})
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to create transfer")
@@ -119,11 +125,12 @@ func (h *TransferHandler) InitiateTransfer(ctx context.Context, req *transferv1.
 		Msg("transfer initiated")
 
 	return &transferv1.InitiateTransferResponse{
-		TransferId:  t.TransferID,
-		TotalChunks: totalChunks,
-		Status:      transferv1.TransferStatus_TRANSFER_STATUS_PENDING,
-		CreatedAt:   timestamppb.New(t.CreatedAt),
-		RouteHops:   routeHops,
+		TransferId:            t.TransferID,
+		TotalChunks:           totalChunks,
+		Status:                transferv1.TransferStatus_TRANSFER_STATUS_PENDING,
+		CreatedAt:             timestamppb.New(t.CreatedAt),
+		RouteHops:             routeHops,
+		SenderEphemeralPubkey: t.SenderEphemeralPubkey,
 	}, nil
 }
 
@@ -325,14 +332,15 @@ func (h *TransferHandler) GetTransferStatus(ctx context.Context, req *transferv1
 	}
 
 	return &transferv1.GetTransferStatusResponse{
-		TransferId:        t.TransferID,
-		Status:            transferv1.TransferStatus(t.Status),
-		ChunksTransferred: t.ChunksDone,
-		TotalChunks:       t.TotalChunks,
-		BytesTransferred:  bytesTransferred,
-		TotalBytes:        t.TotalSizeBytes,
-		StartedAt:         timestamppb.New(t.CreatedAt),
-		UpdatedAt:         timestamppb.New(t.UpdatedAt),
+		TransferId:            t.TransferID,
+		Status:                transferv1.TransferStatus(t.Status),
+		ChunksTransferred:     t.ChunksDone,
+		TotalChunks:           t.TotalChunks,
+		BytesTransferred:      bytesTransferred,
+		TotalBytes:            t.TotalSizeBytes,
+		StartedAt:             timestamppb.New(t.CreatedAt),
+		UpdatedAt:             timestamppb.New(t.UpdatedAt),
+		SenderEphemeralPubkey: t.SenderEphemeralPubkey,
 	}, nil
 }
 
@@ -363,14 +371,16 @@ func (h *TransferHandler) ListTransfers(ctx context.Context, req *transferv1.Lis
 			progress = (t.ChunksDone * 100) / t.TotalChunks
 		}
 		transfers = append(transfers, &transferv1.TransferInfo{
-			TransferId:      t.TransferID,
-			SenderNodeId:    t.SenderNodeID,
-			ReceiverNodeId:  t.ReceiverNodeID,
-			Filename:        t.Filename,
-			TotalSizeBytes:  t.TotalSizeBytes,
-			Status:          transferv1.TransferStatus(t.Status),
-			ProgressPercent: progress,
-			CreatedAt:       timestamppb.New(t.CreatedAt),
+			TransferId:            t.TransferID,
+			SenderNodeId:          t.SenderNodeID,
+			ReceiverNodeId:        t.ReceiverNodeID,
+			Filename:              t.Filename,
+			TotalSizeBytes:        t.TotalSizeBytes,
+			Status:                transferv1.TransferStatus(t.Status),
+			ProgressPercent:       progress,
+			CreatedAt:             timestamppb.New(t.CreatedAt),
+			SenderEphemeralPubkey: t.SenderEphemeralPubkey,
+			ContentHash:           t.ContentHash,
 		})
 	}
 
@@ -443,14 +453,16 @@ func (h *TransferHandler) WatchTransfers(req *transferv1.WatchTransfersRequest, 
 		return stream.Send(&transferv1.TransferEvent{
 			Type: eventType,
 			Transfer: &transferv1.TransferInfo{
-				TransferId:      t.TransferID,
-				SenderNodeId:    t.SenderNodeID,
-				ReceiverNodeId:  t.ReceiverNodeID,
-				Filename:        t.Filename,
-				TotalSizeBytes:  t.TotalSizeBytes,
-				Status:          transferv1.TransferStatus(t.Status),
-				ProgressPercent: progress,
-				CreatedAt:       timestamppb.New(t.CreatedAt),
+				TransferId:            t.TransferID,
+				SenderNodeId:          t.SenderNodeID,
+				ReceiverNodeId:        t.ReceiverNodeID,
+				Filename:              t.Filename,
+				TotalSizeBytes:        t.TotalSizeBytes,
+				Status:                transferv1.TransferStatus(t.Status),
+				ProgressPercent:       progress,
+				CreatedAt:             timestamppb.New(t.CreatedAt),
+				SenderEphemeralPubkey: t.SenderEphemeralPubkey,
+				ContentHash:           t.ContentHash,
 			},
 			Timestamp: timestamppb.Now(),
 		})

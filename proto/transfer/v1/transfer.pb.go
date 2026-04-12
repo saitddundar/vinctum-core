@@ -144,11 +144,12 @@ type InitiateTransferRequest struct {
 	TotalSizeBytes int64                  `protobuf:"varint,4,opt,name=total_size_bytes,json=totalSizeBytes,proto3" json:"total_size_bytes,omitempty"`
 	ContentHash    string                 `protobuf:"bytes,5,opt,name=content_hash,json=contentHash,proto3" json:"content_hash,omitempty"` // SHA-256 hash of the entire payload
 	// Deprecated: Marked as deprecated in transfer/v1/transfer.proto.
-	EncryptionKey     string `protobuf:"bytes,6,opt,name=encryption_key,json=encryptionKey,proto3" json:"encryption_key,omitempty"`              // DEPRECATED: must be empty. Chunks are E2E encrypted client-side; the server rejects requests that include a key.
-	ChunkSizeBytes    int32  `protobuf:"varint,7,opt,name=chunk_size_bytes,json=chunkSizeBytes,proto3" json:"chunk_size_bytes,omitempty"`        // Size per chunk in bytes (default: 256KB)
-	ReplicationFactor int32  `protobuf:"varint,8,opt,name=replication_factor,json=replicationFactor,proto3" json:"replication_factor,omitempty"` // Number of copies across the network (default: 1)
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	EncryptionKey         string `protobuf:"bytes,6,opt,name=encryption_key,json=encryptionKey,proto3" json:"encryption_key,omitempty"`                           // DEPRECATED: must be empty. Chunks are E2E encrypted client-side; the server rejects requests that include a key.
+	ChunkSizeBytes        int32  `protobuf:"varint,7,opt,name=chunk_size_bytes,json=chunkSizeBytes,proto3" json:"chunk_size_bytes,omitempty"`                     // Size per chunk in bytes (default: 256KB)
+	ReplicationFactor     int32  `protobuf:"varint,8,opt,name=replication_factor,json=replicationFactor,proto3" json:"replication_factor,omitempty"`              // Number of copies across the network (default: 1)
+	SenderEphemeralPubkey []byte `protobuf:"bytes,9,opt,name=sender_ephemeral_pubkey,json=senderEphemeralPubkey,proto3" json:"sender_ephemeral_pubkey,omitempty"` // Sender's ephemeral X25519 public key (32 bytes) for ECDH key agreement
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
 }
 
 func (x *InitiateTransferRequest) Reset() {
@@ -238,15 +239,23 @@ func (x *InitiateTransferRequest) GetReplicationFactor() int32 {
 	return 0
 }
 
+func (x *InitiateTransferRequest) GetSenderEphemeralPubkey() []byte {
+	if x != nil {
+		return x.SenderEphemeralPubkey
+	}
+	return nil
+}
+
 type InitiateTransferResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TransferId    string                 `protobuf:"bytes,1,opt,name=transfer_id,json=transferId,proto3" json:"transfer_id,omitempty"`
-	TotalChunks   int32                  `protobuf:"varint,2,opt,name=total_chunks,json=totalChunks,proto3" json:"total_chunks,omitempty"`
-	Status        TransferStatus         `protobuf:"varint,3,opt,name=status,proto3,enum=transfer.v1.TransferStatus" json:"status,omitempty"`
-	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	RouteHops     []*v1.RouteHop         `protobuf:"bytes,5,rep,name=route_hops,json=routeHops,proto3" json:"route_hops,omitempty"` // Computed route for this transfer
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state                 protoimpl.MessageState `protogen:"open.v1"`
+	TransferId            string                 `protobuf:"bytes,1,opt,name=transfer_id,json=transferId,proto3" json:"transfer_id,omitempty"`
+	TotalChunks           int32                  `protobuf:"varint,2,opt,name=total_chunks,json=totalChunks,proto3" json:"total_chunks,omitempty"`
+	Status                TransferStatus         `protobuf:"varint,3,opt,name=status,proto3,enum=transfer.v1.TransferStatus" json:"status,omitempty"`
+	CreatedAt             *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	RouteHops             []*v1.RouteHop         `protobuf:"bytes,5,rep,name=route_hops,json=routeHops,proto3" json:"route_hops,omitempty"`                                       // Computed route for this transfer
+	SenderEphemeralPubkey []byte                 `protobuf:"bytes,6,opt,name=sender_ephemeral_pubkey,json=senderEphemeralPubkey,proto3" json:"sender_ephemeral_pubkey,omitempty"` // Echo back so sender can verify storage
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
 }
 
 func (x *InitiateTransferResponse) Reset() {
@@ -310,6 +319,13 @@ func (x *InitiateTransferResponse) GetCreatedAt() *timestamppb.Timestamp {
 func (x *InitiateTransferResponse) GetRouteHops() []*v1.RouteHop {
 	if x != nil {
 		return x.RouteHops
+	}
+	return nil
+}
+
+func (x *InitiateTransferResponse) GetSenderEphemeralPubkey() []byte {
+	if x != nil {
+		return x.SenderEphemeralPubkey
 	}
 	return nil
 }
@@ -631,17 +647,18 @@ func (x *GetTransferStatusRequest) GetTransferId() string {
 }
 
 type GetTransferStatusResponse struct {
-	state             protoimpl.MessageState `protogen:"open.v1"`
-	TransferId        string                 `protobuf:"bytes,1,opt,name=transfer_id,json=transferId,proto3" json:"transfer_id,omitempty"`
-	Status            TransferStatus         `protobuf:"varint,2,opt,name=status,proto3,enum=transfer.v1.TransferStatus" json:"status,omitempty"`
-	ChunksTransferred int32                  `protobuf:"varint,3,opt,name=chunks_transferred,json=chunksTransferred,proto3" json:"chunks_transferred,omitempty"`
-	TotalChunks       int32                  `protobuf:"varint,4,opt,name=total_chunks,json=totalChunks,proto3" json:"total_chunks,omitempty"`
-	BytesTransferred  int64                  `protobuf:"varint,5,opt,name=bytes_transferred,json=bytesTransferred,proto3" json:"bytes_transferred,omitempty"`
-	TotalBytes        int64                  `protobuf:"varint,6,opt,name=total_bytes,json=totalBytes,proto3" json:"total_bytes,omitempty"`
-	StartedAt         *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
-	UpdatedAt         *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	state                 protoimpl.MessageState `protogen:"open.v1"`
+	TransferId            string                 `protobuf:"bytes,1,opt,name=transfer_id,json=transferId,proto3" json:"transfer_id,omitempty"`
+	Status                TransferStatus         `protobuf:"varint,2,opt,name=status,proto3,enum=transfer.v1.TransferStatus" json:"status,omitempty"`
+	ChunksTransferred     int32                  `protobuf:"varint,3,opt,name=chunks_transferred,json=chunksTransferred,proto3" json:"chunks_transferred,omitempty"`
+	TotalChunks           int32                  `protobuf:"varint,4,opt,name=total_chunks,json=totalChunks,proto3" json:"total_chunks,omitempty"`
+	BytesTransferred      int64                  `protobuf:"varint,5,opt,name=bytes_transferred,json=bytesTransferred,proto3" json:"bytes_transferred,omitempty"`
+	TotalBytes            int64                  `protobuf:"varint,6,opt,name=total_bytes,json=totalBytes,proto3" json:"total_bytes,omitempty"`
+	StartedAt             *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
+	UpdatedAt             *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	SenderEphemeralPubkey []byte                 `protobuf:"bytes,9,opt,name=sender_ephemeral_pubkey,json=senderEphemeralPubkey,proto3" json:"sender_ephemeral_pubkey,omitempty"` // Ephemeral pubkey for receiver-side key derivation
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
 }
 
 func (x *GetTransferStatusResponse) Reset() {
@@ -726,6 +743,13 @@ func (x *GetTransferStatusResponse) GetStartedAt() *timestamppb.Timestamp {
 func (x *GetTransferStatusResponse) GetUpdatedAt() *timestamppb.Timestamp {
 	if x != nil {
 		return x.UpdatedAt
+	}
+	return nil
+}
+
+func (x *GetTransferStatusResponse) GetSenderEphemeralPubkey() []byte {
+	if x != nil {
+		return x.SenderEphemeralPubkey
 	}
 	return nil
 }
@@ -827,17 +851,19 @@ func (x *ListTransfersResponse) GetTransfers() []*TransferInfo {
 }
 
 type TransferInfo struct {
-	state           protoimpl.MessageState `protogen:"open.v1"`
-	TransferId      string                 `protobuf:"bytes,1,opt,name=transfer_id,json=transferId,proto3" json:"transfer_id,omitempty"`
-	SenderNodeId    string                 `protobuf:"bytes,2,opt,name=sender_node_id,json=senderNodeId,proto3" json:"sender_node_id,omitempty"`
-	ReceiverNodeId  string                 `protobuf:"bytes,3,opt,name=receiver_node_id,json=receiverNodeId,proto3" json:"receiver_node_id,omitempty"`
-	Filename        string                 `protobuf:"bytes,4,opt,name=filename,proto3" json:"filename,omitempty"`
-	TotalSizeBytes  int64                  `protobuf:"varint,5,opt,name=total_size_bytes,json=totalSizeBytes,proto3" json:"total_size_bytes,omitempty"`
-	Status          TransferStatus         `protobuf:"varint,6,opt,name=status,proto3,enum=transfer.v1.TransferStatus" json:"status,omitempty"`
-	ProgressPercent int32                  `protobuf:"varint,7,opt,name=progress_percent,json=progressPercent,proto3" json:"progress_percent,omitempty"`
-	CreatedAt       *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	state                 protoimpl.MessageState `protogen:"open.v1"`
+	TransferId            string                 `protobuf:"bytes,1,opt,name=transfer_id,json=transferId,proto3" json:"transfer_id,omitempty"`
+	SenderNodeId          string                 `protobuf:"bytes,2,opt,name=sender_node_id,json=senderNodeId,proto3" json:"sender_node_id,omitempty"`
+	ReceiverNodeId        string                 `protobuf:"bytes,3,opt,name=receiver_node_id,json=receiverNodeId,proto3" json:"receiver_node_id,omitempty"`
+	Filename              string                 `protobuf:"bytes,4,opt,name=filename,proto3" json:"filename,omitempty"`
+	TotalSizeBytes        int64                  `protobuf:"varint,5,opt,name=total_size_bytes,json=totalSizeBytes,proto3" json:"total_size_bytes,omitempty"`
+	Status                TransferStatus         `protobuf:"varint,6,opt,name=status,proto3,enum=transfer.v1.TransferStatus" json:"status,omitempty"`
+	ProgressPercent       int32                  `protobuf:"varint,7,opt,name=progress_percent,json=progressPercent,proto3" json:"progress_percent,omitempty"`
+	CreatedAt             *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	SenderEphemeralPubkey []byte                 `protobuf:"bytes,9,opt,name=sender_ephemeral_pubkey,json=senderEphemeralPubkey,proto3" json:"sender_ephemeral_pubkey,omitempty"` // Ephemeral X25519 pubkey; receiver needs this to derive the decryption key
+	ContentHash           string                 `protobuf:"bytes,10,opt,name=content_hash,json=contentHash,proto3" json:"content_hash,omitempty"`                                // Content hash covering the ephemeral pubkey (MITM binding)
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
 }
 
 func (x *TransferInfo) Reset() {
@@ -924,6 +950,20 @@ func (x *TransferInfo) GetCreatedAt() *timestamppb.Timestamp {
 		return x.CreatedAt
 	}
 	return nil
+}
+
+func (x *TransferInfo) GetSenderEphemeralPubkey() []byte {
+	if x != nil {
+		return x.SenderEphemeralPubkey
+	}
+	return nil
+}
+
+func (x *TransferInfo) GetContentHash() string {
+	if x != nil {
+		return x.ContentHash
+	}
+	return ""
 }
 
 type CancelTransferRequest struct {
@@ -1148,7 +1188,7 @@ var File_transfer_v1_transfer_proto protoreflect.FileDescriptor
 
 const file_transfer_v1_transfer_proto_rawDesc = "" +
 	"\n" +
-	"\x1atransfer/v1/transfer.proto\x12\vtransfer.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x18routing/v1/routing.proto\"\xd6\x02\n" +
+	"\x1atransfer/v1/transfer.proto\x12\vtransfer.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x18routing/v1/routing.proto\"\x8e\x03\n" +
 	"\x17InitiateTransferRequest\x12$\n" +
 	"\x0esender_node_id\x18\x01 \x01(\tR\fsenderNodeId\x12(\n" +
 	"\x10receiver_node_id\x18\x02 \x01(\tR\x0ereceiverNodeId\x12\x1a\n" +
@@ -1157,7 +1197,8 @@ const file_transfer_v1_transfer_proto_rawDesc = "" +
 	"\fcontent_hash\x18\x05 \x01(\tR\vcontentHash\x12)\n" +
 	"\x0eencryption_key\x18\x06 \x01(\tB\x02\x18\x01R\rencryptionKey\x12(\n" +
 	"\x10chunk_size_bytes\x18\a \x01(\x05R\x0echunkSizeBytes\x12-\n" +
-	"\x12replication_factor\x18\b \x01(\x05R\x11replicationFactor\"\x83\x02\n" +
+	"\x12replication_factor\x18\b \x01(\x05R\x11replicationFactor\x126\n" +
+	"\x17sender_ephemeral_pubkey\x18\t \x01(\fR\x15senderEphemeralPubkey\"\xbb\x02\n" +
 	"\x18InitiateTransferResponse\x12\x1f\n" +
 	"\vtransfer_id\x18\x01 \x01(\tR\n" +
 	"transferId\x12!\n" +
@@ -1166,7 +1207,8 @@ const file_transfer_v1_transfer_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x123\n" +
 	"\n" +
-	"route_hops\x18\x05 \x03(\v2\x14.routing.v1.RouteHopR\trouteHops\"\x87\x01\n" +
+	"route_hops\x18\x05 \x03(\v2\x14.routing.v1.RouteHopR\trouteHops\x126\n" +
+	"\x17sender_ephemeral_pubkey\x18\x06 \x01(\fR\x15senderEphemeralPubkey\"\x87\x01\n" +
 	"\x10SendChunkRequest\x12\x1f\n" +
 	"\vtransfer_id\x18\x01 \x01(\tR\n" +
 	"transferId\x12\x1f\n" +
@@ -1198,7 +1240,7 @@ const file_transfer_v1_transfer_proto_rawDesc = "" +
 	"\ais_last\x18\x05 \x01(\bR\x06isLast\";\n" +
 	"\x18GetTransferStatusRequest\x12\x1f\n" +
 	"\vtransfer_id\x18\x01 \x01(\tR\n" +
-	"transferId\"\x87\x03\n" +
+	"transferId\"\xbf\x03\n" +
 	"\x19GetTransferStatusResponse\x12\x1f\n" +
 	"\vtransfer_id\x18\x01 \x01(\tR\n" +
 	"transferId\x123\n" +
@@ -1211,12 +1253,13 @@ const file_transfer_v1_transfer_proto_rawDesc = "" +
 	"\n" +
 	"started_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tstartedAt\x129\n" +
 	"\n" +
-	"updated_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"q\n" +
+	"updated_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x126\n" +
+	"\x17sender_ephemeral_pubkey\x18\t \x01(\fR\x15senderEphemeralPubkey\"q\n" +
 	"\x14ListTransfersRequest\x12\x17\n" +
 	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12@\n" +
 	"\rfilter_status\x18\x02 \x01(\x0e2\x1b.transfer.v1.TransferStatusR\ffilterStatus\"P\n" +
 	"\x15ListTransfersResponse\x127\n" +
-	"\ttransfers\x18\x01 \x03(\v2\x19.transfer.v1.TransferInfoR\ttransfers\"\xe0\x02\n" +
+	"\ttransfers\x18\x01 \x03(\v2\x19.transfer.v1.TransferInfoR\ttransfers\"\xbb\x03\n" +
 	"\fTransferInfo\x12\x1f\n" +
 	"\vtransfer_id\x18\x01 \x01(\tR\n" +
 	"transferId\x12$\n" +
@@ -1227,7 +1270,10 @@ const file_transfer_v1_transfer_proto_rawDesc = "" +
 	"\x06status\x18\x06 \x01(\x0e2\x1b.transfer.v1.TransferStatusR\x06status\x12)\n" +
 	"\x10progress_percent\x18\a \x01(\x05R\x0fprogressPercent\x129\n" +
 	"\n" +
-	"created_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"P\n" +
+	"created_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x126\n" +
+	"\x17sender_ephemeral_pubkey\x18\t \x01(\fR\x15senderEphemeralPubkey\x12!\n" +
+	"\fcontent_hash\x18\n" +
+	" \x01(\tR\vcontentHash\"P\n" +
 	"\x15CancelTransferRequest\x12\x1f\n" +
 	"\vtransfer_id\x18\x01 \x01(\tR\n" +
 	"transferId\x12\x16\n" +
