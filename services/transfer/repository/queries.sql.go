@@ -19,24 +19,25 @@ func (q *Queries) CompleteTransfer(ctx context.Context, transferID string) error
 }
 
 const createTransfer = `-- name: CreateTransfer :one
-INSERT INTO transfers (transfer_id, sender_node_id, receiver_node_id, filename, total_size_bytes, content_hash, chunk_size_bytes, total_chunks, status, encryption_key, route_hops, replication_factor)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-RETURNING transfer_id, sender_node_id, receiver_node_id, filename, total_size_bytes, content_hash, chunk_size_bytes, total_chunks, chunks_done, status, created_at, updated_at, encryption_key, route_hops, replication_factor
+INSERT INTO transfers (transfer_id, sender_node_id, receiver_node_id, filename, total_size_bytes, content_hash, chunk_size_bytes, total_chunks, status, encryption_key, route_hops, replication_factor, sender_ephemeral_pubkey)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+RETURNING transfer_id, sender_node_id, receiver_node_id, filename, total_size_bytes, content_hash, chunk_size_bytes, total_chunks, chunks_done, status, created_at, updated_at, encryption_key, route_hops, replication_factor, sender_ephemeral_pubkey
 `
 
 type CreateTransferParams struct {
-	TransferID        string `json:"transfer_id"`
-	SenderNodeID      string `json:"sender_node_id"`
-	ReceiverNodeID    string `json:"receiver_node_id"`
-	Filename          string `json:"filename"`
-	TotalSizeBytes    int64  `json:"total_size_bytes"`
-	ContentHash       string `json:"content_hash"`
-	ChunkSizeBytes    int32  `json:"chunk_size_bytes"`
-	TotalChunks       int32  `json:"total_chunks"`
-	Status            int32  `json:"status"`
-	EncryptionKey     string `json:"encryption_key"`
-	RouteHops         []byte `json:"route_hops"`
-	ReplicationFactor int32  `json:"replication_factor"`
+	TransferID            string `json:"transfer_id"`
+	SenderNodeID          string `json:"sender_node_id"`
+	ReceiverNodeID        string `json:"receiver_node_id"`
+	Filename              string `json:"filename"`
+	TotalSizeBytes        int64  `json:"total_size_bytes"`
+	ContentHash           string `json:"content_hash"`
+	ChunkSizeBytes        int32  `json:"chunk_size_bytes"`
+	TotalChunks           int32  `json:"total_chunks"`
+	Status                int32  `json:"status"`
+	EncryptionKey         string `json:"encryption_key"`
+	RouteHops             []byte `json:"route_hops"`
+	ReplicationFactor     int32  `json:"replication_factor"`
+	SenderEphemeralPubkey []byte `json:"sender_ephemeral_pubkey"`
 }
 
 func (q *Queries) CreateTransfer(ctx context.Context, arg CreateTransferParams) (Transfer, error) {
@@ -53,6 +54,7 @@ func (q *Queries) CreateTransfer(ctx context.Context, arg CreateTransferParams) 
 		arg.EncryptionKey,
 		arg.RouteHops,
 		arg.ReplicationFactor,
+		arg.SenderEphemeralPubkey,
 	)
 	var i Transfer
 	err := row.Scan(
@@ -71,12 +73,13 @@ func (q *Queries) CreateTransfer(ctx context.Context, arg CreateTransferParams) 
 		&i.EncryptionKey,
 		&i.RouteHops,
 		&i.ReplicationFactor,
+		&i.SenderEphemeralPubkey,
 	)
 	return i, err
 }
 
 const getTransfer = `-- name: GetTransfer :one
-SELECT transfer_id, sender_node_id, receiver_node_id, filename, total_size_bytes, content_hash, chunk_size_bytes, total_chunks, chunks_done, status, created_at, updated_at, encryption_key, route_hops, replication_factor FROM transfers WHERE transfer_id = $1
+SELECT transfer_id, sender_node_id, receiver_node_id, filename, total_size_bytes, content_hash, chunk_size_bytes, total_chunks, chunks_done, status, created_at, updated_at, encryption_key, route_hops, replication_factor, sender_ephemeral_pubkey FROM transfers WHERE transfer_id = $1
 `
 
 func (q *Queries) GetTransfer(ctx context.Context, transferID string) (Transfer, error) {
@@ -98,12 +101,13 @@ func (q *Queries) GetTransfer(ctx context.Context, transferID string) (Transfer,
 		&i.EncryptionKey,
 		&i.RouteHops,
 		&i.ReplicationFactor,
+		&i.SenderEphemeralPubkey,
 	)
 	return i, err
 }
 
 const listTransfersByNode = `-- name: ListTransfersByNode :many
-SELECT transfer_id, sender_node_id, receiver_node_id, filename, total_size_bytes, content_hash, chunk_size_bytes, total_chunks, chunks_done, status, created_at, updated_at, encryption_key, route_hops, replication_factor FROM transfers WHERE sender_node_id = $1 OR receiver_node_id = $1 ORDER BY created_at DESC
+SELECT transfer_id, sender_node_id, receiver_node_id, filename, total_size_bytes, content_hash, chunk_size_bytes, total_chunks, chunks_done, status, created_at, updated_at, encryption_key, route_hops, replication_factor, sender_ephemeral_pubkey FROM transfers WHERE sender_node_id = $1 OR receiver_node_id = $1 ORDER BY created_at DESC
 `
 
 func (q *Queries) ListTransfersByNode(ctx context.Context, senderNodeID string) ([]Transfer, error) {
@@ -131,6 +135,7 @@ func (q *Queries) ListTransfersByNode(ctx context.Context, senderNodeID string) 
 			&i.EncryptionKey,
 			&i.RouteHops,
 			&i.ReplicationFactor,
+			&i.SenderEphemeralPubkey,
 		); err != nil {
 			return nil, err
 		}
@@ -143,7 +148,7 @@ func (q *Queries) ListTransfersByNode(ctx context.Context, senderNodeID string) 
 }
 
 const listTransfersByStatus = `-- name: ListTransfersByStatus :many
-SELECT transfer_id, sender_node_id, receiver_node_id, filename, total_size_bytes, content_hash, chunk_size_bytes, total_chunks, chunks_done, status, created_at, updated_at, encryption_key, route_hops, replication_factor FROM transfers WHERE (sender_node_id = $1 OR receiver_node_id = $1) AND status = $2 ORDER BY created_at DESC
+SELECT transfer_id, sender_node_id, receiver_node_id, filename, total_size_bytes, content_hash, chunk_size_bytes, total_chunks, chunks_done, status, created_at, updated_at, encryption_key, route_hops, replication_factor, sender_ephemeral_pubkey FROM transfers WHERE (sender_node_id = $1 OR receiver_node_id = $1) AND status = $2 ORDER BY created_at DESC
 `
 
 type ListTransfersByStatusParams struct {
@@ -176,6 +181,7 @@ func (q *Queries) ListTransfersByStatus(ctx context.Context, arg ListTransfersBy
 			&i.EncryptionKey,
 			&i.RouteHops,
 			&i.ReplicationFactor,
+			&i.SenderEphemeralPubkey,
 		); err != nil {
 			return nil, err
 		}

@@ -9,19 +9,20 @@ import (
 )
 
 type Transfer struct {
-	TransferID        string    `json:"transfer_id"`
-	SenderNodeID      string    `json:"sender_node_id"`
-	ReceiverNodeID    string    `json:"receiver_node_id"`
-	Filename          string    `json:"filename"`
-	TotalSizeBytes    int64     `json:"total_size_bytes"`
-	ContentHash       string    `json:"content_hash"`
-	ChunkSizeBytes    int32     `json:"chunk_size_bytes"`
-	TotalChunks       int32     `json:"total_chunks"`
-	ChunksDone        int32     `json:"chunks_done"`
-	Status            int32     `json:"status"`
-	CreatedAt         time.Time `json:"created_at"`
-	UpdatedAt         time.Time `json:"updated_at"`
-	EncryptionKey     string    `json:"encryption_key"`
-	RouteHops         []byte    `json:"route_hops"`
-	ReplicationFactor int32     `json:"replication_factor"`
+	TransferID            string    `json:"transfer_id"`
+	SenderNodeID          string    `json:"sender_node_id"`
+	ReceiverNodeID        string    `json:"receiver_node_id"`
+	Filename              string    `json:"filename"`
+	TotalSizeBytes        int64     `json:"total_size_bytes"`
+	ContentHash           string    `json:"content_hash"`
+	ChunkSizeBytes        int32     `json:"chunk_size_bytes"`
+	TotalChunks           int32     `json:"total_chunks"`
+	ChunksDone            int32     `json:"chunks_done"`
+	Status                int32     `json:"status"`
+	CreatedAt             time.Time `json:"created_at"`
+	UpdatedAt             time.Time `json:"updated_at"`
+	EncryptionKey         string    `json:"encryption_key"`
+	RouteHops             []byte    `json:"route_hops"`
+	ReplicationFactor     int32     `json:"replication_factor"`
+	SenderEphemeralPubkey []byte    `json:"sender_ephemeral_pubkey"`
 }
