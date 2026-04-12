@@ -15,6 +15,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 )
 
 type ServiceAddresses struct {
@@ -148,15 +150,15 @@ func (h *GatewayHandler) RegisterRoutes(mux *http.ServeMux) {
 	// transfer proxy
 	mux.HandleFunc("POST /api/v1/transfers", h.handleInitiateTransfer)
 	mux.HandleFunc("GET /api/v1/transfers/{transferId}", h.handleGetTransferStatus)
-	mux.HandleFunc("GET /api/v1/transfers/node/{nodeId}", h.handleListTransfers)
+	mux.HandleFunc("GET /api/v1/node-transfers/{nodeId}", h.handleListTransfers)
 	mux.HandleFunc("POST /api/v1/transfers/{transferId}/cancel", h.handleCancelTransfer)
 
 	// chunk upload/download (bridges HTTP to gRPC streaming)
-	mux.HandleFunc("POST /api/v1/transfers/{transferId}/chunks", h.handleUploadChunk)
-	mux.HandleFunc("GET /api/v1/transfers/{transferId}/chunks", h.handleDownloadChunks)
+	mux.HandleFunc("POST /api/v1/chunks/{transferId}", h.handleUploadChunk)
+	mux.HandleFunc("GET /api/v1/chunks/{transferId}", h.handleDownloadChunks)
 
 	// transfer watch (long-lived NDJSON stream of transfer events)
-	mux.HandleFunc("GET /api/v1/transfers/watch", h.handleWatchTransfers)
+	mux.HandleFunc("GET /api/v1/transfer-events", h.handleWatchTransfers)
 }
 
 // ─── Health ─────────────────────────────────────────────────
@@ -1100,6 +1102,16 @@ func forwardAuth(r *http.Request) context.Context {
 func writeJSON(w http.ResponseWriter, code int, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
+	if msg, ok := v.(proto.Message); ok {
+		b, err := protojson.MarshalOptions{EmitUnpopulated: true}.Marshal(msg)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to encode proto response")
+			return
+		}
+		w.Write(b)
+		w.Write([]byte("\n"))
+		return
+	}
 	if err := json.NewEncoder(w).Encode(v); err != nil {
 		log.Error().Err(err).Msg("failed to encode response")
 	}
@@ -1116,5 +1128,12 @@ func writeGRPCError(w http.ResponseWriter, err error) {
 
 func decodeJSON(r *http.Request, v any) error {
 	defer r.Body.Close()
+	if msg, ok := v.(proto.Message); ok {
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			return err
+		}
+		return protojson.UnmarshalOptions{DiscardUnknown: true}.Unmarshal(body, msg)
+	}
 	return json.NewDecoder(r.Body).Decode(v)
 }
