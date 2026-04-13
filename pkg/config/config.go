@@ -132,6 +132,7 @@ func Load(configPath string) (*Config, error) {
 }
 
 func setDefaults(v *viper.Viper) {
+	v.SetDefault("service.name", "")
 	v.SetDefault("service.environment", "development")
 	v.SetDefault("service.version", "0.1.0")
 	v.SetDefault("service.log_level", "info")
@@ -144,6 +145,7 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("grpc.keep_alive_timeout", "5s")
 	v.SetDefault("grpc.tls_enabled", false)
 
+	v.SetDefault("auth.jwt_secret", "")
 	v.SetDefault("auth.jwt_expiry", "24h")
 	v.SetDefault("auth.refresh_expiry", "168h")
 	v.SetDefault("auth.bcrypt_cost", 12)
@@ -173,6 +175,7 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("ml.api_key", "")
 
 	v.SetDefault("database.driver", "postgres")
+	v.SetDefault("database.dsn", "")
 	v.SetDefault("database.max_open_conns", 25)
 	v.SetDefault("database.max_idle_conns", 10)
 	v.SetDefault("database.conn_max_lifetime", "5m")
