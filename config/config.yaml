@@ -1,0 +1,34 @@
+service:
+  name: identity-service
+  environment: development
+  version: 0.1.0
+  log_level: debug
+
+grpc:
+  host: 0.0.0.0
+  port: 50051
+  tls_enabled: false
+
+auth:
+  jwt_secret: "change-me-in-production-please!!"
+  jwt_expiry: 24h
+  refresh_expiry: 168h
+  bcrypt_cost: 12
+
+database:
+  driver: postgres
+  dsn: "postgres://vinctum:vinctum@localhost:5432/vinctum_identity?sslmode=disable"
+  max_open_conns: 25
+  max_idle_conns: 10
+  conn_max_lifetime: 5m
+
+p2p:
+  listen_addresses:
+    - /ip4/0.0.0.0/tcp/4001
+    - /ip4/0.0.0.0/udp/4001/quic-v1
+  enable_dht: true
+  enable_relay: true
+
+wireguard:
+  enabled: false
+  dry_run: true
