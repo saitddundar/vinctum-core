@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/rs/zerolog/log"
@@ -313,6 +314,12 @@ func (h *IdentityHandler) RegisterDevice(ctx context.Context, req *identityv1.Re
 		return nil, status.Error(codes.InvalidArgument, "name and fingerprint are required")
 	}
 
+	// Auto-generate node_id if not provided so the device is immediately usable for transfers.
+	nodeID := req.NodeId
+	if nodeID == "" {
+		nodeID = uuid.New().String()
+	}
+
 	// Check if device already exists with this fingerprint
 	existing, err := h.queries.GetDeviceByFingerprint(ctx, repository.GetDeviceByFingerprintParams{
 		Column1:     userID,
@@ -320,10 +327,16 @@ func (h *IdentityHandler) RegisterDevice(ctx context.Context, req *identityv1.Re
 	})
 	if err == nil {
 		// Device already registered, update activity and return it
+		// If existing device has no node_id, assign the generated one.
+		updateNodeID := nodeID
+		if existing.NodeID.Valid && existing.NodeID.String != "" {
+			updateNodeID = existing.NodeID.String
+		}
 		h.queries.UpdateDeviceActivity(ctx, repository.UpdateDeviceActivityParams{
 			Column1: existing.ID,
-			NodeID:  pgtype.Text{String: req.NodeId, Valid: req.NodeId != ""},
+			NodeID:  pgtype.Text{String: updateNodeID, Valid: true},
 		})
+		existing.NodeID = pgtype.Text{String: updateNodeID, Valid: true}
 		return &identityv1.RegisterDeviceResponse{Device: deviceToProto(existing)}, nil
 	}
 
@@ -332,7 +345,7 @@ func (h *IdentityHandler) RegisterDevice(ctx context.Context, req *identityv1.Re
 		UserID:      userID,
 		Name:        req.Name,
 		DeviceType:  deviceTypeToString(req.DeviceType),
-		NodeID:      pgtype.Text{String: req.NodeId, Valid: req.NodeId != ""},
+		NodeID:      pgtype.Text{String: nodeID, Valid: true},
 		Fingerprint: req.Fingerprint,
 		IsApproved:  true, // Self-registered via login = auto-approved
 		ApprovedAt:  pgtype.Timestamptz{Time: now, Valid: true},
