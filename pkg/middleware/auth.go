@@ -22,6 +22,7 @@ var publicMethods = map[string]bool{
 	"/identity.v1.IdentityService/RefreshToken":         true,
 	"/identity.v1.IdentityService/VerifyEmail":          true,
 	"/identity.v1.IdentityService/ResendVerification":   true,
+	"/identity.v1.IdentityService/ValidateToken":        true,
 	"/discovery.v1.DiscoveryService/FindPeers":          true,
 	"/discovery.v1.DiscoveryService/GetNodeInfo":        true,
 }
