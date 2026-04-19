@@ -12,9 +12,11 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog/log"
 	"github.com/saitddundar/vinctum-core/internal/migrator"
+	"github.com/saitddundar/vinctum-core/internal/p2p"
 	"github.com/saitddundar/vinctum-core/internal/relay"
 	"github.com/saitddundar/vinctum-core/pkg/config"
 	"github.com/saitddundar/vinctum-core/pkg/grpcutil"
@@ -122,6 +124,38 @@ func main() {
 
 	handler := transferhandler.NewTransferHandler(queries, routingClient, chunkStore, relayClient, nodeID)
 
+	// Initialise P2P node for direct peer-to-peer transfers.
+	if cfg.P2P.EnableRelay || cfg.P2P.EnableDHT {
+		p2pNode, p2pErr := p2p.NewNode(ctx, p2p.NodeConfig{
+			ListenAddrs:     cfg.P2P.ListenAddresses,
+			BootstrapPeers:  cfg.P2P.BootstrapPeers,
+			EnableRelay:     cfg.P2P.EnableRelay,
+			EnableDHT:       cfg.P2P.EnableDHT,
+			EnableHolePunch: cfg.P2P.EnableHolePunch,
+		})
+		if p2pErr != nil {
+			log.Warn().Err(p2pErr).Msg("failed to start p2p node, P2P transfers disabled")
+		} else {
+			defer p2pNode.Close()
+
+			// Create transfer protocol and register stream handler.
+			tp := p2p.NewTransferProtocol(p2pNode.Host, chunkStore, func(transferID string, chunkIndex, totalChunks int32) {
+				// Update DB progress when chunks arrive via P2P.
+				_ = queries.UpdateTransferProgress(ctx, repository.UpdateTransferProgressParams{
+					TransferID: transferID,
+					ChunksDone: chunkIndex + 1,
+				})
+				if chunkIndex+1 >= totalChunks {
+					_ = queries.CompleteTransfer(ctx, transferID)
+				}
+			})
+			tp.RegisterHandler()
+
+			handler.SetP2P(&p2pAdapter{tp: tp})
+			log.Info().Str("peer_id", p2pNode.Host.ID().String()).Msg("p2p transfer protocol enabled")
+		}
+	}
+
 	lis, err := net.Listen("tcp", cfg.GRPC.Address())
 	if err != nil {
 		log.Fatal().Err(err).Str("addr", cfg.GRPC.Address()).Msg("failed to listen")
@@ -186,4 +220,34 @@ func main() {
 
 	log.Info().Msg("shutting down transfer service")
 	srv.GracefulStop()
+}
+
+// p2pAdapter adapts the internal p2p.TransferProtocol to the handler's
+// P2PTransferer interface, converting peer.ID to/from strings.
+type p2pAdapter struct {
+	tp *p2p.TransferProtocol
+}
+
+func (a *p2pAdapter) SendFile(ctx context.Context, peerIDStr string, transferID string, totalChunks int32, totalSizeBytes int64, contentHash string, chunkReader func(int32) ([]byte, string, error)) error {
+	pid, err := peer.Decode(peerIDStr)
+	if err != nil {
+		return fmt.Errorf("invalid peer ID %q: %w", peerIDStr, err)
+	}
+	return a.tp.SendFile(ctx, pid, transferID, totalChunks, totalSizeBytes, contentHash, chunkReader)
+}
+
+func (a *p2pAdapter) IsReachable(ctx context.Context, peerIDStr string) bool {
+	pid, err := peer.Decode(peerIDStr)
+	if err != nil {
+		return false
+	}
+	return a.tp.IsReachable(ctx, pid)
+}
+
+func (a *p2pAdapter) PeerID() string {
+	return a.tp.PeerID().String()
+}
+
+func (a *p2pAdapter) Addrs() []string {
+	return a.tp.Addrs()
 }

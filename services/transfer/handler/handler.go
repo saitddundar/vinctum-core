@@ -26,17 +26,36 @@ import (
 
 const defaultChunkSize = 256 * 1024 // 256 KB
 
+// P2PTransferer provides direct peer-to-peer transfer capabilities.
+// When non-nil, the transfer service can offer P2P as an alternative to relay.
+type P2PTransferer interface {
+	// SendFile sends all chunks directly to a peer via libp2p stream.
+	SendFile(ctx context.Context, peerID string, transferID string, totalChunks int32, totalSizeBytes int64, contentHash string, chunkReader func(index int32) ([]byte, string, error)) error
+	// IsReachable checks if a peer is directly reachable.
+	IsReachable(ctx context.Context, peerID string) bool
+	// PeerID returns this node's libp2p peer ID string.
+	PeerID() string
+	// Addrs returns this node's listening multiaddrs.
+	Addrs() []string
+}
+
 type TransferHandler struct {
 	transferv1.UnimplementedTransferServiceServer
 	queries       repository.Querier
 	routingClient routingv1.RoutingServiceClient // optional — may be nil
 	chunks        storage.ChunkStore             // optional — may be nil
 	relayClient   *relay.Client                  // optional — may be nil
+	p2p           P2PTransferer                  // optional — may be nil
 	nodeID        string
 }
 
 func NewTransferHandler(q repository.Querier, rc routingv1.RoutingServiceClient, cs storage.ChunkStore, rc2 *relay.Client, nodeID string) *TransferHandler {
 	return &TransferHandler{queries: q, routingClient: rc, chunks: cs, relayClient: rc2, nodeID: nodeID}
+}
+
+// SetP2P injects the P2P transfer layer. Call after construction.
+func (h *TransferHandler) SetP2P(p P2PTransferer) {
+	h.p2p = p
 }
 
 func (h *TransferHandler) InitiateTransfer(ctx context.Context, req *transferv1.InitiateTransferRequest) (*transferv1.InitiateTransferResponse, error) {
@@ -124,14 +143,25 @@ func (h *TransferHandler) InitiateTransfer(ctx context.Context, req *transferv1.
 		Int64("size", req.TotalSizeBytes).
 		Msg("transfer initiated")
 
-	return &transferv1.InitiateTransferResponse{
+	resp := &transferv1.InitiateTransferResponse{
 		TransferId:            t.TransferID,
 		TotalChunks:           totalChunks,
 		Status:                transferv1.TransferStatus_TRANSFER_STATUS_PENDING,
 		CreatedAt:             timestamppb.New(t.CreatedAt),
 		RouteHops:             routeHops,
 		SenderEphemeralPubkey: t.SenderEphemeralPubkey,
-	}, nil
+		TransferMode:          transferv1.TransferMode_TRANSFER_MODE_RELAY,
+	}
+
+	// If P2P is available, include receiver peer info so the client can
+	// attempt a direct connection before falling back to relay.
+	if h.p2p != nil {
+		resp.TransferMode = transferv1.TransferMode_TRANSFER_MODE_P2P_DIRECT
+		resp.ReceiverPeerId = h.p2p.PeerID()
+		resp.ReceiverAddrs = h.p2p.Addrs()
+	}
+
+	return resp, nil
 }
 
 func (h *TransferHandler) SendChunk(stream transferv1.TransferService_SendChunkServer) error {
@@ -516,6 +546,73 @@ func (h *TransferHandler) WatchTransfers(req *transferv1.WatchTransfersRequest, 
 			first = false
 		}
 	}
+}
+
+func (h *TransferHandler) GetP2PConnectionInfo(ctx context.Context, req *transferv1.GetP2PConnectionInfoRequest) (*transferv1.GetP2PConnectionInfoResponse, error) {
+	if req.TransferId == "" {
+		return nil, status.Error(codes.InvalidArgument, "transfer_id is required")
+	}
+
+	if _, err := h.queries.GetTransfer(ctx, req.TransferId); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, status.Error(codes.NotFound, "transfer not found")
+		}
+		return nil, status.Error(codes.Internal, "failed to fetch transfer")
+	}
+
+	resp := &transferv1.GetP2PConnectionInfoResponse{}
+
+	if h.p2p != nil {
+		resp.ReceiverPeerId = h.p2p.PeerID()
+		resp.ReceiverAddrs = h.p2p.Addrs()
+		resp.DirectReachable = true
+	}
+
+	return resp, nil
+}
+
+func (h *TransferHandler) ConfirmP2PTransfer(ctx context.Context, req *transferv1.ConfirmP2PTransferRequest) (*transferv1.ConfirmP2PTransferResponse, error) {
+	if req.TransferId == "" {
+		return nil, status.Error(codes.InvalidArgument, "transfer_id is required")
+	}
+
+	t, err := h.queries.GetTransfer(ctx, req.TransferId)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, status.Error(codes.NotFound, "transfer not found")
+		}
+		return nil, status.Error(codes.Internal, "failed to fetch transfer")
+	}
+
+	var finalStatus transferv1.TransferStatus
+	var mode int32
+
+	if req.Success {
+		finalStatus = transferv1.TransferStatus_TRANSFER_STATUS_COMPLETED
+		mode = int32(transferv1.TransferMode_TRANSFER_MODE_P2P_DIRECT)
+	} else {
+		// P2P failed — keep current status so client can fall back to relay.
+		finalStatus = transferv1.TransferStatus(t.Status)
+		mode = int32(transferv1.TransferMode_TRANSFER_MODE_RELAY)
+		log.Warn().
+			Str("transfer_id", req.TransferId).
+			Str("error", req.ErrorMessage).
+			Msg("p2p transfer failed, client should fallback to relay")
+	}
+
+	if err := h.queries.ConfirmP2PTransfer(ctx, repository.ConfirmP2PTransferParams{
+		TransferID:   req.TransferId,
+		Status:       int32(finalStatus),
+		ChunksDone:   req.ChunksTransferred,
+		TransferMode: mode,
+	}); err != nil {
+		return nil, status.Error(codes.Internal, "failed to update transfer")
+	}
+
+	return &transferv1.ConfirmP2PTransferResponse{
+		Success: req.Success,
+		Status:  finalStatus,
+	}, nil
 }
 
 func sha256Hex(data []byte) string {
