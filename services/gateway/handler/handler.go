@@ -153,6 +153,10 @@ func (h *GatewayHandler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/node-transfers/{nodeId}", h.handleListTransfers)
 	mux.HandleFunc("POST /api/v1/transfers/{transferId}/cancel", h.handleCancelTransfer)
 
+	// P2P connection info
+	mux.HandleFunc("GET /api/v1/transfers/{transferId}/p2p-info", h.handleGetP2PConnectionInfo)
+	mux.HandleFunc("POST /api/v1/transfers/{transferId}/confirm-p2p", h.handleConfirmP2PTransfer)
+
 	// chunk upload/download (bridges HTTP to gRPC streaming)
 	mux.HandleFunc("POST /api/v1/chunks/{transferId}", h.handleUploadChunk)
 	mux.HandleFunc("GET /api/v1/chunks/{transferId}", h.handleDownloadChunks)
@@ -818,6 +822,58 @@ func (h *GatewayHandler) handleCancelTransfer(w http.ResponseWriter, r *http.Req
 	resp, err := h.transferClient.CancelTransfer(ctx, &transferv1.CancelTransferRequest{
 		TransferId: transferID,
 		Reason:     body.Reason,
+	})
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+// ─── P2P Connection Info ────────────────────────────────────
+
+func (h *GatewayHandler) handleGetP2PConnectionInfo(w http.ResponseWriter, r *http.Request) {
+	if h.transferClient == nil {
+		writeError(w, http.StatusServiceUnavailable, "transfer service unavailable")
+		return
+	}
+
+	transferID := r.PathValue("transferId")
+	ctx := forwardAuth(r)
+
+	resp, err := h.transferClient.GetP2PConnectionInfo(ctx, &transferv1.GetP2PConnectionInfoRequest{TransferId: transferID})
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+func (h *GatewayHandler) handleConfirmP2PTransfer(w http.ResponseWriter, r *http.Request) {
+	if h.transferClient == nil {
+		writeError(w, http.StatusServiceUnavailable, "transfer service unavailable")
+		return
+	}
+
+	transferID := r.PathValue("transferId")
+	var body struct {
+		ConfirmingNodeID  string `json:"confirming_node_id"`
+		ChunksTransferred int32  `json:"chunks_transferred"`
+		Success           bool   `json:"success"`
+		ErrorMessage      string `json:"error_message"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	ctx := forwardAuth(r)
+	resp, err := h.transferClient.ConfirmP2PTransfer(ctx, &transferv1.ConfirmP2PTransferRequest{
+		TransferId:        transferID,
+		ConfirmingNodeId:  body.ConfirmingNodeID,
+		ChunksTransferred: body.ChunksTransferred,
+		Success:           body.Success,
+		ErrorMessage:      body.ErrorMessage,
 	})
 	if err != nil {
 		writeGRPCError(w, err)
