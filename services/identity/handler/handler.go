@@ -108,10 +108,6 @@ func (h *IdentityHandler) Login(ctx context.Context, req *identityv1.LoginReques
 		return nil, status.Error(codes.Unauthenticated, "invalid credentials")
 	}
 
-	if !user.EmailVerified {
-		return nil, status.Error(codes.PermissionDenied, "email not verified, please check your inbox")
-	}
-
 	pair, err := h.jwt.Issue(user.ID, user.Email)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to issue token")
