@@ -110,6 +110,7 @@ services:
       VINCTUM_GATEWAY_ROUTING_ADDR: routing:50053
       VINCTUM_GATEWAY_TRANSFER_ADDR: transfer:50054
       VINCTUM_AUTH_JWT_SECRET: ${JWT_SECRET}
+      VINCTUM_CORS_ORIGINS: http://localhost:5173,http://localhost:3000,http://localhost:8081,http://localhost:8082
     ports:
       - "8080:8080"
 

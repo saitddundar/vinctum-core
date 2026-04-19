@@ -51,7 +51,7 @@ func main() {
 	gw.RegisterRoutes(mux)
 
 	// Allowed CORS origins from env (comma-separated) or default for dev.
-	allowedOrigins := parseOrigins(envOrDefault("VINCTUM_CORS_ORIGINS", "http://localhost:5173,http://localhost:3000"))
+	allowedOrigins := parseOrigins(envOrDefault("VINCTUM_CORS_ORIGINS", "http://localhost:5173,http://localhost:3000,http://localhost:8081,http://localhost:8082"))
 
 	wrapped := securityMiddleware(allowedOrigins, mux)
 
