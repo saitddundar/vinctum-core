@@ -80,11 +80,12 @@ type SMTPConfig struct {
 }
 
 type P2PConfig struct {
-	ListenAddresses []string `mapstructure:"listen_addresses"`
-	BootstrapPeers  []string `mapstructure:"bootstrap_peers"`
-	IdentityKeyPath string   `mapstructure:"identity_key_path"`
-	EnableDHT       bool     `mapstructure:"enable_dht"`
-	EnableRelay     bool     `mapstructure:"enable_relay"`
+	ListenAddresses  []string `mapstructure:"listen_addresses"`
+	BootstrapPeers   []string `mapstructure:"bootstrap_peers"`
+	IdentityKeyPath  string   `mapstructure:"identity_key_path"`
+	EnableDHT        bool     `mapstructure:"enable_dht"`
+	EnableRelay      bool     `mapstructure:"enable_relay"`
+	EnableHolePunch  bool     `mapstructure:"enable_hole_punch"`
 }
 
 type WireGuardConfig struct {
@@ -153,6 +154,7 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("p2p.listen_addresses", []string{"/ip4/0.0.0.0/tcp/4001", "/ip4/0.0.0.0/udp/4001/quic-v1"})
 	v.SetDefault("p2p.enable_dht", true)
 	v.SetDefault("p2p.enable_relay", true)
+	v.SetDefault("p2p.enable_hole_punch", true)
 
 	// Redis
 	v.SetDefault("redis.addr", "localhost:6379")

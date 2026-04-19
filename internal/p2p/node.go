@@ -17,11 +17,12 @@ import (
 
 // NodeConfig holds the configuration needed to start a P2P node.
 type NodeConfig struct {
-	ListenAddrs    []string
-	BootstrapPeers []string
-	PrivateKey     []byte // Raw Ed25519 or RSA depending on crypto implementation
-	EnableRelay    bool
-	EnableDHT      bool
+	ListenAddrs       []string
+	BootstrapPeers    []string
+	PrivateKey        []byte // Raw Ed25519 or RSA depending on crypto implementation
+	EnableRelay       bool
+	EnableDHT         bool
+	EnableHolePunch   bool // Enable NAT hole punching for direct P2P
 }
 
 // Node wraps a libp2p host and its associated DHT instance.
@@ -47,6 +48,10 @@ func NewNode(ctx context.Context, cfg NodeConfig) (*Node, error) {
 
 	if cfg.EnableRelay {
 		opts = append(opts, libp2p.EnableRelay())
+	}
+
+	if cfg.EnableHolePunch {
+		opts = append(opts, libp2p.EnableHolePunching())
 	}
 
 	h, err := libp2p.New(opts...)
