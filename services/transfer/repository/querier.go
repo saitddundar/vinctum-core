@@ -10,11 +10,13 @@ import (
 
 type Querier interface {
 	CompleteTransfer(ctx context.Context, transferID string) error
+	ConfirmP2PTransfer(ctx context.Context, arg ConfirmP2PTransferParams) error
 	CreateTransfer(ctx context.Context, arg CreateTransferParams) (Transfer, error)
 	GetTransfer(ctx context.Context, transferID string) (Transfer, error)
 	ListTransfersByNode(ctx context.Context, senderNodeID string) ([]Transfer, error)
 	ListTransfersByStatus(ctx context.Context, arg ListTransfersByStatusParams) ([]Transfer, error)
 	UpdateRouteHops(ctx context.Context, arg UpdateRouteHopsParams) error
+	UpdateTransferMode(ctx context.Context, arg UpdateTransferModeParams) error
 	UpdateTransferProgress(ctx context.Context, arg UpdateTransferProgressParams) error
 	UpdateTransferStatus(ctx context.Context, arg UpdateTransferStatusParams) error
 }

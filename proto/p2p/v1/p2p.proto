@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package p2p.v1;
+
+option go_package = "github.com/saitddundar/vinctum-core/proto/p2p/v1;p2pv1";
+
+// Wire-level messages for the libp2p transfer stream protocol.
+// These are NOT gRPC services — they are length-delimited protobuf
+// messages exchanged over raw libp2p streams.
+
+// Sent at the start of a P2P transfer stream to identify the session.
+message P2PTransferHeader {
+  string transfer_id     = 1;
+  int32  total_chunks    = 2;
+  int64  total_size_bytes = 3;
+  string content_hash    = 4;
+}
+
+// Each chunk sent over the stream.
+message P2PChunk {
+  int32  chunk_index = 1;
+  bytes  data        = 2;  // E2E encrypted ciphertext
+  string chunk_hash  = 3;  // SHA-256 of ciphertext
+  bool   is_last     = 4;
+}
+
+// Sent by receiver after processing each chunk for flow control.
+message P2PChunkAck {
+  int32  chunk_index = 1;
+  bool   accepted    = 2;
+  string error       = 3;
+}

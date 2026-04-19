@@ -29,6 +29,12 @@ service TransferService {
   // Streams transfer events (new/updated/completed) for a given node so
   // receivers can react to incoming transfers without polling.
   rpc WatchTransfers(WatchTransfersRequest) returns (stream TransferEvent);
+
+  // Returns P2P connection info (peer ID, multiaddrs) for direct transfer.
+  rpc GetP2PConnectionInfo(GetP2PConnectionInfoRequest) returns (GetP2PConnectionInfoResponse);
+
+  // Reports the result of a direct P2P transfer attempt.
+  rpc ConfirmP2PTransfer(ConfirmP2PTransferRequest) returns (ConfirmP2PTransferResponse);
 }
 
 // ─── InitiateTransfer ────────────────────────────────────
@@ -52,6 +58,9 @@ message InitiateTransferResponse {
   google.protobuf.Timestamp created_at = 4;
   repeated routing.v1.RouteHop route_hops = 5; // Computed route for this transfer
   bytes  sender_ephemeral_pubkey = 6; // Echo back so sender can verify storage
+  TransferMode transfer_mode = 7; // Indicates whether P2P is available
+  string receiver_peer_id = 8; // libp2p peer ID of receiver (if P2P available)
+  repeated string receiver_addrs = 9; // libp2p multiaddrs of receiver
 }
 
 // ─── SendChunk ───────────────────────────────────────────
@@ -126,6 +135,7 @@ message TransferInfo {
   google.protobuf.Timestamp created_at = 8;
   bytes  sender_ephemeral_pubkey = 9; // Ephemeral X25519 pubkey; receiver needs this to derive the decryption key
   string content_hash = 10; // Content hash covering the ephemeral pubkey (MITM binding)
+  TransferMode transfer_mode = 11; // How this transfer is being conducted
 }
 
 // ─── CancelTransfer ─────────────────────────────────────
@@ -172,4 +182,39 @@ enum TransferStatus {
   TRANSFER_STATUS_COMPLETED   = 3;
   TRANSFER_STATUS_FAILED      = 4;
   TRANSFER_STATUS_CANCELLED   = 5;
+}
+
+enum TransferMode {
+  TRANSFER_MODE_UNSPECIFIED  = 0;
+  TRANSFER_MODE_RELAY        = 1; // Store-and-forward via server
+  TRANSFER_MODE_P2P_DIRECT   = 2; // Direct libp2p stream
+  TRANSFER_MODE_P2P_RELAYED  = 3; // libp2p via circuit relay
+}
+
+// ─── P2P Connection Info ────────────────────────────────
+
+message GetP2PConnectionInfoRequest {
+  string transfer_id = 1;
+}
+
+message GetP2PConnectionInfoResponse {
+  string receiver_peer_id       = 1;
+  repeated string receiver_addrs = 2; // libp2p multiaddrs
+  bool   direct_reachable       = 3;
+  repeated string relay_addrs   = 4; // circuit relay addresses if behind NAT
+}
+
+// ─── Confirm P2P Transfer ───────────────────────────────
+
+message ConfirmP2PTransferRequest {
+  string transfer_id       = 1;
+  string confirming_node_id = 2;
+  int32  chunks_transferred = 3;
+  bool   success            = 4;
+  string error_message      = 5;
+}
+
+message ConfirmP2PTransferResponse {
+  bool           success = 1;
+  TransferStatus status  = 2;
 }

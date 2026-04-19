@@ -19,13 +19,15 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	TransferService_InitiateTransfer_FullMethodName  = "/transfer.v1.TransferService/InitiateTransfer"
-	TransferService_SendChunk_FullMethodName         = "/transfer.v1.TransferService/SendChunk"
-	TransferService_ReceiveChunks_FullMethodName     = "/transfer.v1.TransferService/ReceiveChunks"
-	TransferService_GetTransferStatus_FullMethodName = "/transfer.v1.TransferService/GetTransferStatus"
-	TransferService_ListTransfers_FullMethodName     = "/transfer.v1.TransferService/ListTransfers"
-	TransferService_CancelTransfer_FullMethodName    = "/transfer.v1.TransferService/CancelTransfer"
-	TransferService_WatchTransfers_FullMethodName    = "/transfer.v1.TransferService/WatchTransfers"
+	TransferService_InitiateTransfer_FullMethodName     = "/transfer.v1.TransferService/InitiateTransfer"
+	TransferService_SendChunk_FullMethodName            = "/transfer.v1.TransferService/SendChunk"
+	TransferService_ReceiveChunks_FullMethodName        = "/transfer.v1.TransferService/ReceiveChunks"
+	TransferService_GetTransferStatus_FullMethodName    = "/transfer.v1.TransferService/GetTransferStatus"
+	TransferService_ListTransfers_FullMethodName        = "/transfer.v1.TransferService/ListTransfers"
+	TransferService_CancelTransfer_FullMethodName       = "/transfer.v1.TransferService/CancelTransfer"
+	TransferService_WatchTransfers_FullMethodName       = "/transfer.v1.TransferService/WatchTransfers"
+	TransferService_GetP2PConnectionInfo_FullMethodName = "/transfer.v1.TransferService/GetP2PConnectionInfo"
+	TransferService_ConfirmP2PTransfer_FullMethodName   = "/transfer.v1.TransferService/ConfirmP2PTransfer"
 )
 
 // TransferServiceClient is the client API for TransferService service.
@@ -47,6 +49,10 @@ type TransferServiceClient interface {
 	// Streams transfer events (new/updated/completed) for a given node so
 	// receivers can react to incoming transfers without polling.
 	WatchTransfers(ctx context.Context, in *WatchTransfersRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[TransferEvent], error)
+	// Returns P2P connection info (peer ID, multiaddrs) for direct transfer.
+	GetP2PConnectionInfo(ctx context.Context, in *GetP2PConnectionInfoRequest, opts ...grpc.CallOption) (*GetP2PConnectionInfoResponse, error)
+	// Reports the result of a direct P2P transfer attempt.
+	ConfirmP2PTransfer(ctx context.Context, in *ConfirmP2PTransferRequest, opts ...grpc.CallOption) (*ConfirmP2PTransferResponse, error)
 }
 
 type transferServiceClient struct {
@@ -148,6 +154,26 @@ func (c *transferServiceClient) WatchTransfers(ctx context.Context, in *WatchTra
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type TransferService_WatchTransfersClient = grpc.ServerStreamingClient[TransferEvent]
 
+func (c *transferServiceClient) GetP2PConnectionInfo(ctx context.Context, in *GetP2PConnectionInfoRequest, opts ...grpc.CallOption) (*GetP2PConnectionInfoResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetP2PConnectionInfoResponse)
+	err := c.cc.Invoke(ctx, TransferService_GetP2PConnectionInfo_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *transferServiceClient) ConfirmP2PTransfer(ctx context.Context, in *ConfirmP2PTransferRequest, opts ...grpc.CallOption) (*ConfirmP2PTransferResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ConfirmP2PTransferResponse)
+	err := c.cc.Invoke(ctx, TransferService_ConfirmP2PTransfer_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TransferServiceServer is the server API for TransferService service.
 // All implementations should embed UnimplementedTransferServiceServer
 // for forward compatibility.
@@ -167,6 +193,10 @@ type TransferServiceServer interface {
 	// Streams transfer events (new/updated/completed) for a given node so
 	// receivers can react to incoming transfers without polling.
 	WatchTransfers(*WatchTransfersRequest, grpc.ServerStreamingServer[TransferEvent]) error
+	// Returns P2P connection info (peer ID, multiaddrs) for direct transfer.
+	GetP2PConnectionInfo(context.Context, *GetP2PConnectionInfoRequest) (*GetP2PConnectionInfoResponse, error)
+	// Reports the result of a direct P2P transfer attempt.
+	ConfirmP2PTransfer(context.Context, *ConfirmP2PTransferRequest) (*ConfirmP2PTransferResponse, error)
 }
 
 // UnimplementedTransferServiceServer should be embedded to have
@@ -196,6 +226,12 @@ func (UnimplementedTransferServiceServer) CancelTransfer(context.Context, *Cance
 }
 func (UnimplementedTransferServiceServer) WatchTransfers(*WatchTransfersRequest, grpc.ServerStreamingServer[TransferEvent]) error {
 	return status.Error(codes.Unimplemented, "method WatchTransfers not implemented")
+}
+func (UnimplementedTransferServiceServer) GetP2PConnectionInfo(context.Context, *GetP2PConnectionInfoRequest) (*GetP2PConnectionInfoResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetP2PConnectionInfo not implemented")
+}
+func (UnimplementedTransferServiceServer) ConfirmP2PTransfer(context.Context, *ConfirmP2PTransferRequest) (*ConfirmP2PTransferResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ConfirmP2PTransfer not implemented")
 }
 func (UnimplementedTransferServiceServer) testEmbeddedByValue() {}
 
@@ -318,6 +354,42 @@ func _TransferService_WatchTransfers_Handler(srv interface{}, stream grpc.Server
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type TransferService_WatchTransfersServer = grpc.ServerStreamingServer[TransferEvent]
 
+func _TransferService_GetP2PConnectionInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetP2PConnectionInfoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TransferServiceServer).GetP2PConnectionInfo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TransferService_GetP2PConnectionInfo_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TransferServiceServer).GetP2PConnectionInfo(ctx, req.(*GetP2PConnectionInfoRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TransferService_ConfirmP2PTransfer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ConfirmP2PTransferRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TransferServiceServer).ConfirmP2PTransfer(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TransferService_ConfirmP2PTransfer_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TransferServiceServer).ConfirmP2PTransfer(ctx, req.(*ConfirmP2PTransferRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TransferService_ServiceDesc is the grpc.ServiceDesc for TransferService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -340,6 +412,14 @@ var TransferService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CancelTransfer",
 			Handler:    _TransferService_CancelTransfer_Handler,
+		},
+		{
+			MethodName: "GetP2PConnectionInfo",
+			Handler:    _TransferService_GetP2PConnectionInfo_Handler,
+		},
+		{
+			MethodName: "ConfirmP2PTransfer",
+			Handler:    _TransferService_ConfirmP2PTransfer_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

@@ -25,4 +25,5 @@ type Transfer struct {
 	RouteHops             []byte    `json:"route_hops"`
 	ReplicationFactor     int32     `json:"replication_factor"`
 	SenderEphemeralPubkey []byte    `json:"sender_ephemeral_pubkey"`
+	TransferMode          int32     `json:"transfer_mode"`
 }

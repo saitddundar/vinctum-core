@@ -23,3 +23,9 @@ UPDATE transfers SET status = 3, chunks_done = total_chunks, updated_at = NOW() 
 
 -- name: UpdateRouteHops :exec
 UPDATE transfers SET route_hops = $2, updated_at = NOW() WHERE transfer_id = $1;
+
+-- name: UpdateTransferMode :exec
+UPDATE transfers SET transfer_mode = $2, updated_at = NOW() WHERE transfer_id = $1;
+
+-- name: ConfirmP2PTransfer :exec
+UPDATE transfers SET status = $2, chunks_done = $3, transfer_mode = $4, updated_at = NOW() WHERE transfer_id = $1;

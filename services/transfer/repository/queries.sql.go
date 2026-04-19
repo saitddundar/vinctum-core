@@ -18,10 +18,31 @@ func (q *Queries) CompleteTransfer(ctx context.Context, transferID string) error
 	return err
 }
 
+const confirmP2PTransfer = `-- name: ConfirmP2PTransfer :exec
+UPDATE transfers SET status = $2, chunks_done = $3, transfer_mode = $4, updated_at = NOW() WHERE transfer_id = $1
+`
+
+type ConfirmP2PTransferParams struct {
+	TransferID   string `json:"transfer_id"`
+	Status       int32  `json:"status"`
+	ChunksDone   int32  `json:"chunks_done"`
+	TransferMode int32  `json:"transfer_mode"`
+}
+
+func (q *Queries) ConfirmP2PTransfer(ctx context.Context, arg ConfirmP2PTransferParams) error {
+	_, err := q.db.Exec(ctx, confirmP2PTransfer,
+		arg.TransferID,
+		arg.Status,
+		arg.ChunksDone,
+		arg.TransferMode,
+	)
+	return err
+}
+
 const createTransfer = `-- name: CreateTransfer :one
 INSERT INTO transfers (transfer_id, sender_node_id, receiver_node_id, filename, total_size_bytes, content_hash, chunk_size_bytes, total_chunks, status, encryption_key, route_hops, replication_factor, sender_ephemeral_pubkey)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-RETURNING transfer_id, sender_node_id, receiver_node_id, filename, total_size_bytes, content_hash, chunk_size_bytes, total_chunks, chunks_done, status, created_at, updated_at, encryption_key, route_hops, replication_factor, sender_ephemeral_pubkey
+RETURNING transfer_id, sender_node_id, receiver_node_id, filename, total_size_bytes, content_hash, chunk_size_bytes, total_chunks, chunks_done, status, created_at, updated_at, encryption_key, route_hops, replication_factor, sender_ephemeral_pubkey, transfer_mode
 `
 
 type CreateTransferParams struct {
@@ -74,12 +95,13 @@ func (q *Queries) CreateTransfer(ctx context.Context, arg CreateTransferParams) 
 		&i.RouteHops,
 		&i.ReplicationFactor,
 		&i.SenderEphemeralPubkey,
+		&i.TransferMode,
 	)
 	return i, err
 }
 
 const getTransfer = `-- name: GetTransfer :one
-SELECT transfer_id, sender_node_id, receiver_node_id, filename, total_size_bytes, content_hash, chunk_size_bytes, total_chunks, chunks_done, status, created_at, updated_at, encryption_key, route_hops, replication_factor, sender_ephemeral_pubkey FROM transfers WHERE transfer_id = $1
+SELECT transfer_id, sender_node_id, receiver_node_id, filename, total_size_bytes, content_hash, chunk_size_bytes, total_chunks, chunks_done, status, created_at, updated_at, encryption_key, route_hops, replication_factor, sender_ephemeral_pubkey, transfer_mode FROM transfers WHERE transfer_id = $1
 `
 
 func (q *Queries) GetTransfer(ctx context.Context, transferID string) (Transfer, error) {
@@ -102,12 +124,13 @@ func (q *Queries) GetTransfer(ctx context.Context, transferID string) (Transfer,
 		&i.RouteHops,
 		&i.ReplicationFactor,
 		&i.SenderEphemeralPubkey,
+		&i.TransferMode,
 	)
 	return i, err
 }
 
 const listTransfersByNode = `-- name: ListTransfersByNode :many
-SELECT transfer_id, sender_node_id, receiver_node_id, filename, total_size_bytes, content_hash, chunk_size_bytes, total_chunks, chunks_done, status, created_at, updated_at, encryption_key, route_hops, replication_factor, sender_ephemeral_pubkey FROM transfers WHERE sender_node_id = $1 OR receiver_node_id = $1 ORDER BY created_at DESC
+SELECT transfer_id, sender_node_id, receiver_node_id, filename, total_size_bytes, content_hash, chunk_size_bytes, total_chunks, chunks_done, status, created_at, updated_at, encryption_key, route_hops, replication_factor, sender_ephemeral_pubkey, transfer_mode FROM transfers WHERE sender_node_id = $1 OR receiver_node_id = $1 ORDER BY created_at DESC
 `
 
 func (q *Queries) ListTransfersByNode(ctx context.Context, senderNodeID string) ([]Transfer, error) {
@@ -136,6 +159,7 @@ func (q *Queries) ListTransfersByNode(ctx context.Context, senderNodeID string) 
 			&i.RouteHops,
 			&i.ReplicationFactor,
 			&i.SenderEphemeralPubkey,
+			&i.TransferMode,
 		); err != nil {
 			return nil, err
 		}
@@ -148,7 +172,7 @@ func (q *Queries) ListTransfersByNode(ctx context.Context, senderNodeID string) 
 }
 
 const listTransfersByStatus = `-- name: ListTransfersByStatus :many
-SELECT transfer_id, sender_node_id, receiver_node_id, filename, total_size_bytes, content_hash, chunk_size_bytes, total_chunks, chunks_done, status, created_at, updated_at, encryption_key, route_hops, replication_factor, sender_ephemeral_pubkey FROM transfers WHERE (sender_node_id = $1 OR receiver_node_id = $1) AND status = $2 ORDER BY created_at DESC
+SELECT transfer_id, sender_node_id, receiver_node_id, filename, total_size_bytes, content_hash, chunk_size_bytes, total_chunks, chunks_done, status, created_at, updated_at, encryption_key, route_hops, replication_factor, sender_ephemeral_pubkey, transfer_mode FROM transfers WHERE (sender_node_id = $1 OR receiver_node_id = $1) AND status = $2 ORDER BY created_at DESC
 `
 
 type ListTransfersByStatusParams struct {
@@ -182,6 +206,7 @@ func (q *Queries) ListTransfersByStatus(ctx context.Context, arg ListTransfersBy
 			&i.RouteHops,
 			&i.ReplicationFactor,
 			&i.SenderEphemeralPubkey,
+			&i.TransferMode,
 		); err != nil {
 			return nil, err
 		}
@@ -204,6 +229,20 @@ type UpdateRouteHopsParams struct {
 
 func (q *Queries) UpdateRouteHops(ctx context.Context, arg UpdateRouteHopsParams) error {
 	_, err := q.db.Exec(ctx, updateRouteHops, arg.TransferID, arg.RouteHops)
+	return err
+}
+
+const updateTransferMode = `-- name: UpdateTransferMode :exec
+UPDATE transfers SET transfer_mode = $2, updated_at = NOW() WHERE transfer_id = $1
+`
+
+type UpdateTransferModeParams struct {
+	TransferID   string `json:"transfer_id"`
+	TransferMode int32  `json:"transfer_mode"`
+}
+
+func (q *Queries) UpdateTransferMode(ctx context.Context, arg UpdateTransferModeParams) error {
+	_, err := q.db.Exec(ctx, updateTransferMode, arg.TransferID, arg.TransferMode)
 	return err
 }
 
