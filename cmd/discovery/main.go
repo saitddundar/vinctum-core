@@ -67,16 +67,19 @@ func main() {
 	}
 
 	rl := middleware.NewRateLimiter(100, 200)
+	audit := middleware.NewAuditLogger(pool)
 	srv := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
 			middleware.UnaryMetricsInterceptor(),
 			middleware.UnaryRateLimitInterceptor(rl),
 			middleware.UnaryAuthInterceptor(cfg.Auth.JWTSecret),
+			audit.UnaryInterceptor(),
 		),
 		grpc.ChainStreamInterceptor(
 			middleware.StreamMetricsInterceptor(),
 			middleware.StreamRateLimitInterceptor(rl),
 			middleware.StreamAuthInterceptor(cfg.Auth.JWTSecret),
+			audit.StreamInterceptor(),
 		),
 	)
 
