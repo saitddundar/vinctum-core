@@ -7,6 +7,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/rs/zerolog/log"
+	"github.com/saitddundar/vinctum-core/pkg/crypto"
 	discoveryv1 "github.com/saitddundar/vinctum-core/proto/discovery/v1"
 	"github.com/saitddundar/vinctum-core/services/discovery/repository"
 	"google.golang.org/grpc/codes"
@@ -32,6 +33,15 @@ func NewDiscoveryHandler(q repository.Querier, p2p P2PNode) *DiscoveryHandler {
 func (h *DiscoveryHandler) AnnounceNode(ctx context.Context, req *discoveryv1.AnnounceNodeRequest) (*discoveryv1.AnnounceNodeResponse, error) {
 	if req.NodeId == "" || len(req.Addrs) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "node_id and addrs are required")
+	}
+
+	if req.PublicKey == "" || len(req.Signature) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "public_key and signature are required")
+	}
+
+	if err := crypto.VerifyAnnouncement(req.NodeId, req.Addrs, req.PublicKey, req.Signature); err != nil {
+		log.Warn().Err(err).Str("node_id", req.NodeId).Msg("announcement signature verification failed")
+		return nil, status.Error(codes.Unauthenticated, "invalid announcement signature")
 	}
 
 	err := h.queries.UpsertPeer(ctx, repository.UpsertPeerParams{

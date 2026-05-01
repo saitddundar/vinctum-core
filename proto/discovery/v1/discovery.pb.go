@@ -76,6 +76,7 @@ type AnnounceNodeRequest struct {
 	NodeId        string                 `protobuf:"bytes,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
 	Addrs         []string               `protobuf:"bytes,2,rep,name=addrs,proto3" json:"addrs,omitempty"`                          // multiaddrs: /ip4/1.2.3.4/tcp/4001
 	PublicKey     string                 `protobuf:"bytes,3,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"` // Ed25519 public key (base64)
+	Signature     []byte                 `protobuf:"bytes,4,opt,name=signature,proto3" json:"signature,omitempty"`                  // Ed25519 signature over (node_id || addrs || public_key)
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -129,6 +130,13 @@ func (x *AnnounceNodeRequest) GetPublicKey() string {
 		return x.PublicKey
 	}
 	return ""
+}
+
+func (x *AnnounceNodeRequest) GetSignature() []byte {
+	if x != nil {
+		return x.Signature
+	}
+	return nil
 }
 
 type AnnounceNodeResponse struct {
@@ -559,12 +567,13 @@ var File_discovery_v1_discovery_proto protoreflect.FileDescriptor
 
 const file_discovery_v1_discovery_proto_rawDesc = "" +
 	"\n" +
-	"\x1cdiscovery/v1/discovery.proto\x12\fdiscovery.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"c\n" +
+	"\x1cdiscovery/v1/discovery.proto\x12\fdiscovery.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\x81\x01\n" +
 	"\x13AnnounceNodeRequest\x12\x17\n" +
 	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12\x14\n" +
 	"\x05addrs\x18\x02 \x03(\tR\x05addrs\x12\x1d\n" +
 	"\n" +
-	"public_key\x18\x03 \x01(\tR\tpublicKey\"\x89\x01\n" +
+	"public_key\x18\x03 \x01(\tR\tpublicKey\x12\x1c\n" +
+	"\tsignature\x18\x04 \x01(\fR\tsignature\"\x89\x01\n" +
 	"\x14AnnounceNodeResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12=\n" +

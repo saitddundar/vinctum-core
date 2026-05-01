@@ -17,6 +17,7 @@ message AnnounceNodeRequest {
   string node_id         = 1;
   repeated string addrs  = 2; // multiaddrs: /ip4/1.2.3.4/tcp/4001
   string public_key      = 3; // Ed25519 public key (base64)
+  bytes  signature       = 4; // Ed25519 signature over (node_id || addrs || public_key)
 }
 
 message AnnounceNodeResponse {
