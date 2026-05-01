@@ -60,6 +60,23 @@ services:
     ports:
       - "50052:50052"
 
+  ml:
+    build:
+      context: ../../../vinctum-ml
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      VINCTUM_ML_LOG_LEVEL: info
+      VINCTUM_ML_WORKERS: 2
+      VINCTUM_ML_API_KEY: ${ML_API_KEY:-}
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
   routing:
     build:
       context: ../..
@@ -68,11 +85,15 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      ml:
+        condition: service_healthy
     environment:
       VINCTUM_SERVICE_NAME: routing-service
       VINCTUM_GRPC_PORT: 50053
       VINCTUM_DATABASE_DSN: postgres://vinctum:vinctum@postgres:5432/vinctum?sslmode=disable
       VINCTUM_AUTH_JWT_SECRET: ${JWT_SECRET}
+      VINCTUM_ML_API_URL: http://ml:8000
+      VINCTUM_ML_API_KEY: ${ML_API_KEY:-}
     ports:
       - "50053:50053"
 
@@ -102,6 +123,7 @@ services:
       - discovery
       - routing
       - transfer
+      - ml
     environment:
       VINCTUM_SERVICE_NAME: gateway-service
       VINCTUM_GATEWAY_HTTP_PORT: 8080
@@ -109,7 +131,9 @@ services:
       VINCTUM_GATEWAY_DISCOVERY_ADDR: discovery:50052
       VINCTUM_GATEWAY_ROUTING_ADDR: routing:50053
       VINCTUM_GATEWAY_TRANSFER_ADDR: transfer:50054
+      VINCTUM_GATEWAY_ML_ADDR: http://ml:8000
       VINCTUM_AUTH_JWT_SECRET: ${JWT_SECRET}
+      VINCTUM_ML_API_KEY: ${ML_API_KEY:-}
       VINCTUM_CORS_ORIGINS: http://localhost:5173,http://localhost:3000,http://localhost:8081,http://localhost:8082
     ports:
       - "8080:8080"

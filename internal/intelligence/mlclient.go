@@ -64,6 +64,22 @@ type mlAnomalyResponse struct {
 	AnomalyScore float64 `json:"anomaly_score"`
 }
 
+type mlRouteRequest struct {
+	Nodes []mlScoreRequest `json:"nodes"`
+}
+
+type mlRouteResponse struct {
+	Scores     []mlScoreResponse `json:"scores"`
+	BestNode   string            `json:"best_node"`
+	RouteScore float64           `json:"route_score"`
+}
+
+type mlHealthResponse struct {
+	Status       string            `json:"status"`
+	Version      string            `json:"version"`
+	ModelsLoaded map[string]bool   `json:"models_loaded"`
+}
+
 func metricsToML(m *NodeMetrics) mlNodeMetrics {
 	return mlNodeMetrics{
 		TotalEvents:   m.TotalEvents,
@@ -114,6 +130,42 @@ func (c *MLClient) DetectAnomaly(nodeID string, m *NodeMetrics) (*mlAnomalyRespo
 		return nil, fmt.Errorf("ml anomaly: %w", err)
 	}
 	return &resp, nil
+}
+
+func (c *MLClient) ScoreRoute(nodes map[string]*NodeMetrics) (*mlRouteResponse, error) {
+	reqs := make([]mlScoreRequest, 0, len(nodes))
+	for id, m := range nodes {
+		reqs = append(reqs, mlScoreRequest{NodeID: id, Metrics: metricsToML(m)})
+	}
+
+	var resp mlRouteResponse
+	if err := c.post("/route", mlRouteRequest{Nodes: reqs}, &resp); err != nil {
+		return nil, fmt.Errorf("ml route: %w", err)
+	}
+	return &resp, nil
+}
+
+func (c *MLClient) Health() (*mlHealthResponse, error) {
+	req, err := http.NewRequest("GET", c.baseURL+"/health", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("ml health returned %d", resp.StatusCode)
+	}
+
+	var h mlHealthResponse
+	if err := json.NewDecoder(resp.Body).Decode(&h); err != nil {
+		return nil, err
+	}
+	return &h, nil
 }
 
 func (c *MLClient) post(path string, body any, result any) error {
