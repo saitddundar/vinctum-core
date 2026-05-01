@@ -4,17 +4,18 @@ Decentralized data courier platform built with Go microservices, gRPC, and libp2
 
 ## Architecture
 
-5 microservices communicating over gRPC, with a REST gateway for external clients:
+6 microservices communicating over gRPC, with a REST gateway for external clients:
 
 | Service     | Port  | Role                                      |
 |-------------|-------|-------------------------------------------|
-| Identity    | 50051 | Auth (JWT + bcrypt), user management      |
+| Identity    | 50051 | Auth (JWT + bcrypt), user/device management, pairing, peer sessions |
 | Discovery   | 50052 | P2P peer registry via libp2p/Kademlia DHT |
 | Routing     | 50053 | Route computation, relay management       |
-| Transfer    | 50054 | Chunk-based encrypted file transfer       |
+| Transfer    | 50054 | Chunk-based encrypted file transfer (relay + P2P) |
+| Relay       | —     | Internal store-and-forward chunk relay with circuit breaker |
 | Gateway     | 8080  | HTTP-to-gRPC proxy for browser clients    |
 
-Backing stores: PostgreSQL 16, Redis 7 (token blacklist).
+Backing stores: PostgreSQL 16, Redis 7 (token blacklist). External ML service (vinctum-ml, FastAPI + ONNX) for intelligent routing.
 
 ## Project Layout
 
@@ -23,12 +24,13 @@ cmd/                  # Service entry points (one main.go per service)
 proto/                # Protobuf definitions (buf.build toolchain)
 services/             # Business logic: handler/ + repository/ per service
   transfer/storage/   # File-based chunk store
-internal/             # Auth (JWT, blacklist), migrator, p2p node, intelligence
-pkg/                  # Shared: config, logger, crypto, middleware, grpcutil (TLS)
+internal/             # Auth (JWT, blacklist, pairing), migrator, p2p node, intelligence, relay
+  relay/              # Relay client, circuit breaker, rerouter, replicator
+pkg/                  # Shared: config, logger, crypto, middleware, grpcutil (TLS), mailer
 scripts/migrations/   # SQL schema files (embedded, auto-applied on boot)
 config/               # YAML configs (config.dev.yaml)
 deployments/docker/   # Dockerfiles + docker-compose.yml
-doc/                  # Threat model, 14-week project plan
+docs/                 # Threat model, 14-week project plan, ADRs (docs/adr/)
 ```
 
 ## Code Generation
@@ -73,9 +75,14 @@ CI (`.github/workflows/ci.yml`) runs lint -> test (with Postgres + Redis) -> bui
 - **Handler tests**: use `fakeQuerier` implementations, no real DB needed.
 - **Config**: Viper with `VINCTUM_` env prefix. Nested keys use `_` separator (e.g., `VINCTUM_AUTH_JWT_SECRET`).
 - **Migrations**: embedded SQL files in `scripts/migrations/`, auto-applied on service startup via `internal/migrator`.
-- **gRPC auth**: `pkg/middleware` interceptors validate JWT on all RPCs except Register/Login/RefreshToken/FindPeers/GetNodeInfo.
+- **gRPC auth**: `pkg/middleware` interceptors validate JWT on all RPCs except Register/Login/RefreshToken/FindPeers/GetNodeInfo/VerifyEmail/ResendVerification.
+- **gRPC rate limiting**: `pkg/middleware/ratelimit.go` token-bucket rate limiter per peer (extracted from gRPC metadata).
 - **gRPC metrics**: `pkg/middleware/metrics.go` Prometheus interceptors on all services; metrics at `:grpcPort+1000/metrics` (gateway at `:8080/metrics`).
-- **Intelligence**: `internal/intelligence/` provides node scoring, anomaly detection; wired into routing via `NodeIntelligence` interface.
+- **Audit logging**: `pkg/middleware/audit.go` records every gRPC call (user, method, status code, peer address, duration) to `audit_logs` table (migration 013). Wired into all services.
+- **Intelligence**: `internal/intelligence/` provides node scoring, anomaly detection; wired into routing via `NodeIntelligence` interface. External ML service (vinctum-ml) via `mlclient.go` with `/score`, `/anomaly`, `/route`, `/health` endpoints; falls back to local Z-score when unavailable.
+- **Relay internals**: `internal/relay/` provides relay client with connection pooling (`peerpool.go`), per-node circuit breaker (`circuitbreaker.go`), rerouter for failed nodes, and background chunk replicator.
+- **Email**: `pkg/mailer/` sends verification emails (SMTP or stub mode for dev).
+- **Device pairing**: `internal/auth/pairing.go` generates short-lived pairing codes (crypto/rand) stored in Redis.
 - **mTLS**: `pkg/grpcutil/tls.go` loads TLS credentials from config; enabled when `grpc.tls_enabled: true`.
 - **Proto imports**: `buf.build/googleapis/googleapis` is a dependency.
 
@@ -92,6 +99,9 @@ CI (`.github/workflows/ci.yml`) runs lint -> test (with Postgres + Redis) -> bui
 | `VINCTUM_CHUNK_DIR`             | ./data/chunks         | transfer     |
 | `VINCTUM_GATEWAY_*_ADDR`        | localhost:5005x       | gateway      |
 | `VINCTUM_GATEWAY_HTTP_PORT`     | 8080                  | gateway      |
+| `VINCTUM_ML_API_URL`           | —                     | routing      |
+| `VINCTUM_ML_API_KEY`           | —                     | routing, gw  |
+| `VINCTUM_GATEWAY_ML_ADDR`     | —                     | gateway      |
 | `VINCTUM_GRPC_TLS_ENABLED`     | false                 | all gRPC     |
 | `VINCTUM_GRPC_CERT_FILE`       | —                     | all gRPC     |
 | `VINCTUM_GRPC_KEY_FILE`        | —                     | all gRPC     |
@@ -99,9 +109,10 @@ CI (`.github/workflows/ci.yml`) runs lint -> test (with Postgres + Redis) -> bui
 
 ## Security Notes
 
-- JWT uses HMAC-SHA256 (not RSA) -- secret must be strong in prod.
+- JWT uses HMAC-SHA256 (not RSA) -- secret must be strong in prod. Refresh token rotation implemented (old token blacklisted on each refresh).
 - All gRPC services have auth interceptors; Discovery allows unauthenticated FindPeers/GetNodeInfo.
+- **Signed peer announcements**: `AnnounceNode` requires Ed25519 signature over `(node_id || addrs || public_key)`. Verification in `pkg/crypto/ed25519.go`. Prevents peer spoofing (threat S-02).
 - mTLS supported via `pkg/grpcutil` -- enable with `grpc.tls_enabled: true` + cert/key/CA paths.
 - E2E key exchange: each device registers a static X25519 public key with Identity (`device_keys` table, migration 010). `UploadDeviceKey`/`GetDeviceKey`/`GetSessionDeviceKeys` RPCs expose them; gateway endpoints under `/api/v1/devices/{id}/key` and `/api/v1/sessions/{id}/keys`. Per-transfer symmetric keys are derived via sender-ephemeral X25519 + ECDH + HKDF-SHA256 (`pkg/crypto/ecdh.go`). Transfer records store the 32-byte `sender_ephemeral_pubkey` (migration 011); the receiver fetches it from `GetTransferStatus`/`ListTransfers` and re-derives the same AES-256-GCM key. HKDF salt = `ephemeralPub || receiverStaticPub`, info = `vinctum-transfer-v1:<transfer_id>`. Content hash must cover the ephemeral pubkey client-side for MITM binding.
 - Server holds only ciphertext for transfers (commit a9a5771) -- never reintroduce server-side key escrow.
-- See `doc/threat_model.md` for full STRIDE analysis and open items.
+- See `docs/threat_model.md` for full STRIDE analysis and open items.
