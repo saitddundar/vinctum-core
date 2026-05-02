@@ -94,6 +94,11 @@ RETURNING *;
 -- name: GetDeviceKey :one
 SELECT * FROM device_keys WHERE device_id = $1::uuid;
 
+-- name: GetDeviceKeyByNodeID :one
+SELECT dk.* FROM device_keys dk
+JOIN devices d ON d.id = dk.device_id
+WHERE d.node_id = $1 AND d.revoked_at IS NULL AND d.is_approved = TRUE;
+
 -- name: ListSessionDeviceKeys :many
 SELECT dk.* FROM device_keys dk
 JOIN peer_session_devices psd ON dk.device_id = psd.device_id

@@ -226,6 +226,25 @@ func (q *Queries) GetDeviceKey(ctx context.Context, dollar_1 string) (DeviceKey,
 	return i, err
 }
 
+const getDeviceKeyByNodeID = `-- name: GetDeviceKeyByNodeID :one
+SELECT dk.device_id, dk.kex_algo, dk.kex_public_key, dk.created_at, dk.rotated_at FROM device_keys dk
+JOIN devices d ON d.id = dk.device_id
+WHERE d.node_id = $1 AND d.revoked_at IS NULL AND d.is_approved = TRUE
+`
+
+func (q *Queries) GetDeviceKeyByNodeID(ctx context.Context, nodeID string) (DeviceKey, error) {
+	row := q.db.QueryRow(ctx, getDeviceKeyByNodeID, nodeID)
+	var i DeviceKey
+	err := row.Scan(
+		&i.DeviceID,
+		&i.KexAlgo,
+		&i.KexPublicKey,
+		&i.CreatedAt,
+		&i.RotatedAt,
+	)
+	return i, err
+}
+
 const getPeerSession = `-- name: GetPeerSession :one
 SELECT id, user_id, name, is_active, created_at, closed_at FROM peer_sessions WHERE id = $1::uuid
 `

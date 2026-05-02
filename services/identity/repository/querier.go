@@ -22,6 +22,7 @@ type Querier interface {
 	GetDeviceByFingerprint(ctx context.Context, arg GetDeviceByFingerprintParams) (Device, error)
 	GetDeviceByID(ctx context.Context, dollar_1 string) (Device, error)
 	GetDeviceKey(ctx context.Context, dollar_1 string) (DeviceKey, error)
+	GetDeviceKeyByNodeID(ctx context.Context, nodeID string) (DeviceKey, error)
 	GetPeerSession(ctx context.Context, dollar_1 string) (PeerSession, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, dollar_1 string) (User, error)
