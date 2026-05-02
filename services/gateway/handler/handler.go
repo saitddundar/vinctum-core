@@ -135,6 +135,8 @@ func (h *GatewayHandler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/devices/{deviceId}/key", h.handleUploadDeviceKey)
 	mux.HandleFunc("GET /api/v1/devices/{deviceId}/key", h.handleGetDeviceKey)
 	mux.HandleFunc("GET /api/v1/sessions/{sessionId}/keys", h.handleGetSessionDeviceKeys)
+	// node key lookup (cross-user E2E: fetch receiver's public key by node_id)
+	mux.HandleFunc("GET /api/v1/nodes/{nodeId}/key", h.handleGetNodeKey)
 
 	// routing proxy
 	mux.HandleFunc("POST /api/v1/routes/find", h.handleFindRoute)
@@ -667,6 +669,41 @@ func (h *GatewayHandler) handleGetSessionDeviceKeys(w http.ResponseWriter, r *ht
 	ctx := forwardAuth(r)
 	resp, err := h.identityClient.GetSessionDeviceKeys(ctx, &identityv1.GetSessionDeviceKeysRequest{
 		SessionId: sessionID,
+	})
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+// handleGetNodeKey returns the X25519 public key for a given node_id.
+// This is used for cross-user E2E key exchange: the sender needs the receiver's
+// public key even if they don't know the receiver's device_id.
+func (h *GatewayHandler) handleGetNodeKey(w http.ResponseWriter, r *http.Request) {
+	if h.identityClient == nil {
+		writeError(w, http.StatusServiceUnavailable, "identity service unavailable")
+		return
+	}
+	nodeID := r.PathValue("nodeId")
+	if nodeID == "" {
+		writeError(w, http.StatusBadRequest, "node_id is required")
+		return
+	}
+	ctx := forwardAuth(r)
+
+	// Use GetDeviceKeyByNodeID which does the node_id→device_id JOIN in the DB.
+	// We reuse GetDeviceKey RPC but pass the node_id through the identity handler's
+	// GetDeviceKeyByNodeID query path via a dedicated lookup.
+	// Since we don't have a separate proto RPC for this, we fetch the device first
+	// to get its device_id, then fetch the key by device_id.
+	//
+	// Step 1: resolve node_id → device (via ListDevices is per-user only, so
+	// we rely on the identity handler's GetDeviceKey accepting a node_id lookup
+	// through the SQL query GetDeviceKeyByNodeID directly in the identity service.
+	// For now, call GetDeviceKey with a special prefix "node:" to signal the handler.
+	resp, err := h.identityClient.GetDeviceKey(ctx, &identityv1.GetDeviceKeyRequest{
+		DeviceId: "node:" + nodeID,
 	})
 	if err != nil {
 		writeGRPCError(w, err)
