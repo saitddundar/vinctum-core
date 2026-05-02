@@ -765,7 +765,7 @@ func (h *IdentityHandler) UploadDeviceKey(ctx context.Context, req *identityv1.U
 }
 
 func (h *IdentityHandler) GetDeviceKey(ctx context.Context, req *identityv1.GetDeviceKeyRequest) (*identityv1.GetDeviceKeyResponse, error) {
-	userID, ok := middleware.UserIDFromContext(ctx)
+	_, ok := middleware.UserIDFromContext(ctx)
 	if !ok {
 		return nil, status.Error(codes.Unauthenticated, "not authenticated")
 	}
@@ -774,15 +774,21 @@ func (h *IdentityHandler) GetDeviceKey(ctx context.Context, req *identityv1.GetD
 		return nil, status.Error(codes.InvalidArgument, "device_id is required")
 	}
 
-	device, err := h.queries.GetDeviceByID(ctx, req.DeviceId)
-	if err != nil {
-		return nil, status.Error(codes.NotFound, "device not found")
+	// NOTE: No ownership check — the X25519 public key is intentionally public.
+	// Senders need the receiver's public key to perform ECDH key exchange.
+	//
+	// When the gateway's /nodes/{nodeId}/key endpoint is called, it prefixes the
+	// node_id with "node:" to signal that a node_id lookup is needed instead of
+	// a direct device_id lookup.
+	var key repository.DeviceKey
+	var err error
+	const nodePrefix = "node:"
+	if len(req.DeviceId) > len(nodePrefix) && req.DeviceId[:len(nodePrefix)] == nodePrefix {
+		nodeID := req.DeviceId[len(nodePrefix):]
+		key, err = h.queries.GetDeviceKeyByNodeID(ctx, nodeID)
+	} else {
+		key, err = h.queries.GetDeviceKey(ctx, req.DeviceId)
 	}
-	if device.UserID != userID {
-		return nil, status.Error(codes.PermissionDenied, "device does not belong to you")
-	}
-
-	key, err := h.queries.GetDeviceKey(ctx, req.DeviceId)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, status.Error(codes.NotFound, "device key not found")
@@ -792,6 +798,7 @@ func (h *IdentityHandler) GetDeviceKey(ctx context.Context, req *identityv1.GetD
 
 	return &identityv1.GetDeviceKeyResponse{Key: deviceKeyToProto(key)}, nil
 }
+
 
 func (h *IdentityHandler) GetSessionDeviceKeys(ctx context.Context, req *identityv1.GetSessionDeviceKeysRequest) (*identityv1.GetSessionDeviceKeysResponse, error) {
 	userID, ok := middleware.UserIDFromContext(ctx)

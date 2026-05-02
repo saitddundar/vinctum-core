@@ -3,6 +3,7 @@ package handler_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 	"testing"
 	"time"
@@ -311,6 +312,18 @@ func (f *fakeQuerier) GetDeviceKey(_ context.Context, deviceID string) (reposito
 	return k, nil
 }
 
+func (f *fakeQuerier) GetDeviceKeyByNodeID(_ context.Context, nodeID string) (repository.DeviceKey, error) {
+	for _, d := range f.devices {
+		if d.NodeID.Valid && d.NodeID.String == nodeID && !d.RevokedAt.Valid && d.IsApproved {
+			if k, ok := f.deviceKeys[d.ID]; ok {
+				return k, nil
+			}
+			return repository.DeviceKey{}, pgx.ErrNoRows
+		}
+	}
+	return repository.DeviceKey{}, pgx.ErrNoRows
+}
+
 func (f *fakeQuerier) ListSessionDeviceKeys(_ context.Context, sessionID string) ([]repository.DeviceKey, error) {
 	var out []repository.DeviceKey
 	for deviceID := range f.sessionDevices[sessionID] {
@@ -461,17 +474,24 @@ func seedApprovedDevice(t *testing.T, f *testFixture) (userID, deviceID string) 
 		Username: "kex-user-" + suffix, Email: "kex" + suffix + "@example.com", PasswordHash: "x",
 	})
 	require.NoError(t, err)
-	dev, err := f.q.CreateDevice(context.Background(), repository.CreateDeviceParams{
+	// Use a real UUID for the device so UUID-parse-based lookup logic works correctly.
+	devID := "00000000-0000-0000-0000-" + fmt.Sprintf("%012d", f.q.nextID+1)
+	dev := repository.Device{
+		ID:          devID,
 		UserID:      user.ID,
 		Name:        "laptop",
 		DeviceType:  "pc",
 		Fingerprint: "fp-" + suffix,
 		IsApproved:  true,
 		ApprovedAt:  pgtype.Timestamptz{Time: time.Now(), Valid: true},
-	})
-	require.NoError(t, err)
+		LastActive:  time.Now(),
+		CreatedAt:   time.Now(),
+	}
+	f.q.nextID++
+	f.q.devices[dev.ID] = dev
 	return user.ID, dev.ID
 }
+
 
 func TestUploadDeviceKey(t *testing.T) {
 	f := newTestFixture()
