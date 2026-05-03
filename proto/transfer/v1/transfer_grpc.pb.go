@@ -28,6 +28,7 @@ const (
 	TransferService_WatchTransfers_FullMethodName       = "/transfer.v1.TransferService/WatchTransfers"
 	TransferService_GetP2PConnectionInfo_FullMethodName = "/transfer.v1.TransferService/GetP2PConnectionInfo"
 	TransferService_ConfirmP2PTransfer_FullMethodName   = "/transfer.v1.TransferService/ConfirmP2PTransfer"
+	TransferService_RespondToTransfer_FullMethodName    = "/transfer.v1.TransferService/RespondToTransfer"
 )
 
 // TransferServiceClient is the client API for TransferService service.
@@ -53,6 +54,8 @@ type TransferServiceClient interface {
 	GetP2PConnectionInfo(ctx context.Context, in *GetP2PConnectionInfoRequest, opts ...grpc.CallOption) (*GetP2PConnectionInfoResponse, error)
 	// Reports the result of a direct P2P transfer attempt.
 	ConfirmP2PTransfer(ctx context.Context, in *ConfirmP2PTransferRequest, opts ...grpc.CallOption) (*ConfirmP2PTransferResponse, error)
+	// Accepts or rejects a pending incoming transfer.
+	RespondToTransfer(ctx context.Context, in *RespondToTransferRequest, opts ...grpc.CallOption) (*RespondToTransferResponse, error)
 }
 
 type transferServiceClient struct {
@@ -174,6 +177,16 @@ func (c *transferServiceClient) ConfirmP2PTransfer(ctx context.Context, in *Conf
 	return out, nil
 }
 
+func (c *transferServiceClient) RespondToTransfer(ctx context.Context, in *RespondToTransferRequest, opts ...grpc.CallOption) (*RespondToTransferResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RespondToTransferResponse)
+	err := c.cc.Invoke(ctx, TransferService_RespondToTransfer_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TransferServiceServer is the server API for TransferService service.
 // All implementations should embed UnimplementedTransferServiceServer
 // for forward compatibility.
@@ -197,6 +210,8 @@ type TransferServiceServer interface {
 	GetP2PConnectionInfo(context.Context, *GetP2PConnectionInfoRequest) (*GetP2PConnectionInfoResponse, error)
 	// Reports the result of a direct P2P transfer attempt.
 	ConfirmP2PTransfer(context.Context, *ConfirmP2PTransferRequest) (*ConfirmP2PTransferResponse, error)
+	// Accepts or rejects a pending incoming transfer.
+	RespondToTransfer(context.Context, *RespondToTransferRequest) (*RespondToTransferResponse, error)
 }
 
 // UnimplementedTransferServiceServer should be embedded to have
@@ -232,6 +247,9 @@ func (UnimplementedTransferServiceServer) GetP2PConnectionInfo(context.Context, 
 }
 func (UnimplementedTransferServiceServer) ConfirmP2PTransfer(context.Context, *ConfirmP2PTransferRequest) (*ConfirmP2PTransferResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ConfirmP2PTransfer not implemented")
+}
+func (UnimplementedTransferServiceServer) RespondToTransfer(context.Context, *RespondToTransferRequest) (*RespondToTransferResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RespondToTransfer not implemented")
 }
 func (UnimplementedTransferServiceServer) testEmbeddedByValue() {}
 
@@ -390,6 +408,24 @@ func _TransferService_ConfirmP2PTransfer_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TransferService_RespondToTransfer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RespondToTransferRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TransferServiceServer).RespondToTransfer(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TransferService_RespondToTransfer_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TransferServiceServer).RespondToTransfer(ctx, req.(*RespondToTransferRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TransferService_ServiceDesc is the grpc.ServiceDesc for TransferService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -420,6 +456,10 @@ var TransferService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ConfirmP2PTransfer",
 			Handler:    _TransferService_ConfirmP2PTransfer_Handler,
+		},
+		{
+			MethodName: "RespondToTransfer",
+			Handler:    _TransferService_RespondToTransfer_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
