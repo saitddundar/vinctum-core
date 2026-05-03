@@ -18,10 +18,17 @@ type NodeIntelligence interface {
 	IsAnomalous(nodeID string) bool
 }
 
+// MetricsProvider exposes raw node metrics from the intelligence collector.
+type MetricsProvider interface {
+	NodeMetrics(nodeID string) (totalEvents, successes, failures, timeouts, reroutes, circuitOpens int64, avgLatencyMs, minLatencyMs, maxLatencyMs, p95LatencyMs float64, totalBytes int64, avgBytesPerOp, failureRate, uptime float64, ok bool)
+	AllNodeIDs() []string
+}
+
 type RoutingHandler struct {
 	routingv1.UnimplementedRoutingServiceServer
-	queries repository.Querier
-	intel   NodeIntelligence
+	queries  repository.Querier
+	intel    NodeIntelligence
+	metrics  MetricsProvider
 }
 
 func NewRoutingHandler(q repository.Querier) *RoutingHandler {
@@ -30,6 +37,10 @@ func NewRoutingHandler(q repository.Querier) *RoutingHandler {
 
 func (h *RoutingHandler) SetIntelligence(ni NodeIntelligence) {
 	h.intel = ni
+}
+
+func (h *RoutingHandler) SetMetricsProvider(mp MetricsProvider) {
+	h.metrics = mp
 }
 
 func (h *RoutingHandler) FindRoute(ctx context.Context, req *routingv1.FindRouteRequest) (*routingv1.FindRouteResponse, error) {
@@ -238,4 +249,42 @@ func (h *RoutingHandler) RegisterRelay(ctx context.Context, req *routingv1.Regis
 		Success:      true,
 		RegisteredAt: timestamppb.Now(),
 	}, nil
+}
+
+func (h *RoutingHandler) GetNodeMetrics(ctx context.Context, req *routingv1.GetNodeMetricsRequest) (*routingv1.GetNodeMetricsResponse, error) {
+	if h.metrics == nil {
+		return &routingv1.GetNodeMetricsResponse{}, nil
+	}
+
+	nodeIDs := req.NodeIds
+	if len(nodeIDs) == 0 {
+		nodeIDs = h.metrics.AllNodeIDs()
+	}
+
+	nodes := make([]*routingv1.NodeMetrics, 0, len(nodeIDs))
+	for _, id := range nodeIDs {
+		totalEvents, successes, failures, timeouts, reroutes, circuitOpens, avgLatency, minLatency, maxLatency, p95Latency, totalBytes, avgBytesPerOp, failureRate, uptime, ok := h.metrics.NodeMetrics(id)
+		if !ok {
+			continue
+		}
+		nodes = append(nodes, &routingv1.NodeMetrics{
+			NodeId:        id,
+			TotalEvents:   totalEvents,
+			Successes:     successes,
+			Failures:      failures,
+			Timeouts:      timeouts,
+			Reroutes:      reroutes,
+			CircuitOpens:  circuitOpens,
+			AvgLatencyMs:  avgLatency,
+			MinLatencyMs:  minLatency,
+			MaxLatencyMs:  maxLatency,
+			P95LatencyMs:  p95Latency,
+			TotalBytes:    totalBytes,
+			AvgBytesPerOp: avgBytesPerOp,
+			FailureRate:   failureRate,
+			Uptime:        uptime,
+		})
+	}
+
+	return &routingv1.GetNodeMetricsResponse{Nodes: nodes}, nil
 }

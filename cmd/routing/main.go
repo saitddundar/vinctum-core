@@ -63,6 +63,9 @@ func main() {
 	detector := intelligence.NewAnomalyDetector(collector, intelligence.DefaultAnomalyConfig())
 	localAdapter := intelligence.NewRouterAdapter(scorer, detector)
 
+	// Expose metrics provider for GetNodeMetrics RPC.
+	handler.SetMetricsProvider(intelligence.NewCollectorMetricsProvider(collector))
+
 	if cfg.ML.APIURL != "" {
 		mlClient := intelligence.NewMLClient(cfg.ML.APIURL, cfg.ML.APIKey)
 		handler.SetIntelligence(intelligence.NewMLRouterAdapter(mlClient, collector, localAdapter))
