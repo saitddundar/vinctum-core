@@ -19,30 +19,38 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	IdentityService_Register_FullMethodName             = "/identity.v1.IdentityService/Register"
-	IdentityService_Login_FullMethodName                = "/identity.v1.IdentityService/Login"
-	IdentityService_ValidateToken_FullMethodName        = "/identity.v1.IdentityService/ValidateToken"
-	IdentityService_RefreshToken_FullMethodName         = "/identity.v1.IdentityService/RefreshToken"
-	IdentityService_Logout_FullMethodName               = "/identity.v1.IdentityService/Logout"
-	IdentityService_VerifyEmail_FullMethodName          = "/identity.v1.IdentityService/VerifyEmail"
-	IdentityService_ResendVerification_FullMethodName   = "/identity.v1.IdentityService/ResendVerification"
-	IdentityService_RegisterDevice_FullMethodName       = "/identity.v1.IdentityService/RegisterDevice"
-	IdentityService_ListDevices_FullMethodName          = "/identity.v1.IdentityService/ListDevices"
-	IdentityService_GetDevice_FullMethodName            = "/identity.v1.IdentityService/GetDevice"
-	IdentityService_RevokeDevice_FullMethodName         = "/identity.v1.IdentityService/RevokeDevice"
-	IdentityService_UpdateDeviceActivity_FullMethodName = "/identity.v1.IdentityService/UpdateDeviceActivity"
-	IdentityService_GeneratePairingCode_FullMethodName  = "/identity.v1.IdentityService/GeneratePairingCode"
-	IdentityService_RedeemPairingCode_FullMethodName    = "/identity.v1.IdentityService/RedeemPairingCode"
-	IdentityService_ApprovePairing_FullMethodName       = "/identity.v1.IdentityService/ApprovePairing"
-	IdentityService_CreatePeerSession_FullMethodName    = "/identity.v1.IdentityService/CreatePeerSession"
-	IdentityService_ListPeerSessions_FullMethodName     = "/identity.v1.IdentityService/ListPeerSessions"
-	IdentityService_ClosePeerSession_FullMethodName     = "/identity.v1.IdentityService/ClosePeerSession"
-	IdentityService_JoinPeerSession_FullMethodName      = "/identity.v1.IdentityService/JoinPeerSession"
-	IdentityService_LeavePeerSession_FullMethodName     = "/identity.v1.IdentityService/LeavePeerSession"
-	IdentityService_ListSessionDevices_FullMethodName   = "/identity.v1.IdentityService/ListSessionDevices"
-	IdentityService_UploadDeviceKey_FullMethodName      = "/identity.v1.IdentityService/UploadDeviceKey"
-	IdentityService_GetDeviceKey_FullMethodName         = "/identity.v1.IdentityService/GetDeviceKey"
-	IdentityService_GetSessionDeviceKeys_FullMethodName = "/identity.v1.IdentityService/GetSessionDeviceKeys"
+	IdentityService_Register_FullMethodName               = "/identity.v1.IdentityService/Register"
+	IdentityService_Login_FullMethodName                  = "/identity.v1.IdentityService/Login"
+	IdentityService_ValidateToken_FullMethodName          = "/identity.v1.IdentityService/ValidateToken"
+	IdentityService_RefreshToken_FullMethodName           = "/identity.v1.IdentityService/RefreshToken"
+	IdentityService_Logout_FullMethodName                 = "/identity.v1.IdentityService/Logout"
+	IdentityService_VerifyEmail_FullMethodName            = "/identity.v1.IdentityService/VerifyEmail"
+	IdentityService_ResendVerification_FullMethodName     = "/identity.v1.IdentityService/ResendVerification"
+	IdentityService_RegisterDevice_FullMethodName         = "/identity.v1.IdentityService/RegisterDevice"
+	IdentityService_ListDevices_FullMethodName            = "/identity.v1.IdentityService/ListDevices"
+	IdentityService_GetDevice_FullMethodName              = "/identity.v1.IdentityService/GetDevice"
+	IdentityService_RevokeDevice_FullMethodName           = "/identity.v1.IdentityService/RevokeDevice"
+	IdentityService_UpdateDeviceActivity_FullMethodName   = "/identity.v1.IdentityService/UpdateDeviceActivity"
+	IdentityService_GeneratePairingCode_FullMethodName    = "/identity.v1.IdentityService/GeneratePairingCode"
+	IdentityService_RedeemPairingCode_FullMethodName      = "/identity.v1.IdentityService/RedeemPairingCode"
+	IdentityService_ApprovePairing_FullMethodName         = "/identity.v1.IdentityService/ApprovePairing"
+	IdentityService_CreatePeerSession_FullMethodName      = "/identity.v1.IdentityService/CreatePeerSession"
+	IdentityService_ListPeerSessions_FullMethodName       = "/identity.v1.IdentityService/ListPeerSessions"
+	IdentityService_ClosePeerSession_FullMethodName       = "/identity.v1.IdentityService/ClosePeerSession"
+	IdentityService_JoinPeerSession_FullMethodName        = "/identity.v1.IdentityService/JoinPeerSession"
+	IdentityService_LeavePeerSession_FullMethodName       = "/identity.v1.IdentityService/LeavePeerSession"
+	IdentityService_ListSessionDevices_FullMethodName     = "/identity.v1.IdentityService/ListSessionDevices"
+	IdentityService_UploadDeviceKey_FullMethodName        = "/identity.v1.IdentityService/UploadDeviceKey"
+	IdentityService_GetDeviceKey_FullMethodName           = "/identity.v1.IdentityService/GetDeviceKey"
+	IdentityService_GetSessionDeviceKeys_FullMethodName   = "/identity.v1.IdentityService/GetSessionDeviceKeys"
+	IdentityService_SendFriendRequest_FullMethodName      = "/identity.v1.IdentityService/SendFriendRequest"
+	IdentityService_RespondToFriendRequest_FullMethodName = "/identity.v1.IdentityService/RespondToFriendRequest"
+	IdentityService_ListFriends_FullMethodName            = "/identity.v1.IdentityService/ListFriends"
+	IdentityService_ListFriendRequests_FullMethodName     = "/identity.v1.IdentityService/ListFriendRequests"
+	IdentityService_RemoveFriend_FullMethodName           = "/identity.v1.IdentityService/RemoveFriend"
+	IdentityService_SearchUsers_FullMethodName            = "/identity.v1.IdentityService/SearchUsers"
+	IdentityService_GetNotificationCount_FullMethodName   = "/identity.v1.IdentityService/GetNotificationCount"
+	IdentityService_ListFriendDevices_FullMethodName      = "/identity.v1.IdentityService/ListFriendDevices"
 )
 
 // IdentityServiceClient is the client API for IdentityService service.
@@ -77,6 +85,15 @@ type IdentityServiceClient interface {
 	UploadDeviceKey(ctx context.Context, in *UploadDeviceKeyRequest, opts ...grpc.CallOption) (*UploadDeviceKeyResponse, error)
 	GetDeviceKey(ctx context.Context, in *GetDeviceKeyRequest, opts ...grpc.CallOption) (*GetDeviceKeyResponse, error)
 	GetSessionDeviceKeys(ctx context.Context, in *GetSessionDeviceKeysRequest, opts ...grpc.CallOption) (*GetSessionDeviceKeysResponse, error)
+	// Friends
+	SendFriendRequest(ctx context.Context, in *SendFriendRequestReq, opts ...grpc.CallOption) (*SendFriendRequestResp, error)
+	RespondToFriendRequest(ctx context.Context, in *RespondToFriendRequestReq, opts ...grpc.CallOption) (*RespondToFriendRequestResp, error)
+	ListFriends(ctx context.Context, in *ListFriendsRequest, opts ...grpc.CallOption) (*ListFriendsResponse, error)
+	ListFriendRequests(ctx context.Context, in *ListFriendRequestsRequest, opts ...grpc.CallOption) (*ListFriendRequestsResponse, error)
+	RemoveFriend(ctx context.Context, in *RemoveFriendRequest, opts ...grpc.CallOption) (*RemoveFriendResponse, error)
+	SearchUsers(ctx context.Context, in *SearchUsersRequest, opts ...grpc.CallOption) (*SearchUsersResponse, error)
+	GetNotificationCount(ctx context.Context, in *GetNotificationCountRequest, opts ...grpc.CallOption) (*GetNotificationCountResponse, error)
+	ListFriendDevices(ctx context.Context, in *ListFriendDevicesRequest, opts ...grpc.CallOption) (*ListFriendDevicesResponse, error)
 }
 
 type identityServiceClient struct {
@@ -327,6 +344,86 @@ func (c *identityServiceClient) GetSessionDeviceKeys(ctx context.Context, in *Ge
 	return out, nil
 }
 
+func (c *identityServiceClient) SendFriendRequest(ctx context.Context, in *SendFriendRequestReq, opts ...grpc.CallOption) (*SendFriendRequestResp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SendFriendRequestResp)
+	err := c.cc.Invoke(ctx, IdentityService_SendFriendRequest_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) RespondToFriendRequest(ctx context.Context, in *RespondToFriendRequestReq, opts ...grpc.CallOption) (*RespondToFriendRequestResp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RespondToFriendRequestResp)
+	err := c.cc.Invoke(ctx, IdentityService_RespondToFriendRequest_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) ListFriends(ctx context.Context, in *ListFriendsRequest, opts ...grpc.CallOption) (*ListFriendsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListFriendsResponse)
+	err := c.cc.Invoke(ctx, IdentityService_ListFriends_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) ListFriendRequests(ctx context.Context, in *ListFriendRequestsRequest, opts ...grpc.CallOption) (*ListFriendRequestsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListFriendRequestsResponse)
+	err := c.cc.Invoke(ctx, IdentityService_ListFriendRequests_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) RemoveFriend(ctx context.Context, in *RemoveFriendRequest, opts ...grpc.CallOption) (*RemoveFriendResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RemoveFriendResponse)
+	err := c.cc.Invoke(ctx, IdentityService_RemoveFriend_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) SearchUsers(ctx context.Context, in *SearchUsersRequest, opts ...grpc.CallOption) (*SearchUsersResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SearchUsersResponse)
+	err := c.cc.Invoke(ctx, IdentityService_SearchUsers_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) GetNotificationCount(ctx context.Context, in *GetNotificationCountRequest, opts ...grpc.CallOption) (*GetNotificationCountResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetNotificationCountResponse)
+	err := c.cc.Invoke(ctx, IdentityService_GetNotificationCount_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) ListFriendDevices(ctx context.Context, in *ListFriendDevicesRequest, opts ...grpc.CallOption) (*ListFriendDevicesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListFriendDevicesResponse)
+	err := c.cc.Invoke(ctx, IdentityService_ListFriendDevices_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // IdentityServiceServer is the server API for IdentityService service.
 // All implementations should embed UnimplementedIdentityServiceServer
 // for forward compatibility.
@@ -359,6 +456,15 @@ type IdentityServiceServer interface {
 	UploadDeviceKey(context.Context, *UploadDeviceKeyRequest) (*UploadDeviceKeyResponse, error)
 	GetDeviceKey(context.Context, *GetDeviceKeyRequest) (*GetDeviceKeyResponse, error)
 	GetSessionDeviceKeys(context.Context, *GetSessionDeviceKeysRequest) (*GetSessionDeviceKeysResponse, error)
+	// Friends
+	SendFriendRequest(context.Context, *SendFriendRequestReq) (*SendFriendRequestResp, error)
+	RespondToFriendRequest(context.Context, *RespondToFriendRequestReq) (*RespondToFriendRequestResp, error)
+	ListFriends(context.Context, *ListFriendsRequest) (*ListFriendsResponse, error)
+	ListFriendRequests(context.Context, *ListFriendRequestsRequest) (*ListFriendRequestsResponse, error)
+	RemoveFriend(context.Context, *RemoveFriendRequest) (*RemoveFriendResponse, error)
+	SearchUsers(context.Context, *SearchUsersRequest) (*SearchUsersResponse, error)
+	GetNotificationCount(context.Context, *GetNotificationCountRequest) (*GetNotificationCountResponse, error)
+	ListFriendDevices(context.Context, *ListFriendDevicesRequest) (*ListFriendDevicesResponse, error)
 }
 
 // UnimplementedIdentityServiceServer should be embedded to have
@@ -439,6 +545,30 @@ func (UnimplementedIdentityServiceServer) GetDeviceKey(context.Context, *GetDevi
 }
 func (UnimplementedIdentityServiceServer) GetSessionDeviceKeys(context.Context, *GetSessionDeviceKeysRequest) (*GetSessionDeviceKeysResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetSessionDeviceKeys not implemented")
+}
+func (UnimplementedIdentityServiceServer) SendFriendRequest(context.Context, *SendFriendRequestReq) (*SendFriendRequestResp, error) {
+	return nil, status.Error(codes.Unimplemented, "method SendFriendRequest not implemented")
+}
+func (UnimplementedIdentityServiceServer) RespondToFriendRequest(context.Context, *RespondToFriendRequestReq) (*RespondToFriendRequestResp, error) {
+	return nil, status.Error(codes.Unimplemented, "method RespondToFriendRequest not implemented")
+}
+func (UnimplementedIdentityServiceServer) ListFriends(context.Context, *ListFriendsRequest) (*ListFriendsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListFriends not implemented")
+}
+func (UnimplementedIdentityServiceServer) ListFriendRequests(context.Context, *ListFriendRequestsRequest) (*ListFriendRequestsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListFriendRequests not implemented")
+}
+func (UnimplementedIdentityServiceServer) RemoveFriend(context.Context, *RemoveFriendRequest) (*RemoveFriendResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RemoveFriend not implemented")
+}
+func (UnimplementedIdentityServiceServer) SearchUsers(context.Context, *SearchUsersRequest) (*SearchUsersResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SearchUsers not implemented")
+}
+func (UnimplementedIdentityServiceServer) GetNotificationCount(context.Context, *GetNotificationCountRequest) (*GetNotificationCountResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetNotificationCount not implemented")
+}
+func (UnimplementedIdentityServiceServer) ListFriendDevices(context.Context, *ListFriendDevicesRequest) (*ListFriendDevicesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListFriendDevices not implemented")
 }
 func (UnimplementedIdentityServiceServer) testEmbeddedByValue() {}
 
@@ -892,6 +1022,150 @@ func _IdentityService_GetSessionDeviceKeys_Handler(srv interface{}, ctx context.
 	return interceptor(ctx, in, info, handler)
 }
 
+func _IdentityService_SendFriendRequest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SendFriendRequestReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).SendFriendRequest(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_SendFriendRequest_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).SendFriendRequest(ctx, req.(*SendFriendRequestReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_RespondToFriendRequest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RespondToFriendRequestReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).RespondToFriendRequest(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_RespondToFriendRequest_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).RespondToFriendRequest(ctx, req.(*RespondToFriendRequestReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_ListFriends_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListFriendsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).ListFriends(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_ListFriends_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).ListFriends(ctx, req.(*ListFriendsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_ListFriendRequests_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListFriendRequestsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).ListFriendRequests(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_ListFriendRequests_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).ListFriendRequests(ctx, req.(*ListFriendRequestsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_RemoveFriend_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemoveFriendRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).RemoveFriend(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_RemoveFriend_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).RemoveFriend(ctx, req.(*RemoveFriendRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_SearchUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SearchUsersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).SearchUsers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_SearchUsers_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).SearchUsers(ctx, req.(*SearchUsersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_GetNotificationCount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetNotificationCountRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).GetNotificationCount(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_GetNotificationCount_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).GetNotificationCount(ctx, req.(*GetNotificationCountRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_ListFriendDevices_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListFriendDevicesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).ListFriendDevices(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_ListFriendDevices_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).ListFriendDevices(ctx, req.(*ListFriendDevicesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // IdentityService_ServiceDesc is the grpc.ServiceDesc for IdentityService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -994,6 +1268,38 @@ var IdentityService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetSessionDeviceKeys",
 			Handler:    _IdentityService_GetSessionDeviceKeys_Handler,
+		},
+		{
+			MethodName: "SendFriendRequest",
+			Handler:    _IdentityService_SendFriendRequest_Handler,
+		},
+		{
+			MethodName: "RespondToFriendRequest",
+			Handler:    _IdentityService_RespondToFriendRequest_Handler,
+		},
+		{
+			MethodName: "ListFriends",
+			Handler:    _IdentityService_ListFriends_Handler,
+		},
+		{
+			MethodName: "ListFriendRequests",
+			Handler:    _IdentityService_ListFriendRequests_Handler,
+		},
+		{
+			MethodName: "RemoveFriend",
+			Handler:    _IdentityService_RemoveFriend_Handler,
+		},
+		{
+			MethodName: "SearchUsers",
+			Handler:    _IdentityService_SearchUsers_Handler,
+		},
+		{
+			MethodName: "GetNotificationCount",
+			Handler:    _IdentityService_GetNotificationCount_Handler,
+		},
+		{
+			MethodName: "ListFriendDevices",
+			Handler:    _IdentityService_ListFriendDevices_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

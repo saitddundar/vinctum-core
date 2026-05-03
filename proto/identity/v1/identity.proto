@@ -39,6 +39,16 @@ service IdentityService {
   rpc UploadDeviceKey(UploadDeviceKeyRequest) returns (UploadDeviceKeyResponse);
   rpc GetDeviceKey(GetDeviceKeyRequest) returns (GetDeviceKeyResponse);
   rpc GetSessionDeviceKeys(GetSessionDeviceKeysRequest) returns (GetSessionDeviceKeysResponse);
+
+  // Friends
+  rpc SendFriendRequest(SendFriendRequestReq) returns (SendFriendRequestResp);
+  rpc RespondToFriendRequest(RespondToFriendRequestReq) returns (RespondToFriendRequestResp);
+  rpc ListFriends(ListFriendsRequest) returns (ListFriendsResponse);
+  rpc ListFriendRequests(ListFriendRequestsRequest) returns (ListFriendRequestsResponse);
+  rpc RemoveFriend(RemoveFriendRequest) returns (RemoveFriendResponse);
+  rpc SearchUsers(SearchUsersRequest) returns (SearchUsersResponse);
+  rpc GetNotificationCount(GetNotificationCountRequest) returns (GetNotificationCountResponse);
+  rpc ListFriendDevices(ListFriendDevicesRequest) returns (ListFriendDevicesResponse);
 }
 
 message RegisterRequest {
@@ -300,4 +310,72 @@ message GetSessionDeviceKeysRequest {
 }
 message GetSessionDeviceKeysResponse {
   repeated DeviceKey keys = 1;
+}
+
+// ─── Friend types ──────────────────────────────────
+
+message UserInfo {
+  string user_id  = 1;
+  string username = 2;
+  string email    = 3;
+}
+
+message Friend {
+  string   id         = 1;
+  UserInfo user       = 2;
+  string   status     = 3;
+  google.protobuf.Timestamp created_at = 4;
+}
+
+message SendFriendRequestReq {
+  string addressee_user_id = 1;
+}
+message SendFriendRequestResp {
+  Friend friendship = 1;
+}
+
+message RespondToFriendRequestReq {
+  string friendship_id = 1;
+  bool   accept        = 2;
+}
+message RespondToFriendRequestResp {
+  Friend friendship = 1;
+}
+
+message ListFriendsRequest {}
+message ListFriendsResponse {
+  repeated Friend friends = 1;
+}
+
+message ListFriendRequestsRequest {}
+message ListFriendRequestsResponse {
+  repeated Friend requests = 1;
+}
+
+message RemoveFriendRequest {
+  string friendship_id = 1;
+}
+message RemoveFriendResponse {
+  bool success = 1;
+}
+
+message SearchUsersRequest {
+  string query = 1;
+}
+message SearchUsersResponse {
+  repeated UserInfo users = 1;
+}
+
+message GetNotificationCountRequest {}
+message GetNotificationCountResponse {
+  int32 friend_requests      = 1;
+  int32 incoming_transfers   = 2;
+  int32 total                = 3;
+}
+
+message ListFriendDevicesRequest {
+  string friend_user_id = 1;
+}
+message ListFriendDevicesResponse {
+  repeated Device devices = 1;
 }
