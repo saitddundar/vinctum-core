@@ -794,6 +794,250 @@ func (x *RegisterRelayResponse) GetRegisteredAt() *timestamppb.Timestamp {
 	return nil
 }
 
+type GetNodeMetricsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	NodeIds       []string               `protobuf:"bytes,1,rep,name=node_ids,json=nodeIds,proto3" json:"node_ids,omitempty"` // Empty = return all known nodes
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetNodeMetricsRequest) Reset() {
+	*x = GetNodeMetricsRequest{}
+	mi := &file_routing_v1_routing_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetNodeMetricsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetNodeMetricsRequest) ProtoMessage() {}
+
+func (x *GetNodeMetricsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_routing_v1_routing_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetNodeMetricsRequest.ProtoReflect.Descriptor instead.
+func (*GetNodeMetricsRequest) Descriptor() ([]byte, []int) {
+	return file_routing_v1_routing_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *GetNodeMetricsRequest) GetNodeIds() []string {
+	if x != nil {
+		return x.NodeIds
+	}
+	return nil
+}
+
+type GetNodeMetricsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Nodes         []*NodeMetrics         `protobuf:"bytes,1,rep,name=nodes,proto3" json:"nodes,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetNodeMetricsResponse) Reset() {
+	*x = GetNodeMetricsResponse{}
+	mi := &file_routing_v1_routing_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetNodeMetricsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetNodeMetricsResponse) ProtoMessage() {}
+
+func (x *GetNodeMetricsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_routing_v1_routing_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetNodeMetricsResponse.ProtoReflect.Descriptor instead.
+func (*GetNodeMetricsResponse) Descriptor() ([]byte, []int) {
+	return file_routing_v1_routing_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *GetNodeMetricsResponse) GetNodes() []*NodeMetrics {
+	if x != nil {
+		return x.Nodes
+	}
+	return nil
+}
+
+type NodeMetrics struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	NodeId        string                 `protobuf:"bytes,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
+	TotalEvents   int64                  `protobuf:"varint,2,opt,name=total_events,json=totalEvents,proto3" json:"total_events,omitempty"`
+	Successes     int64                  `protobuf:"varint,3,opt,name=successes,proto3" json:"successes,omitempty"`
+	Failures      int64                  `protobuf:"varint,4,opt,name=failures,proto3" json:"failures,omitempty"`
+	Timeouts      int64                  `protobuf:"varint,5,opt,name=timeouts,proto3" json:"timeouts,omitempty"`
+	Reroutes      int64                  `protobuf:"varint,6,opt,name=reroutes,proto3" json:"reroutes,omitempty"`
+	CircuitOpens  int64                  `protobuf:"varint,7,opt,name=circuit_opens,json=circuitOpens,proto3" json:"circuit_opens,omitempty"`
+	AvgLatencyMs  float64                `protobuf:"fixed64,8,opt,name=avg_latency_ms,json=avgLatencyMs,proto3" json:"avg_latency_ms,omitempty"`
+	MinLatencyMs  float64                `protobuf:"fixed64,9,opt,name=min_latency_ms,json=minLatencyMs,proto3" json:"min_latency_ms,omitempty"`
+	MaxLatencyMs  float64                `protobuf:"fixed64,10,opt,name=max_latency_ms,json=maxLatencyMs,proto3" json:"max_latency_ms,omitempty"`
+	P95LatencyMs  float64                `protobuf:"fixed64,11,opt,name=p95_latency_ms,json=p95LatencyMs,proto3" json:"p95_latency_ms,omitempty"`
+	TotalBytes    int64                  `protobuf:"varint,12,opt,name=total_bytes,json=totalBytes,proto3" json:"total_bytes,omitempty"`
+	AvgBytesPerOp float64                `protobuf:"fixed64,13,opt,name=avg_bytes_per_op,json=avgBytesPerOp,proto3" json:"avg_bytes_per_op,omitempty"`
+	FailureRate   float64                `protobuf:"fixed64,14,opt,name=failure_rate,json=failureRate,proto3" json:"failure_rate,omitempty"`
+	Uptime        float64                `protobuf:"fixed64,15,opt,name=uptime,proto3" json:"uptime,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *NodeMetrics) Reset() {
+	*x = NodeMetrics{}
+	mi := &file_routing_v1_routing_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *NodeMetrics) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*NodeMetrics) ProtoMessage() {}
+
+func (x *NodeMetrics) ProtoReflect() protoreflect.Message {
+	mi := &file_routing_v1_routing_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use NodeMetrics.ProtoReflect.Descriptor instead.
+func (*NodeMetrics) Descriptor() ([]byte, []int) {
+	return file_routing_v1_routing_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *NodeMetrics) GetNodeId() string {
+	if x != nil {
+		return x.NodeId
+	}
+	return ""
+}
+
+func (x *NodeMetrics) GetTotalEvents() int64 {
+	if x != nil {
+		return x.TotalEvents
+	}
+	return 0
+}
+
+func (x *NodeMetrics) GetSuccesses() int64 {
+	if x != nil {
+		return x.Successes
+	}
+	return 0
+}
+
+func (x *NodeMetrics) GetFailures() int64 {
+	if x != nil {
+		return x.Failures
+	}
+	return 0
+}
+
+func (x *NodeMetrics) GetTimeouts() int64 {
+	if x != nil {
+		return x.Timeouts
+	}
+	return 0
+}
+
+func (x *NodeMetrics) GetReroutes() int64 {
+	if x != nil {
+		return x.Reroutes
+	}
+	return 0
+}
+
+func (x *NodeMetrics) GetCircuitOpens() int64 {
+	if x != nil {
+		return x.CircuitOpens
+	}
+	return 0
+}
+
+func (x *NodeMetrics) GetAvgLatencyMs() float64 {
+	if x != nil {
+		return x.AvgLatencyMs
+	}
+	return 0
+}
+
+func (x *NodeMetrics) GetMinLatencyMs() float64 {
+	if x != nil {
+		return x.MinLatencyMs
+	}
+	return 0
+}
+
+func (x *NodeMetrics) GetMaxLatencyMs() float64 {
+	if x != nil {
+		return x.MaxLatencyMs
+	}
+	return 0
+}
+
+func (x *NodeMetrics) GetP95LatencyMs() float64 {
+	if x != nil {
+		return x.P95LatencyMs
+	}
+	return 0
+}
+
+func (x *NodeMetrics) GetTotalBytes() int64 {
+	if x != nil {
+		return x.TotalBytes
+	}
+	return 0
+}
+
+func (x *NodeMetrics) GetAvgBytesPerOp() float64 {
+	if x != nil {
+		return x.AvgBytesPerOp
+	}
+	return 0
+}
+
+func (x *NodeMetrics) GetFailureRate() float64 {
+	if x != nil {
+		return x.FailureRate
+	}
+	return 0
+}
+
+func (x *NodeMetrics) GetUptime() float64 {
+	if x != nil {
+		return x.Uptime
+	}
+	return 0
+}
+
 var File_routing_v1_routing_proto protoreflect.FileDescriptor
 
 const file_routing_v1_routing_proto_rawDesc = "" +
@@ -855,14 +1099,37 @@ const file_routing_v1_routing_proto_rawDesc = "" +
 	"\fmax_circuits\x18\x03 \x01(\x05R\vmaxCircuits\"r\n" +
 	"\x15RegisterRelayResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12?\n" +
-	"\rregistered_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\fregisteredAt2\xb2\x03\n" +
+	"\rregistered_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\fregisteredAt\"2\n" +
+	"\x15GetNodeMetricsRequest\x12\x19\n" +
+	"\bnode_ids\x18\x01 \x03(\tR\anodeIds\"G\n" +
+	"\x16GetNodeMetricsResponse\x12-\n" +
+	"\x05nodes\x18\x01 \x03(\v2\x17.routing.v1.NodeMetricsR\x05nodes\"\xfd\x03\n" +
+	"\vNodeMetrics\x12\x17\n" +
+	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12!\n" +
+	"\ftotal_events\x18\x02 \x01(\x03R\vtotalEvents\x12\x1c\n" +
+	"\tsuccesses\x18\x03 \x01(\x03R\tsuccesses\x12\x1a\n" +
+	"\bfailures\x18\x04 \x01(\x03R\bfailures\x12\x1a\n" +
+	"\btimeouts\x18\x05 \x01(\x03R\btimeouts\x12\x1a\n" +
+	"\breroutes\x18\x06 \x01(\x03R\breroutes\x12#\n" +
+	"\rcircuit_opens\x18\a \x01(\x03R\fcircuitOpens\x12$\n" +
+	"\x0eavg_latency_ms\x18\b \x01(\x01R\favgLatencyMs\x12$\n" +
+	"\x0emin_latency_ms\x18\t \x01(\x01R\fminLatencyMs\x12$\n" +
+	"\x0emax_latency_ms\x18\n" +
+	" \x01(\x01R\fmaxLatencyMs\x12$\n" +
+	"\x0ep95_latency_ms\x18\v \x01(\x01R\fp95LatencyMs\x12\x1f\n" +
+	"\vtotal_bytes\x18\f \x01(\x03R\n" +
+	"totalBytes\x12'\n" +
+	"\x10avg_bytes_per_op\x18\r \x01(\x01R\ravgBytesPerOp\x12!\n" +
+	"\ffailure_rate\x18\x0e \x01(\x01R\vfailureRate\x12\x16\n" +
+	"\x06uptime\x18\x0f \x01(\x01R\x06uptime2\x8b\x04\n" +
 	"\x0eRoutingService\x12H\n" +
 	"\tFindRoute\x12\x1c.routing.v1.FindRouteRequest\x1a\x1d.routing.v1.FindRouteResponse\x12]\n" +
 	"\x10UpdateRouteTable\x12#.routing.v1.UpdateRouteTableRequest\x1a$.routing.v1.UpdateRouteTableResponse\x12T\n" +
 	"\rGetRouteTable\x12 .routing.v1.GetRouteTableRequest\x1a!.routing.v1.GetRouteTableResponse\x12K\n" +
 	"\n" +
 	"ListRelays\x12\x1d.routing.v1.ListRelaysRequest\x1a\x1e.routing.v1.ListRelaysResponse\x12T\n" +
-	"\rRegisterRelay\x12 .routing.v1.RegisterRelayRequest\x1a!.routing.v1.RegisterRelayResponseB@Z>github.com/saitddundar/vinctum-core/proto/routing/v1;routingv1b\x06proto3"
+	"\rRegisterRelay\x12 .routing.v1.RegisterRelayRequest\x1a!.routing.v1.RegisterRelayResponse\x12W\n" +
+	"\x0eGetNodeMetrics\x12!.routing.v1.GetNodeMetricsRequest\x1a\".routing.v1.GetNodeMetricsResponseB@Z>github.com/saitddundar/vinctum-core/proto/routing/v1;routingv1b\x06proto3"
 
 var (
 	file_routing_v1_routing_proto_rawDescOnce sync.Once
@@ -876,7 +1143,7 @@ func file_routing_v1_routing_proto_rawDescGZIP() []byte {
 	return file_routing_v1_routing_proto_rawDescData
 }
 
-var file_routing_v1_routing_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
+var file_routing_v1_routing_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
 var file_routing_v1_routing_proto_goTypes = []any{
 	(*FindRouteRequest)(nil),         // 0: routing.v1.FindRouteRequest
 	(*FindRouteResponse)(nil),        // 1: routing.v1.FindRouteResponse
@@ -891,32 +1158,38 @@ var file_routing_v1_routing_proto_goTypes = []any{
 	(*RelayInfo)(nil),                // 10: routing.v1.RelayInfo
 	(*RegisterRelayRequest)(nil),     // 11: routing.v1.RegisterRelayRequest
 	(*RegisterRelayResponse)(nil),    // 12: routing.v1.RegisterRelayResponse
-	(*timestamppb.Timestamp)(nil),    // 13: google.protobuf.Timestamp
+	(*GetNodeMetricsRequest)(nil),    // 13: routing.v1.GetNodeMetricsRequest
+	(*GetNodeMetricsResponse)(nil),   // 14: routing.v1.GetNodeMetricsResponse
+	(*NodeMetrics)(nil),              // 15: routing.v1.NodeMetrics
+	(*timestamppb.Timestamp)(nil),    // 16: google.protobuf.Timestamp
 }
 var file_routing_v1_routing_proto_depIdxs = []int32{
 	2,  // 0: routing.v1.FindRouteResponse.hops:type_name -> routing.v1.RouteHop
 	5,  // 1: routing.v1.UpdateRouteTableRequest.entries:type_name -> routing.v1.RouteEntry
-	13, // 2: routing.v1.UpdateRouteTableResponse.updated_at:type_name -> google.protobuf.Timestamp
+	16, // 2: routing.v1.UpdateRouteTableResponse.updated_at:type_name -> google.protobuf.Timestamp
 	5,  // 3: routing.v1.GetRouteTableResponse.entries:type_name -> routing.v1.RouteEntry
-	13, // 4: routing.v1.GetRouteTableResponse.last_updated:type_name -> google.protobuf.Timestamp
+	16, // 4: routing.v1.GetRouteTableResponse.last_updated:type_name -> google.protobuf.Timestamp
 	10, // 5: routing.v1.ListRelaysResponse.relays:type_name -> routing.v1.RelayInfo
-	13, // 6: routing.v1.RelayInfo.last_seen:type_name -> google.protobuf.Timestamp
-	13, // 7: routing.v1.RegisterRelayResponse.registered_at:type_name -> google.protobuf.Timestamp
-	0,  // 8: routing.v1.RoutingService.FindRoute:input_type -> routing.v1.FindRouteRequest
-	3,  // 9: routing.v1.RoutingService.UpdateRouteTable:input_type -> routing.v1.UpdateRouteTableRequest
-	6,  // 10: routing.v1.RoutingService.GetRouteTable:input_type -> routing.v1.GetRouteTableRequest
-	8,  // 11: routing.v1.RoutingService.ListRelays:input_type -> routing.v1.ListRelaysRequest
-	11, // 12: routing.v1.RoutingService.RegisterRelay:input_type -> routing.v1.RegisterRelayRequest
-	1,  // 13: routing.v1.RoutingService.FindRoute:output_type -> routing.v1.FindRouteResponse
-	4,  // 14: routing.v1.RoutingService.UpdateRouteTable:output_type -> routing.v1.UpdateRouteTableResponse
-	7,  // 15: routing.v1.RoutingService.GetRouteTable:output_type -> routing.v1.GetRouteTableResponse
-	9,  // 16: routing.v1.RoutingService.ListRelays:output_type -> routing.v1.ListRelaysResponse
-	12, // 17: routing.v1.RoutingService.RegisterRelay:output_type -> routing.v1.RegisterRelayResponse
-	13, // [13:18] is the sub-list for method output_type
-	8,  // [8:13] is the sub-list for method input_type
-	8,  // [8:8] is the sub-list for extension type_name
-	8,  // [8:8] is the sub-list for extension extendee
-	0,  // [0:8] is the sub-list for field type_name
+	16, // 6: routing.v1.RelayInfo.last_seen:type_name -> google.protobuf.Timestamp
+	16, // 7: routing.v1.RegisterRelayResponse.registered_at:type_name -> google.protobuf.Timestamp
+	15, // 8: routing.v1.GetNodeMetricsResponse.nodes:type_name -> routing.v1.NodeMetrics
+	0,  // 9: routing.v1.RoutingService.FindRoute:input_type -> routing.v1.FindRouteRequest
+	3,  // 10: routing.v1.RoutingService.UpdateRouteTable:input_type -> routing.v1.UpdateRouteTableRequest
+	6,  // 11: routing.v1.RoutingService.GetRouteTable:input_type -> routing.v1.GetRouteTableRequest
+	8,  // 12: routing.v1.RoutingService.ListRelays:input_type -> routing.v1.ListRelaysRequest
+	11, // 13: routing.v1.RoutingService.RegisterRelay:input_type -> routing.v1.RegisterRelayRequest
+	13, // 14: routing.v1.RoutingService.GetNodeMetrics:input_type -> routing.v1.GetNodeMetricsRequest
+	1,  // 15: routing.v1.RoutingService.FindRoute:output_type -> routing.v1.FindRouteResponse
+	4,  // 16: routing.v1.RoutingService.UpdateRouteTable:output_type -> routing.v1.UpdateRouteTableResponse
+	7,  // 17: routing.v1.RoutingService.GetRouteTable:output_type -> routing.v1.GetRouteTableResponse
+	9,  // 18: routing.v1.RoutingService.ListRelays:output_type -> routing.v1.ListRelaysResponse
+	12, // 19: routing.v1.RoutingService.RegisterRelay:output_type -> routing.v1.RegisterRelayResponse
+	14, // 20: routing.v1.RoutingService.GetNodeMetrics:output_type -> routing.v1.GetNodeMetricsResponse
+	15, // [15:21] is the sub-list for method output_type
+	9,  // [9:15] is the sub-list for method input_type
+	9,  // [9:9] is the sub-list for extension type_name
+	9,  // [9:9] is the sub-list for extension extendee
+	0,  // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_routing_v1_routing_proto_init() }
@@ -930,7 +1203,7 @@ func file_routing_v1_routing_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_routing_v1_routing_proto_rawDesc), len(file_routing_v1_routing_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   13,
+			NumMessages:   16,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

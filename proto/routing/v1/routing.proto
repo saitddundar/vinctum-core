@@ -21,6 +21,9 @@ service RoutingService {
 
   // Registers or updates a relay node.
   rpc RegisterRelay(RegisterRelayRequest) returns (RegisterRelayResponse);
+
+  // Returns collected metrics for given nodes (from intelligence collector).
+  rpc GetNodeMetrics(GetNodeMetricsRequest) returns (GetNodeMetricsResponse);
 }
 
 // ─── FindRoute ───────────────────────────────────────────
@@ -108,4 +111,32 @@ message RegisterRelayRequest {
 message RegisterRelayResponse {
   bool   success = 1;
   google.protobuf.Timestamp registered_at = 2;
+}
+
+// ─── GetNodeMetrics ──────────────────────────────────────
+
+message GetNodeMetricsRequest {
+  repeated string node_ids = 1; // Empty = return all known nodes
+}
+
+message GetNodeMetricsResponse {
+  repeated NodeMetrics nodes = 1;
+}
+
+message NodeMetrics {
+  string node_id         = 1;
+  int64  total_events    = 2;
+  int64  successes       = 3;
+  int64  failures        = 4;
+  int64  timeouts        = 5;
+  int64  reroutes        = 6;
+  int64  circuit_opens   = 7;
+  double avg_latency_ms  = 8;
+  double min_latency_ms  = 9;
+  double max_latency_ms  = 10;
+  double p95_latency_ms  = 11;
+  int64  total_bytes     = 12;
+  double avg_bytes_per_op = 13;
+  double failure_rate    = 14;
+  double uptime          = 15;
 }

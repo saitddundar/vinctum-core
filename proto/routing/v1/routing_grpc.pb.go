@@ -24,6 +24,7 @@ const (
 	RoutingService_GetRouteTable_FullMethodName    = "/routing.v1.RoutingService/GetRouteTable"
 	RoutingService_ListRelays_FullMethodName       = "/routing.v1.RoutingService/ListRelays"
 	RoutingService_RegisterRelay_FullMethodName    = "/routing.v1.RoutingService/RegisterRelay"
+	RoutingService_GetNodeMetrics_FullMethodName   = "/routing.v1.RoutingService/GetNodeMetrics"
 )
 
 // RoutingServiceClient is the client API for RoutingService service.
@@ -40,6 +41,8 @@ type RoutingServiceClient interface {
 	ListRelays(ctx context.Context, in *ListRelaysRequest, opts ...grpc.CallOption) (*ListRelaysResponse, error)
 	// Registers or updates a relay node.
 	RegisterRelay(ctx context.Context, in *RegisterRelayRequest, opts ...grpc.CallOption) (*RegisterRelayResponse, error)
+	// Returns collected metrics for given nodes (from intelligence collector).
+	GetNodeMetrics(ctx context.Context, in *GetNodeMetricsRequest, opts ...grpc.CallOption) (*GetNodeMetricsResponse, error)
 }
 
 type routingServiceClient struct {
@@ -100,6 +103,16 @@ func (c *routingServiceClient) RegisterRelay(ctx context.Context, in *RegisterRe
 	return out, nil
 }
 
+func (c *routingServiceClient) GetNodeMetrics(ctx context.Context, in *GetNodeMetricsRequest, opts ...grpc.CallOption) (*GetNodeMetricsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetNodeMetricsResponse)
+	err := c.cc.Invoke(ctx, RoutingService_GetNodeMetrics_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // RoutingServiceServer is the server API for RoutingService service.
 // All implementations should embed UnimplementedRoutingServiceServer
 // for forward compatibility.
@@ -114,6 +127,8 @@ type RoutingServiceServer interface {
 	ListRelays(context.Context, *ListRelaysRequest) (*ListRelaysResponse, error)
 	// Registers or updates a relay node.
 	RegisterRelay(context.Context, *RegisterRelayRequest) (*RegisterRelayResponse, error)
+	// Returns collected metrics for given nodes (from intelligence collector).
+	GetNodeMetrics(context.Context, *GetNodeMetricsRequest) (*GetNodeMetricsResponse, error)
 }
 
 // UnimplementedRoutingServiceServer should be embedded to have
@@ -137,6 +152,9 @@ func (UnimplementedRoutingServiceServer) ListRelays(context.Context, *ListRelays
 }
 func (UnimplementedRoutingServiceServer) RegisterRelay(context.Context, *RegisterRelayRequest) (*RegisterRelayResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method RegisterRelay not implemented")
+}
+func (UnimplementedRoutingServiceServer) GetNodeMetrics(context.Context, *GetNodeMetricsRequest) (*GetNodeMetricsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetNodeMetrics not implemented")
 }
 func (UnimplementedRoutingServiceServer) testEmbeddedByValue() {}
 
@@ -248,6 +266,24 @@ func _RoutingService_RegisterRelay_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _RoutingService_GetNodeMetrics_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetNodeMetricsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RoutingServiceServer).GetNodeMetrics(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RoutingService_GetNodeMetrics_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RoutingServiceServer).GetNodeMetrics(ctx, req.(*GetNodeMetricsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // RoutingService_ServiceDesc is the grpc.ServiceDesc for RoutingService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -274,6 +310,10 @@ var RoutingService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RegisterRelay",
 			Handler:    _RoutingService_RegisterRelay_Handler,
+		},
+		{
+			MethodName: "GetNodeMetrics",
+			Handler:    _RoutingService_GetNodeMetrics_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
