@@ -785,7 +785,7 @@ func (h *IdentityHandler) GetDeviceKey(ctx context.Context, req *identityv1.GetD
 	const nodePrefix = "node:"
 	if len(req.DeviceId) > len(nodePrefix) && req.DeviceId[:len(nodePrefix)] == nodePrefix {
 		nodeID := req.DeviceId[len(nodePrefix):]
-		key, err = h.queries.GetDeviceKeyByNodeID(ctx, nodeID)
+		key, err = h.queries.GetDeviceKeyByNodeID(ctx, pgtype.Text{String: nodeID, Valid: true})
 	} else {
 		key, err = h.queries.GetDeviceKey(ctx, req.DeviceId)
 	}
@@ -829,6 +829,254 @@ func (h *IdentityHandler) GetSessionDeviceKeys(ctx context.Context, req *identit
 	}
 
 	return &identityv1.GetSessionDeviceKeysResponse{Keys: pbKeys}, nil
+}
+
+// ─── Friends ───────────────────────────────────────
+
+func (h *IdentityHandler) SendFriendRequest(ctx context.Context, req *identityv1.SendFriendRequestReq) (*identityv1.SendFriendRequestResp, error) {
+	userID, ok := middleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "not authenticated")
+	}
+	if req.AddresseeUserId == "" {
+		return nil, status.Error(codes.InvalidArgument, "addressee_user_id is required")
+	}
+	if req.AddresseeUserId == userID {
+		return nil, status.Error(codes.InvalidArgument, "cannot send friend request to yourself")
+	}
+
+	// Check if friendship already exists
+	_, err := h.queries.GetFriendshipBetween(ctx, repository.GetFriendshipBetweenParams{
+		Column1: userID,
+		Column2: req.AddresseeUserId,
+	})
+	if err == nil {
+		return nil, status.Error(codes.AlreadyExists, "friendship already exists")
+	}
+
+	// Verify addressee exists
+	_, err = h.queries.GetUserByID(ctx, req.AddresseeUserId)
+	if err != nil {
+		return nil, status.Error(codes.NotFound, "user not found")
+	}
+
+	f, err := h.queries.CreateFriendRequest(ctx, repository.CreateFriendRequestParams{
+		Column1: userID,
+		Column2: req.AddresseeUserId,
+	})
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to create friend request")
+	}
+
+	addressee, _ := h.queries.GetUserByID(ctx, req.AddresseeUserId)
+	return &identityv1.SendFriendRequestResp{
+		Friendship: friendToProto(f, &identityv1.UserInfo{
+			UserId:   addressee.ID,
+			Username: addressee.Username,
+			Email:    addressee.Email,
+		}),
+	}, nil
+}
+
+func (h *IdentityHandler) RespondToFriendRequest(ctx context.Context, req *identityv1.RespondToFriendRequestReq) (*identityv1.RespondToFriendRequestResp, error) {
+	userID, ok := middleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "not authenticated")
+	}
+	if req.FriendshipId == "" {
+		return nil, status.Error(codes.InvalidArgument, "friendship_id is required")
+	}
+
+	if req.Accept {
+		err := h.queries.AcceptFriendRequest(ctx, repository.AcceptFriendRequestParams{
+			Column1: req.FriendshipId,
+			Column2: userID,
+		})
+		if err != nil {
+			return nil, status.Error(codes.Internal, "failed to accept friend request")
+		}
+	} else {
+		err := h.queries.RejectFriendRequest(ctx, repository.RejectFriendRequestParams{
+			Column1: req.FriendshipId,
+			Column2: userID,
+		})
+		if err != nil {
+			return nil, status.Error(codes.Internal, "failed to reject friend request")
+		}
+	}
+
+	f, err := h.queries.GetFriendship(ctx, req.FriendshipId)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to fetch friendship")
+	}
+
+	requester, _ := h.queries.GetUserByID(ctx, f.RequesterID)
+	return &identityv1.RespondToFriendRequestResp{
+		Friendship: friendToProto(f, &identityv1.UserInfo{
+			UserId:   requester.ID,
+			Username: requester.Username,
+			Email:    requester.Email,
+		}),
+	}, nil
+}
+
+func (h *IdentityHandler) ListFriends(ctx context.Context, _ *identityv1.ListFriendsRequest) (*identityv1.ListFriendsResponse, error) {
+	userID, ok := middleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "not authenticated")
+	}
+
+	rows, err := h.queries.ListAcceptedFriends(ctx, userID)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to list friends")
+	}
+
+	friends := make([]*identityv1.Friend, len(rows))
+	for i, r := range rows {
+		friends[i] = &identityv1.Friend{
+			Id:     r.ID,
+			Status: r.Status,
+			User: &identityv1.UserInfo{
+				UserId:   r.FriendUserID,
+				Username: r.FriendUsername,
+				Email:    r.FriendEmail,
+			},
+			CreatedAt: timestamppb.New(r.CreatedAt),
+		}
+	}
+	return &identityv1.ListFriendsResponse{Friends: friends}, nil
+}
+
+func (h *IdentityHandler) ListFriendRequests(ctx context.Context, _ *identityv1.ListFriendRequestsRequest) (*identityv1.ListFriendRequestsResponse, error) {
+	userID, ok := middleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "not authenticated")
+	}
+
+	rows, err := h.queries.ListPendingFriendRequests(ctx, userID)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to list friend requests")
+	}
+
+	reqs := make([]*identityv1.Friend, len(rows))
+	for i, r := range rows {
+		reqs[i] = &identityv1.Friend{
+			Id:     r.ID,
+			Status: r.Status,
+			User: &identityv1.UserInfo{
+				UserId:   r.FriendUserID,
+				Username: r.FriendUsername,
+				Email:    r.FriendEmail,
+			},
+			CreatedAt: timestamppb.New(r.CreatedAt),
+		}
+	}
+	return &identityv1.ListFriendRequestsResponse{Requests: reqs}, nil
+}
+
+func (h *IdentityHandler) RemoveFriend(ctx context.Context, req *identityv1.RemoveFriendRequest) (*identityv1.RemoveFriendResponse, error) {
+	userID, ok := middleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "not authenticated")
+	}
+	if req.FriendshipId == "" {
+		return nil, status.Error(codes.InvalidArgument, "friendship_id is required")
+	}
+
+	err := h.queries.RemoveFriend(ctx, repository.RemoveFriendParams{
+		Column1: req.FriendshipId,
+		Column2: userID,
+	})
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to remove friend")
+	}
+	return &identityv1.RemoveFriendResponse{Success: true}, nil
+}
+
+func (h *IdentityHandler) SearchUsers(ctx context.Context, req *identityv1.SearchUsersRequest) (*identityv1.SearchUsersResponse, error) {
+	userID, ok := middleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "not authenticated")
+	}
+	if req.Query == "" {
+		return nil, status.Error(codes.InvalidArgument, "query is required")
+	}
+
+	rows, err := h.queries.SearchUsersByUsername(ctx, repository.SearchUsersByUsernameParams{
+		Column1: pgtype.Text{String: req.Query, Valid: true},
+		Column2: userID,
+	})
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to search users")
+	}
+
+	users := make([]*identityv1.UserInfo, len(rows))
+	for i, r := range rows {
+		users[i] = &identityv1.UserInfo{
+			UserId:   r.ID,
+			Username: r.Username,
+			Email:    r.Email,
+		}
+	}
+	return &identityv1.SearchUsersResponse{Users: users}, nil
+}
+
+func (h *IdentityHandler) GetNotificationCount(ctx context.Context, _ *identityv1.GetNotificationCountRequest) (*identityv1.GetNotificationCountResponse, error) {
+	userID, ok := middleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "not authenticated")
+	}
+
+	count, err := h.queries.CountPendingFriendRequests(ctx, userID)
+	if err != nil {
+		count = 0
+	}
+
+	fr := int32(count)
+	return &identityv1.GetNotificationCountResponse{
+		FriendRequests:    fr,
+		IncomingTransfers: 0, // filled by gateway aggregating from transfer service
+		Total:             fr,
+	}, nil
+}
+
+func (h *IdentityHandler) ListFriendDevices(ctx context.Context, req *identityv1.ListFriendDevicesRequest) (*identityv1.ListFriendDevicesResponse, error) {
+	userID, ok := middleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "not authenticated")
+	}
+	if req.FriendUserId == "" {
+		return nil, status.Error(codes.InvalidArgument, "friend_user_id is required")
+	}
+
+	// Verify they are actually friends
+	f, err := h.queries.GetFriendshipBetween(ctx, repository.GetFriendshipBetweenParams{
+		Column1: userID,
+		Column2: req.FriendUserId,
+	})
+	if err != nil || f.Status != "accepted" {
+		return nil, status.Error(codes.PermissionDenied, "not friends with this user")
+	}
+
+	devices, err := h.queries.ListDevicesByUserPublic(ctx, req.FriendUserId)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to list devices")
+	}
+
+	pbDevices := make([]*identityv1.Device, len(devices))
+	for i, d := range devices {
+		pbDevices[i] = deviceToProto(d)
+	}
+	return &identityv1.ListFriendDevicesResponse{Devices: pbDevices}, nil
+}
+
+func friendToProto(f repository.Friend, user *identityv1.UserInfo) *identityv1.Friend {
+	return &identityv1.Friend{
+		Id:        f.ID,
+		User:      user,
+		Status:    f.Status,
+		CreatedAt: timestamppb.New(f.CreatedAt),
+	}
 }
 
 // ─── Helpers ────────────────────────────────────────

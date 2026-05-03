@@ -312,9 +312,9 @@ func (f *fakeQuerier) GetDeviceKey(_ context.Context, deviceID string) (reposito
 	return k, nil
 }
 
-func (f *fakeQuerier) GetDeviceKeyByNodeID(_ context.Context, nodeID string) (repository.DeviceKey, error) {
+func (f *fakeQuerier) GetDeviceKeyByNodeID(_ context.Context, nodeID pgtype.Text) (repository.DeviceKey, error) {
 	for _, d := range f.devices {
-		if d.NodeID.Valid && d.NodeID.String == nodeID && !d.RevokedAt.Valid && d.IsApproved {
+		if d.NodeID.Valid && d.NodeID.String == nodeID.String && !d.RevokedAt.Valid && d.IsApproved {
 			if k, ok := f.deviceKeys[d.ID]; ok {
 				return k, nil
 			}
@@ -336,6 +336,42 @@ func (f *fakeQuerier) ListSessionDeviceKeys(_ context.Context, sessionID string)
 		}
 	}
 	return out, nil
+}
+
+// ─── Friends stubs ──────────────────────────────────
+
+func (f *fakeQuerier) CreateFriendRequest(_ context.Context, _ repository.CreateFriendRequestParams) (repository.Friend, error) {
+	return repository.Friend{}, nil
+}
+func (f *fakeQuerier) GetFriendship(_ context.Context, _ string) (repository.Friend, error) {
+	return repository.Friend{}, pgx.ErrNoRows
+}
+func (f *fakeQuerier) GetFriendshipBetween(_ context.Context, _ repository.GetFriendshipBetweenParams) (repository.Friend, error) {
+	return repository.Friend{}, pgx.ErrNoRows
+}
+func (f *fakeQuerier) AcceptFriendRequest(_ context.Context, _ repository.AcceptFriendRequestParams) error {
+	return nil
+}
+func (f *fakeQuerier) RejectFriendRequest(_ context.Context, _ repository.RejectFriendRequestParams) error {
+	return nil
+}
+func (f *fakeQuerier) ListAcceptedFriends(_ context.Context, _ string) ([]repository.ListAcceptedFriendsRow, error) {
+	return nil, nil
+}
+func (f *fakeQuerier) ListPendingFriendRequests(_ context.Context, _ string) ([]repository.ListPendingFriendRequestsRow, error) {
+	return nil, nil
+}
+func (f *fakeQuerier) RemoveFriend(_ context.Context, _ repository.RemoveFriendParams) error {
+	return nil
+}
+func (f *fakeQuerier) CountPendingFriendRequests(_ context.Context, _ string) (int64, error) {
+	return 0, nil
+}
+func (f *fakeQuerier) SearchUsersByUsername(_ context.Context, _ repository.SearchUsersByUsernameParams) ([]repository.SearchUsersByUsernameRow, error) {
+	return nil, nil
+}
+func (f *fakeQuerier) ListDevicesByUserPublic(_ context.Context, _ string) ([]repository.Device, error) {
+	return nil, nil
 }
 
 // Ensure fakeQuerier satisfies the Querier interface at compile time.
