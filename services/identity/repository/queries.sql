@@ -104,3 +104,57 @@ SELECT dk.* FROM device_keys dk
 JOIN peer_session_devices psd ON dk.device_id = psd.device_id
 JOIN devices d ON d.id = dk.device_id
 WHERE psd.session_id = $1::uuid AND psd.left_at IS NULL AND d.revoked_at IS NULL;
+
+-- ─── Friends ────────────────────────────────────────
+
+-- name: CreateFriendRequest :one
+INSERT INTO friends (requester_id, addressee_id, status)
+VALUES ($1::uuid, $2::uuid, 'pending')
+RETURNING *;
+
+-- name: GetFriendship :one
+SELECT * FROM friends WHERE id = $1::uuid;
+
+-- name: GetFriendshipBetween :one
+SELECT * FROM friends
+WHERE (requester_id = $1::uuid AND addressee_id = $2::uuid)
+   OR (requester_id = $2::uuid AND addressee_id = $1::uuid)
+LIMIT 1;
+
+-- name: AcceptFriendRequest :exec
+UPDATE friends SET status = 'accepted', updated_at = NOW()
+WHERE id = $1::uuid AND addressee_id = $2::uuid AND status = 'pending';
+
+-- name: RejectFriendRequest :exec
+UPDATE friends SET status = 'rejected', updated_at = NOW()
+WHERE id = $1::uuid AND addressee_id = $2::uuid AND status = 'pending';
+
+-- name: ListAcceptedFriends :many
+SELECT f.*, u.id AS friend_user_id, u.username AS friend_username, u.email AS friend_email
+FROM friends f
+JOIN users u ON u.id = CASE WHEN f.requester_id = $1::uuid THEN f.addressee_id ELSE f.requester_id END
+WHERE (f.requester_id = $1::uuid OR f.addressee_id = $1::uuid) AND f.status = 'accepted'
+ORDER BY f.updated_at DESC;
+
+-- name: ListPendingFriendRequests :many
+SELECT f.*, u.id AS friend_user_id, u.username AS friend_username, u.email AS friend_email
+FROM friends f
+JOIN users u ON u.id = f.requester_id
+WHERE f.addressee_id = $1::uuid AND f.status = 'pending'
+ORDER BY f.created_at DESC;
+
+-- name: RemoveFriend :exec
+DELETE FROM friends WHERE id = $1::uuid
+AND (requester_id = $2::uuid OR addressee_id = $2::uuid);
+
+-- name: CountPendingFriendRequests :one
+SELECT COUNT(*) FROM friends WHERE addressee_id = $1::uuid AND status = 'pending';
+
+-- name: SearchUsersByUsername :many
+SELECT id, username, email FROM users
+WHERE username ILIKE '%' || $1 || '%' AND id != $2::uuid
+LIMIT 20;
+
+-- name: ListDevicesByUserPublic :many
+SELECT * FROM devices WHERE user_id = $1::uuid AND revoked_at IS NULL AND is_approved = TRUE
+ORDER BY last_active DESC;

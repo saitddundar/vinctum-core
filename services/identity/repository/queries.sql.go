@@ -7,9 +7,25 @@ package repository
 
 import (
 	"context"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
+
+const acceptFriendRequest = `-- name: AcceptFriendRequest :exec
+UPDATE friends SET status = 'accepted', updated_at = NOW()
+WHERE id = $1::uuid AND addressee_id = $2::uuid AND status = 'pending'
+`
+
+type AcceptFriendRequestParams struct {
+	Column1 string `json:"column_1"`
+	Column2 string `json:"column_2"`
+}
+
+func (q *Queries) AcceptFriendRequest(ctx context.Context, arg AcceptFriendRequestParams) error {
+	_, err := q.db.Exec(ctx, acceptFriendRequest, arg.Column1, arg.Column2)
+	return err
+}
 
 const addDeviceToSession = `-- name: AddDeviceToSession :exec
 INSERT INTO peer_session_devices (session_id, device_id) VALUES ($1, $2)
@@ -53,6 +69,17 @@ type ClosePeerSessionParams struct {
 func (q *Queries) ClosePeerSession(ctx context.Context, arg ClosePeerSessionParams) error {
 	_, err := q.db.Exec(ctx, closePeerSession, arg.Column1, arg.Column2)
 	return err
+}
+
+const countPendingFriendRequests = `-- name: CountPendingFriendRequests :one
+SELECT COUNT(*) FROM friends WHERE addressee_id = $1::uuid AND status = 'pending'
+`
+
+func (q *Queries) CountPendingFriendRequests(ctx context.Context, dollar_1 string) (int64, error) {
+	row := q.db.QueryRow(ctx, countPendingFriendRequests, dollar_1)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }
 
 const createDevice = `-- name: CreateDevice :one
@@ -99,6 +126,33 @@ func (q *Queries) CreateDevice(ctx context.Context, arg CreateDeviceParams) (Dev
 		&i.LastActive,
 		&i.CreatedAt,
 		&i.RevokedAt,
+	)
+	return i, err
+}
+
+const createFriendRequest = `-- name: CreateFriendRequest :one
+
+INSERT INTO friends (requester_id, addressee_id, status)
+VALUES ($1::uuid, $2::uuid, 'pending')
+RETURNING id, requester_id, addressee_id, status, created_at, updated_at
+`
+
+type CreateFriendRequestParams struct {
+	Column1 string `json:"column_1"`
+	Column2 string `json:"column_2"`
+}
+
+// ─── Friends ────────────────────────────────────────
+func (q *Queries) CreateFriendRequest(ctx context.Context, arg CreateFriendRequestParams) (Friend, error) {
+	row := q.db.QueryRow(ctx, createFriendRequest, arg.Column1, arg.Column2)
+	var i Friend
+	err := row.Scan(
+		&i.ID,
+		&i.RequesterID,
+		&i.AddresseeID,
+		&i.Status,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
@@ -232,7 +286,7 @@ JOIN devices d ON d.id = dk.device_id
 WHERE d.node_id = $1 AND d.revoked_at IS NULL AND d.is_approved = TRUE
 `
 
-func (q *Queries) GetDeviceKeyByNodeID(ctx context.Context, nodeID string) (DeviceKey, error) {
+func (q *Queries) GetDeviceKeyByNodeID(ctx context.Context, nodeID pgtype.Text) (DeviceKey, error) {
 	row := q.db.QueryRow(ctx, getDeviceKeyByNodeID, nodeID)
 	var i DeviceKey
 	err := row.Scan(
@@ -241,6 +295,50 @@ func (q *Queries) GetDeviceKeyByNodeID(ctx context.Context, nodeID string) (Devi
 		&i.KexPublicKey,
 		&i.CreatedAt,
 		&i.RotatedAt,
+	)
+	return i, err
+}
+
+const getFriendship = `-- name: GetFriendship :one
+SELECT id, requester_id, addressee_id, status, created_at, updated_at FROM friends WHERE id = $1::uuid
+`
+
+func (q *Queries) GetFriendship(ctx context.Context, dollar_1 string) (Friend, error) {
+	row := q.db.QueryRow(ctx, getFriendship, dollar_1)
+	var i Friend
+	err := row.Scan(
+		&i.ID,
+		&i.RequesterID,
+		&i.AddresseeID,
+		&i.Status,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getFriendshipBetween = `-- name: GetFriendshipBetween :one
+SELECT id, requester_id, addressee_id, status, created_at, updated_at FROM friends
+WHERE (requester_id = $1::uuid AND addressee_id = $2::uuid)
+   OR (requester_id = $2::uuid AND addressee_id = $1::uuid)
+LIMIT 1
+`
+
+type GetFriendshipBetweenParams struct {
+	Column1 string `json:"column_1"`
+	Column2 string `json:"column_2"`
+}
+
+func (q *Queries) GetFriendshipBetween(ctx context.Context, arg GetFriendshipBetweenParams) (Friend, error) {
+	row := q.db.QueryRow(ctx, getFriendshipBetween, arg.Column1, arg.Column2)
+	var i Friend
+	err := row.Scan(
+		&i.ID,
+		&i.RequesterID,
+		&i.AddresseeID,
+		&i.Status,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
@@ -325,6 +423,56 @@ func (q *Queries) GetUserByVerificationToken(ctx context.Context, verificationTo
 	return i, err
 }
 
+const listAcceptedFriends = `-- name: ListAcceptedFriends :many
+SELECT f.id, f.requester_id, f.addressee_id, f.status, f.created_at, f.updated_at, u.id AS friend_user_id, u.username AS friend_username, u.email AS friend_email
+FROM friends f
+JOIN users u ON u.id = CASE WHEN f.requester_id = $1::uuid THEN f.addressee_id ELSE f.requester_id END
+WHERE (f.requester_id = $1::uuid OR f.addressee_id = $1::uuid) AND f.status = 'accepted'
+ORDER BY f.updated_at DESC
+`
+
+type ListAcceptedFriendsRow struct {
+	ID             string    `json:"id"`
+	RequesterID    string    `json:"requester_id"`
+	AddresseeID    string    `json:"addressee_id"`
+	Status         string    `json:"status"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
+	FriendUserID   string    `json:"friend_user_id"`
+	FriendUsername string    `json:"friend_username"`
+	FriendEmail    string    `json:"friend_email"`
+}
+
+func (q *Queries) ListAcceptedFriends(ctx context.Context, dollar_1 string) ([]ListAcceptedFriendsRow, error) {
+	rows, err := q.db.Query(ctx, listAcceptedFriends, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListAcceptedFriendsRow
+	for rows.Next() {
+		var i ListAcceptedFriendsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.RequesterID,
+			&i.AddresseeID,
+			&i.Status,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.FriendUserID,
+			&i.FriendUsername,
+			&i.FriendEmail,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listActivePeerSessions = `-- name: ListActivePeerSessions :many
 SELECT id, user_id, name, is_active, created_at, closed_at FROM peer_sessions WHERE user_id = $1::uuid AND is_active = TRUE ORDER BY created_at DESC
 `
@@ -382,6 +530,94 @@ func (q *Queries) ListDevicesByUser(ctx context.Context, dollar_1 string) ([]Dev
 			&i.LastActive,
 			&i.CreatedAt,
 			&i.RevokedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listDevicesByUserPublic = `-- name: ListDevicesByUserPublic :many
+SELECT id, user_id, name, device_type, node_id, fingerprint, is_approved, approved_at, approved_by, last_active, created_at, revoked_at FROM devices WHERE user_id = $1::uuid AND revoked_at IS NULL AND is_approved = TRUE
+ORDER BY last_active DESC
+`
+
+func (q *Queries) ListDevicesByUserPublic(ctx context.Context, dollar_1 string) ([]Device, error) {
+	rows, err := q.db.Query(ctx, listDevicesByUserPublic, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Device
+	for rows.Next() {
+		var i Device
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.Name,
+			&i.DeviceType,
+			&i.NodeID,
+			&i.Fingerprint,
+			&i.IsApproved,
+			&i.ApprovedAt,
+			&i.ApprovedBy,
+			&i.LastActive,
+			&i.CreatedAt,
+			&i.RevokedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listPendingFriendRequests = `-- name: ListPendingFriendRequests :many
+SELECT f.id, f.requester_id, f.addressee_id, f.status, f.created_at, f.updated_at, u.id AS friend_user_id, u.username AS friend_username, u.email AS friend_email
+FROM friends f
+JOIN users u ON u.id = f.requester_id
+WHERE f.addressee_id = $1::uuid AND f.status = 'pending'
+ORDER BY f.created_at DESC
+`
+
+type ListPendingFriendRequestsRow struct {
+	ID             string    `json:"id"`
+	RequesterID    string    `json:"requester_id"`
+	AddresseeID    string    `json:"addressee_id"`
+	Status         string    `json:"status"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
+	FriendUserID   string    `json:"friend_user_id"`
+	FriendUsername string    `json:"friend_username"`
+	FriendEmail    string    `json:"friend_email"`
+}
+
+func (q *Queries) ListPendingFriendRequests(ctx context.Context, dollar_1 string) ([]ListPendingFriendRequestsRow, error) {
+	rows, err := q.db.Query(ctx, listPendingFriendRequests, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListPendingFriendRequestsRow
+	for rows.Next() {
+		var i ListPendingFriendRequestsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.RequesterID,
+			&i.AddresseeID,
+			&i.Status,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.FriendUserID,
+			&i.FriendUsername,
+			&i.FriendEmail,
 		); err != nil {
 			return nil, err
 		}
@@ -474,6 +710,21 @@ func (q *Queries) RejectDevice(ctx context.Context, dollar_1 string) error {
 	return err
 }
 
+const rejectFriendRequest = `-- name: RejectFriendRequest :exec
+UPDATE friends SET status = 'rejected', updated_at = NOW()
+WHERE id = $1::uuid AND addressee_id = $2::uuid AND status = 'pending'
+`
+
+type RejectFriendRequestParams struct {
+	Column1 string `json:"column_1"`
+	Column2 string `json:"column_2"`
+}
+
+func (q *Queries) RejectFriendRequest(ctx context.Context, arg RejectFriendRequestParams) error {
+	_, err := q.db.Exec(ctx, rejectFriendRequest, arg.Column1, arg.Column2)
+	return err
+}
+
 const removeDeviceFromSession = `-- name: RemoveDeviceFromSession :exec
 UPDATE peer_session_devices SET left_at = NOW() WHERE session_id = $1::uuid AND device_id = $2::uuid
 `
@@ -485,6 +736,21 @@ type RemoveDeviceFromSessionParams struct {
 
 func (q *Queries) RemoveDeviceFromSession(ctx context.Context, arg RemoveDeviceFromSessionParams) error {
 	_, err := q.db.Exec(ctx, removeDeviceFromSession, arg.Column1, arg.Column2)
+	return err
+}
+
+const removeFriend = `-- name: RemoveFriend :exec
+DELETE FROM friends WHERE id = $1::uuid
+AND (requester_id = $2::uuid OR addressee_id = $2::uuid)
+`
+
+type RemoveFriendParams struct {
+	Column1 string `json:"column_1"`
+	Column2 string `json:"column_2"`
+}
+
+func (q *Queries) RemoveFriend(ctx context.Context, arg RemoveFriendParams) error {
+	_, err := q.db.Exec(ctx, removeFriend, arg.Column1, arg.Column2)
 	return err
 }
 
@@ -500,6 +766,43 @@ type RevokeDeviceParams struct {
 func (q *Queries) RevokeDevice(ctx context.Context, arg RevokeDeviceParams) error {
 	_, err := q.db.Exec(ctx, revokeDevice, arg.Column1, arg.Column2)
 	return err
+}
+
+const searchUsersByUsername = `-- name: SearchUsersByUsername :many
+SELECT id, username, email FROM users
+WHERE username ILIKE '%' || $1 || '%' AND id != $2::uuid
+LIMIT 20
+`
+
+type SearchUsersByUsernameParams struct {
+	Column1 pgtype.Text `json:"column_1"`
+	Column2 string      `json:"column_2"`
+}
+
+type SearchUsersByUsernameRow struct {
+	ID       string `json:"id"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
+}
+
+func (q *Queries) SearchUsersByUsername(ctx context.Context, arg SearchUsersByUsernameParams) ([]SearchUsersByUsernameRow, error) {
+	rows, err := q.db.Query(ctx, searchUsersByUsername, arg.Column1, arg.Column2)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []SearchUsersByUsernameRow
+	for rows.Next() {
+		var i SearchUsersByUsernameRow
+		if err := rows.Scan(&i.ID, &i.Username, &i.Email); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const setVerificationToken = `-- name: SetVerificationToken :exec

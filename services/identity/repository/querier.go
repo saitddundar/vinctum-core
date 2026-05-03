@@ -11,29 +11,41 @@ import (
 )
 
 type Querier interface {
+	AcceptFriendRequest(ctx context.Context, arg AcceptFriendRequestParams) error
 	AddDeviceToSession(ctx context.Context, arg AddDeviceToSessionParams) error
 	ApproveDevice(ctx context.Context, arg ApproveDeviceParams) error
 	ClosePeerSession(ctx context.Context, arg ClosePeerSessionParams) error
+	CountPendingFriendRequests(ctx context.Context, dollar_1 string) (int64, error)
 	// ─── Devices ────────────────────────────────────────
 	CreateDevice(ctx context.Context, arg CreateDeviceParams) (Device, error)
+	// ─── Friends ────────────────────────────────────────
+	CreateFriendRequest(ctx context.Context, arg CreateFriendRequestParams) (Friend, error)
 	// ─── Peer Sessions ──────────────────────────────────
 	CreatePeerSession(ctx context.Context, arg CreatePeerSessionParams) (PeerSession, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	GetDeviceByFingerprint(ctx context.Context, arg GetDeviceByFingerprintParams) (Device, error)
 	GetDeviceByID(ctx context.Context, dollar_1 string) (Device, error)
 	GetDeviceKey(ctx context.Context, dollar_1 string) (DeviceKey, error)
-	GetDeviceKeyByNodeID(ctx context.Context, nodeID string) (DeviceKey, error)
+	GetDeviceKeyByNodeID(ctx context.Context, nodeID pgtype.Text) (DeviceKey, error)
+	GetFriendship(ctx context.Context, dollar_1 string) (Friend, error)
+	GetFriendshipBetween(ctx context.Context, arg GetFriendshipBetweenParams) (Friend, error)
 	GetPeerSession(ctx context.Context, dollar_1 string) (PeerSession, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, dollar_1 string) (User, error)
 	GetUserByVerificationToken(ctx context.Context, verificationToken pgtype.Text) (User, error)
+	ListAcceptedFriends(ctx context.Context, dollar_1 string) ([]ListAcceptedFriendsRow, error)
 	ListActivePeerSessions(ctx context.Context, dollar_1 string) ([]PeerSession, error)
 	ListDevicesByUser(ctx context.Context, dollar_1 string) ([]Device, error)
+	ListDevicesByUserPublic(ctx context.Context, dollar_1 string) ([]Device, error)
+	ListPendingFriendRequests(ctx context.Context, dollar_1 string) ([]ListPendingFriendRequestsRow, error)
 	ListSessionDeviceKeys(ctx context.Context, dollar_1 string) ([]DeviceKey, error)
 	ListSessionDevices(ctx context.Context, dollar_1 string) ([]Device, error)
 	RejectDevice(ctx context.Context, dollar_1 string) error
+	RejectFriendRequest(ctx context.Context, arg RejectFriendRequestParams) error
 	RemoveDeviceFromSession(ctx context.Context, arg RemoveDeviceFromSessionParams) error
+	RemoveFriend(ctx context.Context, arg RemoveFriendParams) error
 	RevokeDevice(ctx context.Context, arg RevokeDeviceParams) error
+	SearchUsersByUsername(ctx context.Context, arg SearchUsersByUsernameParams) ([]SearchUsersByUsernameRow, error)
 	SetVerificationToken(ctx context.Context, arg SetVerificationTokenParams) error
 	UpdateDeviceActivity(ctx context.Context, arg UpdateDeviceActivityParams) error
 	// ─── Device Keys ────────────────────────────────────
