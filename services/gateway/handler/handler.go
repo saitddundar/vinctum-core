@@ -138,6 +138,16 @@ func (h *GatewayHandler) RegisterRoutes(mux *http.ServeMux) {
 	// node key lookup (cross-user E2E: fetch receiver's public key by node_id)
 	mux.HandleFunc("GET /api/v1/nodes/{nodeId}/key", h.handleGetNodeKey)
 
+	// friends
+	mux.HandleFunc("POST /api/v1/friends/request", h.handleSendFriendRequest)
+	mux.HandleFunc("POST /api/v1/friends/respond", h.handleRespondToFriendRequest)
+	mux.HandleFunc("GET /api/v1/friends", h.handleListFriends)
+	mux.HandleFunc("GET /api/v1/friends/requests", h.handleListFriendRequests)
+	mux.HandleFunc("DELETE /api/v1/friends/{friendshipId}", h.handleRemoveFriend)
+	mux.HandleFunc("GET /api/v1/friends/{userId}/devices", h.handleListFriendDevices)
+	mux.HandleFunc("GET /api/v1/users/search", h.handleSearchUsers)
+	mux.HandleFunc("GET /api/v1/notifications/count", h.handleGetNotificationCount)
+
 	// routing proxy
 	mux.HandleFunc("POST /api/v1/routes/find", h.handleFindRoute)
 	mux.HandleFunc("GET /api/v1/routes/table/{nodeId}", h.handleGetRouteTable)
@@ -154,6 +164,9 @@ func (h *GatewayHandler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/transfers/{transferId}", h.handleGetTransferStatus)
 	mux.HandleFunc("GET /api/v1/node-transfers/{nodeId}", h.handleListTransfers)
 	mux.HandleFunc("POST /api/v1/transfers/{transferId}/cancel", h.handleCancelTransfer)
+
+	// transfer approval
+	mux.HandleFunc("POST /api/v1/transfers/{transferId}/respond", h.handleRespondToTransfer)
 
 	// P2P connection info
 	mux.HandleFunc("GET /api/v1/transfers/{transferId}/p2p-info", h.handleGetP2PConnectionInfo)
@@ -791,6 +804,11 @@ func (h *GatewayHandler) handleInitiateTransfer(w http.ResponseWriter, r *http.R
 		}
 	}
 
+	// Auto-approve if receiver node also belongs to the same user (same-user device transfer).
+	if req.ReceiverNodeId != "" {
+		req.AutoApprove = h.userOwnsNode(ctx, req.ReceiverNodeId)
+	}
+
 	resp, err := h.transferClient.InitiateTransfer(ctx, &req)
 	if err != nil {
 		writeGRPCError(w, err)
@@ -1190,6 +1208,201 @@ func forwardAuth(r *http.Request) context.Context {
 		ctx = metadata.AppendToOutgoingContext(ctx, "authorization", auth)
 	}
 	return ctx
+}
+
+// ─── Friends Proxy ─────────────────────────────────────────
+
+func (h *GatewayHandler) handleSendFriendRequest(w http.ResponseWriter, r *http.Request) {
+	if h.identityClient == nil {
+		writeError(w, http.StatusServiceUnavailable, "identity service unavailable")
+		return
+	}
+	var req identityv1.SendFriendRequestReq
+	if err := decodeJSON(r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	ctx := forwardAuth(r)
+	resp, err := h.identityClient.SendFriendRequest(ctx, &req)
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, resp)
+}
+
+func (h *GatewayHandler) handleRespondToFriendRequest(w http.ResponseWriter, r *http.Request) {
+	if h.identityClient == nil {
+		writeError(w, http.StatusServiceUnavailable, "identity service unavailable")
+		return
+	}
+	var req identityv1.RespondToFriendRequestReq
+	if err := decodeJSON(r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	ctx := forwardAuth(r)
+	resp, err := h.identityClient.RespondToFriendRequest(ctx, &req)
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+func (h *GatewayHandler) handleListFriends(w http.ResponseWriter, r *http.Request) {
+	if h.identityClient == nil {
+		writeError(w, http.StatusServiceUnavailable, "identity service unavailable")
+		return
+	}
+	ctx := forwardAuth(r)
+	resp, err := h.identityClient.ListFriends(ctx, &identityv1.ListFriendsRequest{})
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+func (h *GatewayHandler) handleListFriendRequests(w http.ResponseWriter, r *http.Request) {
+	if h.identityClient == nil {
+		writeError(w, http.StatusServiceUnavailable, "identity service unavailable")
+		return
+	}
+	ctx := forwardAuth(r)
+	resp, err := h.identityClient.ListFriendRequests(ctx, &identityv1.ListFriendRequestsRequest{})
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+func (h *GatewayHandler) handleRemoveFriend(w http.ResponseWriter, r *http.Request) {
+	if h.identityClient == nil {
+		writeError(w, http.StatusServiceUnavailable, "identity service unavailable")
+		return
+	}
+	friendshipID := r.PathValue("friendshipId")
+	ctx := forwardAuth(r)
+	resp, err := h.identityClient.RemoveFriend(ctx, &identityv1.RemoveFriendRequest{FriendshipId: friendshipID})
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+func (h *GatewayHandler) handleListFriendDevices(w http.ResponseWriter, r *http.Request) {
+	if h.identityClient == nil {
+		writeError(w, http.StatusServiceUnavailable, "identity service unavailable")
+		return
+	}
+	userID := r.PathValue("userId")
+	ctx := forwardAuth(r)
+	resp, err := h.identityClient.ListFriendDevices(ctx, &identityv1.ListFriendDevicesRequest{FriendUserId: userID})
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+func (h *GatewayHandler) handleSearchUsers(w http.ResponseWriter, r *http.Request) {
+	if h.identityClient == nil {
+		writeError(w, http.StatusServiceUnavailable, "identity service unavailable")
+		return
+	}
+	query := r.URL.Query().Get("q")
+	if query == "" {
+		writeError(w, http.StatusBadRequest, "query parameter 'q' is required")
+		return
+	}
+	ctx := forwardAuth(r)
+	resp, err := h.identityClient.SearchUsers(ctx, &identityv1.SearchUsersRequest{Query: query})
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+func (h *GatewayHandler) handleGetNotificationCount(w http.ResponseWriter, r *http.Request) {
+	if h.identityClient == nil {
+		writeError(w, http.StatusServiceUnavailable, "identity service unavailable")
+		return
+	}
+	ctx := forwardAuth(r)
+	resp, err := h.identityClient.GetNotificationCount(ctx, &identityv1.GetNotificationCountRequest{})
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+
+	// Augment with incoming transfer count from transfer service.
+	if h.transferClient != nil {
+		// Count AWAITING_APPROVAL transfers for all user's nodes.
+		devices, err2 := h.identityClient.ListDevices(ctx, &identityv1.ListDevicesRequest{})
+		if err2 == nil {
+			var incomingCount int32
+			for _, d := range devices.Devices {
+				if d.NodeId == "" {
+					continue
+				}
+				transfers, err3 := h.transferClient.ListTransfers(ctx, &transferv1.ListTransfersRequest{
+					NodeId:       d.NodeId,
+					FilterStatus: transferv1.TransferStatus_TRANSFER_STATUS_AWAITING_APPROVAL,
+				})
+				if err3 == nil {
+					for _, t := range transfers.Transfers {
+						if t.ReceiverNodeId == d.NodeId {
+							incomingCount++
+						}
+					}
+				}
+			}
+			resp.IncomingTransfers = incomingCount
+			resp.Total = resp.FriendRequests + incomingCount
+		}
+	}
+
+	writeJSON(w, http.StatusOK, resp)
+}
+
+func (h *GatewayHandler) handleRespondToTransfer(w http.ResponseWriter, r *http.Request) {
+	if h.transferClient == nil {
+		writeError(w, http.StatusServiceUnavailable, "transfer service unavailable")
+		return
+	}
+
+	transferID := r.PathValue("transferId")
+	var body struct {
+		ReceiverNodeId string `json:"receiver_node_id"`
+		Accept         bool   `json:"accept"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	ctx := forwardAuth(r)
+
+	// Verify the receiver node belongs to the authenticated user.
+	if !h.userOwnsNode(ctx, body.ReceiverNodeId) {
+		writeError(w, http.StatusForbidden, "node does not belong to you")
+		return
+	}
+
+	resp, err := h.transferClient.RespondToTransfer(ctx, &transferv1.RespondToTransferRequest{
+		TransferId:     transferID,
+		ReceiverNodeId: body.ReceiverNodeId,
+		Accept:         body.Accept,
+	})
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, resp)
 }
 
 func writeJSON(w http.ResponseWriter, code int, v any) {
