@@ -152,6 +152,8 @@ func (h *GatewayHandler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/routes/find", h.handleFindRoute)
 	mux.HandleFunc("GET /api/v1/routes/table/{nodeId}", h.handleGetRouteTable)
 	mux.HandleFunc("GET /api/v1/relays", h.handleListRelays)
+	mux.HandleFunc("GET /api/v1/nodes/metrics", h.handleGetNodeMetrics)
+	mux.HandleFunc("POST /api/v1/nodes/scan", h.handleScanNodes)
 
 	// ml proxy
 	mux.HandleFunc("GET /api/v1/ml/health", h.handleMLHealth)
@@ -1165,6 +1167,194 @@ func (h *GatewayHandler) proxyML(w http.ResponseWriter, r *http.Request, method,
 	w.WriteHeader(resp.StatusCode)
 	io.Copy(w, resp.Body)
 }
+
+// ─── Node Metrics & Scan ──────────────────────────────────
+
+func (h *GatewayHandler) handleGetNodeMetrics(w http.ResponseWriter, r *http.Request) {
+	if h.routingClient == nil {
+		writeError(w, http.StatusServiceUnavailable, "routing service unavailable")
+		return
+	}
+	ctx := forwardAuth(r)
+
+	// Get user's device node IDs.
+	nodeIDs := h.getUserNodeIDs(ctx)
+
+	resp, err := h.routingClient.GetNodeMetrics(ctx, &routingv1.GetNodeMetricsRequest{NodeIds: nodeIDs})
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+func (h *GatewayHandler) handleScanNodes(w http.ResponseWriter, r *http.Request) {
+	if h.routingClient == nil {
+		writeError(w, http.StatusServiceUnavailable, "routing service unavailable")
+		return
+	}
+	if h.addrs.ML == "" {
+		writeError(w, http.StatusServiceUnavailable, "ml service unavailable")
+		return
+	}
+
+	ctx := forwardAuth(r)
+
+	// Get user's device node IDs.
+	nodeIDs := h.getUserNodeIDs(ctx)
+	if len(nodeIDs) == 0 {
+		writeJSON(w, http.StatusOK, map[string]any{"nodes": []any{}, "summary": map[string]any{"total": 0, "anomalies": 0, "avg_score": 0}})
+		return
+	}
+
+	// Get metrics from routing service.
+	metricsResp, err := h.routingClient.GetNodeMetrics(ctx, &routingv1.GetNodeMetricsRequest{NodeIds: nodeIDs})
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+
+	type nodeResult struct {
+		NodeID       string  `json:"node_id"`
+		Score        float64 `json:"score"`
+		Confidence   float64 `json:"confidence"`
+		IsAnomaly    bool    `json:"is_anomaly"`
+		AnomalyScore float64 `json:"anomaly_score"`
+		HasMetrics   bool    `json:"has_metrics"`
+	}
+
+	results := make([]nodeResult, 0, len(nodeIDs))
+	var totalScore float64
+	var anomalyCount int
+	scored := 0
+
+	for _, m := range metricsResp.GetNodes() {
+		// Call ML /score
+		scoreBody := map[string]any{
+			"node_id": m.NodeId,
+			"metrics": map[string]any{
+				"total_events":    m.TotalEvents,
+				"successes":       m.Successes,
+				"failures":        m.Failures,
+				"timeouts":        m.Timeouts,
+				"reroutes":        m.Reroutes,
+				"circuit_opens":   m.CircuitOpens,
+				"avg_latency_ms":  m.AvgLatencyMs,
+				"min_latency_ms":  m.MinLatencyMs,
+				"max_latency_ms":  m.MaxLatencyMs,
+				"p95_latency_ms":  m.P95LatencyMs,
+				"total_bytes":     m.TotalBytes,
+				"avg_bytes_per_op": m.AvgBytesPerOp,
+				"failure_rate":    m.FailureRate,
+				"uptime":          m.Uptime,
+			},
+		}
+		scoreResp := h.callMLJSON("POST", "/score", scoreBody)
+		anomalyResp := h.callMLJSON("POST", "/anomaly", map[string]any{
+			"node_id":           m.NodeId,
+			"metrics":           scoreBody["metrics"],
+			"events_per_minute": float64(m.TotalEvents) / 10.0,
+		})
+
+		nr := nodeResult{NodeID: m.NodeId, HasMetrics: true}
+		if s, ok := scoreResp["score"].(float64); ok {
+			nr.Score = s
+			totalScore += s
+			scored++
+		}
+		if c, ok := scoreResp["confidence"].(float64); ok {
+			nr.Confidence = c
+		}
+		if a, ok := anomalyResp["is_anomaly"].(bool); ok {
+			nr.IsAnomaly = a
+			if a {
+				anomalyCount++
+			}
+		}
+		if as, ok := anomalyResp["anomaly_score"].(float64); ok {
+			nr.AnomalyScore = as
+		}
+		results = append(results, nr)
+	}
+
+	// Include nodes without metrics.
+	metricsNodeSet := make(map[string]bool)
+	for _, m := range metricsResp.GetNodes() {
+		metricsNodeSet[m.NodeId] = true
+	}
+	for _, id := range nodeIDs {
+		if !metricsNodeSet[id] {
+			results = append(results, nodeResult{NodeID: id, HasMetrics: false})
+		}
+	}
+
+	avgScore := 0.0
+	if scored > 0 {
+		avgScore = totalScore / float64(scored)
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"nodes": results,
+		"summary": map[string]any{
+			"total":     len(nodeIDs),
+			"anomalies": anomalyCount,
+			"avg_score": avgScore,
+			"scanned":   scored,
+		},
+	})
+}
+
+func (h *GatewayHandler) getUserNodeIDs(ctx context.Context) []string {
+	if h.identityClient == nil {
+		return nil
+	}
+	devResp, err := h.identityClient.ListDevices(ctx, &identityv1.ListDevicesRequest{})
+	if err != nil {
+		return nil
+	}
+	var ids []string
+	for _, d := range devResp.Devices {
+		if d.NodeId != "" {
+			ids = append(ids, d.NodeId)
+		}
+	}
+	return ids
+}
+
+func (h *GatewayHandler) callMLJSON(method, path string, body any) map[string]any {
+	bodyBytes, _ := json.Marshal(body)
+	req, err := http.NewRequest(method, h.addrs.ML+path, io.NopCloser(
+		io.Reader(jsonReader(bodyBytes)),
+	))
+	if err != nil {
+		return nil
+	}
+	req.Header.Set("Content-Type", "application/json")
+	if h.mlAPIKey != "" {
+		req.Header.Set("X-API-Key", h.mlAPIKey)
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil
+	}
+	defer resp.Body.Close()
+	var result map[string]any
+	json.NewDecoder(resp.Body).Decode(&result)
+	return result
+}
+
+func jsonReader(b []byte) io.Reader {
+	return io.NopCloser(readerFromBytes(b))
+}
+
+type bytesReader struct{ data []byte; pos int }
+func (r *bytesReader) Read(p []byte) (int, error) {
+	if r.pos >= len(r.data) { return 0, io.EOF }
+	n := copy(p, r.data[r.pos:])
+	r.pos += n
+	return n, nil
+}
+func readerFromBytes(b []byte) *bytesReader { return &bytesReader{data: b} }
 
 func (h *GatewayHandler) handleMLHealth(w http.ResponseWriter, r *http.Request) {
 	h.proxyML(w, r, "GET", "/health")
