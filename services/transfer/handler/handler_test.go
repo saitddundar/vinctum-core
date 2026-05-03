@@ -123,6 +123,30 @@ func (f *fakeQuerier) UpdateRouteHops(_ context.Context, arg repository.UpdateRo
 	return nil
 }
 
+func (f *fakeQuerier) UpdateTransferMode(_ context.Context, arg repository.UpdateTransferModeParams) error {
+	t, ok := f.transfers[arg.TransferID]
+	if !ok {
+		return errNotFound
+	}
+	t.TransferMode = arg.TransferMode
+	t.UpdatedAt = time.Now()
+	f.transfers[arg.TransferID] = t
+	return nil
+}
+
+func (f *fakeQuerier) ConfirmP2PTransfer(_ context.Context, arg repository.ConfirmP2PTransferParams) error {
+	t, ok := f.transfers[arg.TransferID]
+	if !ok {
+		return errNotFound
+	}
+	t.Status = arg.Status
+	t.ChunksDone = arg.ChunksDone
+	t.TransferMode = arg.TransferMode
+	t.UpdatedAt = time.Now()
+	f.transfers[arg.TransferID] = t
+	return nil
+}
+
 // Compile-time interface check.
 var _ repository.Querier = (*fakeQuerier)(nil)
 
@@ -144,6 +168,7 @@ func initTransfer(t *testing.T, h *handler.TransferHandler) *transferv1.Initiate
 		ContentHash:           "sha256-abc123",
 		ChunkSizeBytes:        256 * 1024, // 256 KB
 		SenderEphemeralPubkey: pub,
+		AutoApprove:           true,
 	})
 	require.NoError(t, err)
 	return resp

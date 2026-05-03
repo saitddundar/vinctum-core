@@ -117,6 +117,11 @@ func (h *TransferHandler) InitiateTransfer(ctx context.Context, req *transferv1.
 		replicationFactor = 1
 	}
 
+	initialStatus := transferv1.TransferStatus_TRANSFER_STATUS_PENDING
+	if !req.AutoApprove {
+		initialStatus = transferv1.TransferStatus_TRANSFER_STATUS_AWAITING_APPROVAL
+	}
+
 	t, err := h.queries.CreateTransfer(ctx, repository.CreateTransferParams{
 		TransferID:        transferID,
 		SenderNodeID:      req.SenderNodeId,
@@ -126,7 +131,7 @@ func (h *TransferHandler) InitiateTransfer(ctx context.Context, req *transferv1.
 		ContentHash:       req.ContentHash,
 		ChunkSizeBytes:    chunkSize,
 		TotalChunks:       totalChunks,
-		Status:            int32(transferv1.TransferStatus_TRANSFER_STATUS_PENDING),
+		Status:            int32(initialStatus),
 		EncryptionKey:     "", // never stored; chunks are E2E encrypted client-side
 		RouteHops:         routeJSON,
 		ReplicationFactor:     replicationFactor,
@@ -146,7 +151,7 @@ func (h *TransferHandler) InitiateTransfer(ctx context.Context, req *transferv1.
 	resp := &transferv1.InitiateTransferResponse{
 		TransferId:            t.TransferID,
 		TotalChunks:           totalChunks,
-		Status:                transferv1.TransferStatus_TRANSFER_STATUS_PENDING,
+		Status:                initialStatus,
 		CreatedAt:             timestamppb.New(t.CreatedAt),
 		RouteHops:             routeHops,
 		SenderEphemeralPubkey: t.SenderEphemeralPubkey,
@@ -186,6 +191,9 @@ func (h *TransferHandler) SendChunk(stream transferv1.TransferService_SendChunkS
 			t, err := h.queries.GetTransfer(stream.Context(), transferID)
 			if err != nil {
 				return status.Error(codes.NotFound, "transfer not found")
+			}
+			if t.Status == int32(transferv1.TransferStatus_TRANSFER_STATUS_AWAITING_APPROVAL) {
+				return status.Error(codes.FailedPrecondition, "transfer is awaiting receiver approval")
 			}
 			totalChunks = t.TotalChunks
 			replicationFactor = t.ReplicationFactor
@@ -612,6 +620,47 @@ func (h *TransferHandler) ConfirmP2PTransfer(ctx context.Context, req *transferv
 	return &transferv1.ConfirmP2PTransferResponse{
 		Success: req.Success,
 		Status:  finalStatus,
+	}, nil
+}
+
+func (h *TransferHandler) RespondToTransfer(ctx context.Context, req *transferv1.RespondToTransferRequest) (*transferv1.RespondToTransferResponse, error) {
+	if req.TransferId == "" || req.ReceiverNodeId == "" {
+		return nil, status.Error(codes.InvalidArgument, "transfer_id and receiver_node_id are required")
+	}
+
+	t, err := h.queries.GetTransfer(ctx, req.TransferId)
+	if err != nil {
+		return nil, status.Error(codes.NotFound, "transfer not found")
+	}
+	if t.ReceiverNodeID != req.ReceiverNodeId {
+		return nil, status.Error(codes.PermissionDenied, "you are not the receiver of this transfer")
+	}
+	if t.Status != int32(transferv1.TransferStatus_TRANSFER_STATUS_AWAITING_APPROVAL) {
+		return nil, status.Error(codes.FailedPrecondition, "transfer is not awaiting approval")
+	}
+
+	var newStatus transferv1.TransferStatus
+	if req.Accept {
+		newStatus = transferv1.TransferStatus_TRANSFER_STATUS_PENDING
+	} else {
+		newStatus = transferv1.TransferStatus_TRANSFER_STATUS_CANCELLED
+	}
+
+	if err := h.queries.UpdateTransferStatus(ctx, repository.UpdateTransferStatusParams{
+		TransferID: req.TransferId,
+		Status:     int32(newStatus),
+	}); err != nil {
+		return nil, status.Error(codes.Internal, "failed to update transfer status")
+	}
+
+	log.Info().
+		Str("transfer_id", req.TransferId).
+		Bool("accepted", req.Accept).
+		Msg("transfer response recorded")
+
+	return &transferv1.RespondToTransferResponse{
+		TransferId: req.TransferId,
+		Status:     newStatus,
 	}, nil
 }
 
