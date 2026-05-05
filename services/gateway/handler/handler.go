@@ -180,6 +180,10 @@ func (h *GatewayHandler) RegisterRoutes(mux *http.ServeMux) {
 
 	// transfer watch (long-lived NDJSON stream of transfer events)
 	mux.HandleFunc("GET /api/v1/transfer-events", h.handleWatchTransfers)
+
+	// Group transfers (session-based multi-recipient)
+	mux.HandleFunc("POST /api/v1/sessions/{sessionId}/transfer", h.handleInitiateGroupTransfer)
+	mux.HandleFunc("GET /api/v1/sessions/{sessionId}/transfers", h.handleListGroupTransfers)
 }
 
 // ─── Health ─────────────────────────────────────────────────
@@ -1632,4 +1636,57 @@ func decodeJSON(r *http.Request, v any) error {
 		return protojson.UnmarshalOptions{DiscardUnknown: true, AllowPartial: true}.Unmarshal(body, msg)
 	}
 	return json.NewDecoder(r.Body).Decode(v)
+}
+
+// ─── Group Transfers ────────────────────────────────────
+
+func (h *GatewayHandler) handleInitiateGroupTransfer(w http.ResponseWriter, r *http.Request) {
+	if h.transferClient == nil {
+		writeError(w, http.StatusServiceUnavailable, "transfer service unavailable")
+		return
+	}
+
+	sessionID := r.PathValue("sessionId")
+	var req transferv1.InitiateGroupTransferRequest
+	if err := decodeJSON(r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	req.SessionId = sessionID
+
+	ctx := forwardAuth(r)
+
+	// Verify sender node belongs to authenticated user.
+	if req.SenderNodeId != "" {
+		if !h.userOwnsNode(ctx, req.SenderNodeId) {
+			writeError(w, http.StatusForbidden, "sender node does not belong to you")
+			return
+		}
+	}
+
+	resp, err := h.transferClient.InitiateGroupTransfer(ctx, &req)
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, resp)
+}
+
+func (h *GatewayHandler) handleListGroupTransfers(w http.ResponseWriter, r *http.Request) {
+	if h.transferClient == nil {
+		writeError(w, http.StatusServiceUnavailable, "transfer service unavailable")
+		return
+	}
+
+	sessionID := r.PathValue("sessionId")
+	ctx := forwardAuth(r)
+
+	resp, err := h.transferClient.ListGroupTransfers(ctx, &transferv1.ListGroupTransfersRequest{
+		SessionId: sessionID,
+	})
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, resp)
 }
