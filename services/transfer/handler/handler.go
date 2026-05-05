@@ -12,6 +12,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/rs/zerolog/log"
 	"github.com/saitddundar/vinctum-core/internal/relay"
 	relayv1 "github.com/saitddundar/vinctum-core/proto/relay/v1"
@@ -171,10 +172,13 @@ func (h *TransferHandler) InitiateTransfer(ctx context.Context, req *transferv1.
 
 func (h *TransferHandler) SendChunk(stream transferv1.TransferService_SendChunkServer) error {
 	var transferID string
+	var storageID string // group_transfer_id if group, else transfer_id
 	var chunksReceived int32
 	var totalChunks int32
 	var storedRouteHops []*routingv1.RouteHop
 	var replicationFactor int32
+	var isGroup bool
+	var siblingTransferIDs []string // other transfers in the group
 
 	for {
 		chunk, err := stream.Recv()
@@ -188,25 +192,52 @@ func (h *TransferHandler) SendChunk(stream transferv1.TransferService_SendChunkS
 		if transferID == "" {
 			transferID = chunk.TransferId
 
-			t, err := h.queries.GetTransfer(stream.Context(), transferID)
-			if err != nil {
-				return status.Error(codes.NotFound, "transfer not found")
-			}
-			if t.Status == int32(transferv1.TransferStatus_TRANSFER_STATUS_AWAITING_APPROVAL) {
-				return status.Error(codes.FailedPrecondition, "transfer is awaiting receiver approval")
-			}
-			totalChunks = t.TotalChunks
-			replicationFactor = t.ReplicationFactor
+			// Check if this is a group transfer ID first.
+			gt, gtErr := h.queries.GetGroupTransfer(stream.Context(), transferID)
+			if gtErr == nil {
+				// Uploading to a group transfer directly.
+				isGroup = true
+				storageID = gt.ID
+				totalChunks = gt.TotalChunks
+				replicationFactor = 1
 
-			// Deserialize stored route hops.
-			if len(t.RouteHops) > 0 {
-				_ = json.Unmarshal(t.RouteHops, &storedRouteHops)
+				siblings, _ := h.queries.ListTransfersByGroupID(stream.Context(), pgText(gt.ID))
+				for _, s := range siblings {
+					siblingTransferIDs = append(siblingTransferIDs, s.TransferID)
+					_ = h.queries.UpdateTransferStatus(stream.Context(), repository.UpdateTransferStatusParams{
+						TransferID: s.TransferID,
+						Status:     int32(transferv1.TransferStatus_TRANSFER_STATUS_IN_PROGRESS),
+					})
+				}
+			} else {
+				// Regular 1:1 transfer.
+				t, err := h.queries.GetTransfer(stream.Context(), transferID)
+				if err != nil {
+					return status.Error(codes.NotFound, "transfer not found")
+				}
+				if t.Status == int32(transferv1.TransferStatus_TRANSFER_STATUS_AWAITING_APPROVAL) {
+					return status.Error(codes.FailedPrecondition, "transfer is awaiting receiver approval")
+				}
+				storageID = t.TransferID
+				totalChunks = t.TotalChunks
+				replicationFactor = t.ReplicationFactor
+
+				if t.GroupTransferID.Valid {
+					storageID = t.GroupTransferID.String
+				}
+
+				// Deserialize stored route hops.
+				if len(t.RouteHops) > 0 {
+					_ = json.Unmarshal(t.RouteHops, &storedRouteHops)
+				}
 			}
 
-			_ = h.queries.UpdateTransferStatus(stream.Context(), repository.UpdateTransferStatusParams{
-				TransferID: transferID,
-				Status:     int32(transferv1.TransferStatus_TRANSFER_STATUS_IN_PROGRESS),
-			})
+			if !isGroup {
+				_ = h.queries.UpdateTransferStatus(stream.Context(), repository.UpdateTransferStatusParams{
+					TransferID: transferID,
+					Status:     int32(transferv1.TransferStatus_TRANSFER_STATUS_IN_PROGRESS),
+				})
+			}
 		}
 
 		// Verify transport integrity: chunk_hash must match the bytes we
@@ -223,10 +254,11 @@ func (h *TransferHandler) SendChunk(stream transferv1.TransferService_SendChunkS
 			return status.Error(codes.DataLoss, "chunk hash mismatch")
 		}
 
-		// Persist the opaque ciphertext as the sender's copy.
+		// Persist the opaque ciphertext. For group transfers, store under the
+		// group_transfer_id so all recipients share the same chunk storage.
 		if h.chunks != nil {
-			if _, err := h.chunks.SaveChunk(transferID, chunk.ChunkIndex, chunk.Data); err != nil {
-				log.Error().Err(err).Str("transfer_id", transferID).Int32("chunk", chunk.ChunkIndex).Msg("failed to persist chunk")
+			if _, err := h.chunks.SaveChunk(storageID, chunk.ChunkIndex, chunk.Data); err != nil {
+				log.Error().Err(err).Str("storage_id", storageID).Int32("chunk", chunk.ChunkIndex).Msg("failed to persist chunk")
 				return status.Error(codes.Internal, "failed to persist chunk")
 			}
 		}
@@ -269,29 +301,44 @@ func (h *TransferHandler) SendChunk(stream transferv1.TransferService_SendChunkS
 
 		chunksReceived = chunk.ChunkIndex + 1
 
-		_ = h.queries.UpdateTransferProgress(stream.Context(), repository.UpdateTransferProgressParams{
-			TransferID: transferID,
-			ChunksDone: chunksReceived,
-		})
+		// Update progress on all related transfers.
+		if isGroup {
+			for _, sid := range siblingTransferIDs {
+				_ = h.queries.UpdateTransferProgress(stream.Context(), repository.UpdateTransferProgressParams{
+					TransferID: sid,
+					ChunksDone: chunksReceived,
+				})
+			}
+		} else {
+			_ = h.queries.UpdateTransferProgress(stream.Context(), repository.UpdateTransferProgressParams{
+				TransferID: transferID,
+				ChunksDone: chunksReceived,
+			})
+		}
 
 		log.Debug().
-			Str("transfer_id", transferID).
+			Str("storage_id", storageID).
 			Int32("chunk", chunk.ChunkIndex).
 			Msg("chunk received")
 	}
 
-	// Complete if all chunks received. The plaintext content hash cannot be
-	// verified by the server because chunks are E2E encrypted; the receiver
-	// verifies it after decrypting the full payload.
+	// Complete if all chunks received.
 	finalStatus := transferv1.TransferStatus_TRANSFER_STATUS_IN_PROGRESS
 	if chunksReceived >= totalChunks {
-		_ = h.queries.CompleteTransfer(stream.Context(), transferID)
+		if isGroup {
+			for _, sid := range siblingTransferIDs {
+				_ = h.queries.CompleteTransfer(stream.Context(), sid)
+			}
+		} else {
+			_ = h.queries.CompleteTransfer(stream.Context(), transferID)
+		}
 		finalStatus = transferv1.TransferStatus_TRANSFER_STATUS_COMPLETED
 	}
 
 	log.Info().
-		Str("transfer_id", transferID).
+		Str("storage_id", storageID).
 		Int32("chunks_received", chunksReceived).
+		Bool("group", isGroup).
 		Msg("send stream ended")
 
 	return stream.SendAndClose(&transferv1.SendChunkResponse{
@@ -315,6 +362,12 @@ func (h *TransferHandler) ReceiveChunks(req *transferv1.ReceiveChunksRequest, st
 		return status.Error(codes.Internal, "failed to fetch transfer")
 	}
 
+	// For group transfers, chunks are stored under the group_transfer_id.
+	chunkStorageID := t.TransferID
+	if t.GroupTransferID.Valid {
+		chunkStorageID = t.GroupTransferID.String
+	}
+
 	startChunk := req.StartChunk
 	if startChunk < 0 {
 		startChunk = 0
@@ -327,13 +380,11 @@ func (h *TransferHandler) ReceiveChunks(req *transferv1.ReceiveChunksRequest, st
 		var chunkHash string
 
 		if h.chunks != nil {
-			data, err = h.chunks.LoadChunk(t.TransferID, i)
+			data, err = h.chunks.LoadChunk(chunkStorageID, i)
 			if err != nil {
-				log.Error().Err(err).Str("transfer_id", t.TransferID).Int32("chunk", i).Msg("failed to load chunk")
+				log.Error().Err(err).Str("storage_id", chunkStorageID).Int32("chunk", i).Msg("failed to load chunk")
 				return status.Error(codes.Internal, "failed to load chunk from storage")
 			}
-			// Hash is over the opaque ciphertext; the receiver decrypts and
-			// verifies the plaintext content hash locally.
 			chunkHash = sha256Hex(data)
 		}
 
@@ -369,7 +420,7 @@ func (h *TransferHandler) GetTransferStatus(ctx context.Context, req *transferv1
 		bytesTransferred = t.TotalSizeBytes
 	}
 
-	return &transferv1.GetTransferStatusResponse{
+	resp := &transferv1.GetTransferStatusResponse{
 		TransferId:            t.TransferID,
 		Status:                transferv1.TransferStatus(t.Status),
 		ChunksTransferred:     t.ChunksDone,
@@ -379,7 +430,12 @@ func (h *TransferHandler) GetTransferStatus(ctx context.Context, req *transferv1
 		StartedAt:             timestamppb.New(t.CreatedAt),
 		UpdatedAt:             timestamppb.New(t.UpdatedAt),
 		SenderEphemeralPubkey: t.SenderEphemeralPubkey,
-	}, nil
+		WrappedFileKey:        t.WrappedFileKey,
+	}
+	if t.GroupTransferID.Valid {
+		resp.GroupTransferId = t.GroupTransferID.String
+	}
+	return resp, nil
 }
 
 func (h *TransferHandler) ListTransfers(ctx context.Context, req *transferv1.ListTransfersRequest) (*transferv1.ListTransfersResponse, error) {
@@ -408,7 +464,7 @@ func (h *TransferHandler) ListTransfers(ctx context.Context, req *transferv1.Lis
 		if t.TotalChunks > 0 {
 			progress = (t.ChunksDone * 100) / t.TotalChunks
 		}
-		transfers = append(transfers, &transferv1.TransferInfo{
+		info := &transferv1.TransferInfo{
 			TransferId:            t.TransferID,
 			SenderNodeId:          t.SenderNodeID,
 			ReceiverNodeId:        t.ReceiverNodeID,
@@ -419,7 +475,12 @@ func (h *TransferHandler) ListTransfers(ctx context.Context, req *transferv1.Lis
 			CreatedAt:             timestamppb.New(t.CreatedAt),
 			SenderEphemeralPubkey: t.SenderEphemeralPubkey,
 			ContentHash:           t.ContentHash,
-		})
+			WrappedFileKey:        t.WrappedFileKey,
+		}
+		if t.GroupTransferID.Valid {
+			info.GroupTransferId = t.GroupTransferID.String
+		}
+		transfers = append(transfers, info)
 	}
 
 	return &transferv1.ListTransfersResponse{Transfers: transfers}, nil
@@ -662,6 +723,175 @@ func (h *TransferHandler) RespondToTransfer(ctx context.Context, req *transferv1
 		TransferId: req.TransferId,
 		Status:     newStatus,
 	}, nil
+}
+
+func (h *TransferHandler) InitiateGroupTransfer(ctx context.Context, req *transferv1.InitiateGroupTransferRequest) (*transferv1.InitiateGroupTransferResponse, error) {
+	if req.SessionId == "" || req.SenderNodeId == "" {
+		return nil, status.Error(codes.InvalidArgument, "session_id and sender_node_id are required")
+	}
+	if req.TotalSizeBytes <= 0 {
+		return nil, status.Error(codes.InvalidArgument, "total_size_bytes must be positive")
+	}
+	if len(req.SenderEphemeralPubkey) != 32 {
+		return nil, status.Error(codes.InvalidArgument, "sender_ephemeral_pubkey must be exactly 32 bytes")
+	}
+	if len(req.RecipientKeys) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "at least one recipient_key is required")
+	}
+
+	chunkSize := int32(req.ChunkSizeBytes)
+	if chunkSize <= 0 {
+		chunkSize = defaultChunkSize
+	}
+	totalChunks := int32((req.TotalSizeBytes + int64(chunkSize) - 1) / int64(chunkSize))
+	groupID := uuid.NewString()
+
+	sessionUUID, err := uuid.Parse(req.SessionId)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid session_id format")
+	}
+
+	gt, err := h.queries.CreateGroupTransfer(ctx, repository.CreateGroupTransferParams{
+		ID:                    groupID,
+		SessionID:             pgUUID(sessionUUID),
+		SenderNodeID:          req.SenderNodeId,
+		Filename:              req.Filename,
+		TotalSizeBytes:        req.TotalSizeBytes,
+		ContentHash:           req.ContentHash,
+		ChunkSizeBytes:        chunkSize,
+		TotalChunks:           totalChunks,
+		SenderEphemeralPubkey: req.SenderEphemeralPubkey,
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to create group transfer")
+		return nil, status.Error(codes.Internal, "failed to create group transfer")
+	}
+
+	transfers := make([]*transferv1.TransferInfo, 0, len(req.RecipientKeys))
+	for _, rk := range req.RecipientKeys {
+		if rk.ReceiverNodeId == "" || len(rk.WrappedFileKey) == 0 {
+			return nil, status.Error(codes.InvalidArgument, "each recipient_key must have receiver_node_id and wrapped_file_key")
+		}
+
+		transferID := uuid.NewString()
+		t, err := h.queries.CreateTransfer(ctx, repository.CreateTransferParams{
+			TransferID:            transferID,
+			SenderNodeID:          req.SenderNodeId,
+			ReceiverNodeID:        rk.ReceiverNodeId,
+			Filename:              req.Filename,
+			TotalSizeBytes:        req.TotalSizeBytes,
+			ContentHash:           req.ContentHash,
+			ChunkSizeBytes:        chunkSize,
+			TotalChunks:           totalChunks,
+			Status:                int32(transferv1.TransferStatus_TRANSFER_STATUS_AWAITING_APPROVAL),
+			EncryptionKey:         "",
+			RouteHops:             []byte("[]"),
+			ReplicationFactor:     1,
+			SenderEphemeralPubkey: req.SenderEphemeralPubkey,
+			GroupTransferID:       pgText(groupID),
+			WrappedFileKey:        rk.WrappedFileKey,
+		})
+		if err != nil {
+			log.Error().Err(err).Str("receiver", rk.ReceiverNodeId).Msg("failed to create recipient transfer")
+			return nil, status.Error(codes.Internal, "failed to create recipient transfer")
+		}
+
+		transfers = append(transfers, &transferv1.TransferInfo{
+			TransferId:            t.TransferID,
+			SenderNodeId:          t.SenderNodeID,
+			ReceiverNodeId:        t.ReceiverNodeID,
+			Filename:              t.Filename,
+			TotalSizeBytes:        t.TotalSizeBytes,
+			Status:                transferv1.TransferStatus(t.Status),
+			CreatedAt:             timestamppb.New(t.CreatedAt),
+			SenderEphemeralPubkey: t.SenderEphemeralPubkey,
+			ContentHash:           t.ContentHash,
+			GroupTransferId:       groupID,
+			WrappedFileKey:        t.WrappedFileKey,
+		})
+	}
+
+	log.Info().
+		Str("group_transfer_id", groupID).
+		Str("session_id", req.SessionId).
+		Int("recipients", len(transfers)).
+		Msg("group transfer initiated")
+
+	return &transferv1.InitiateGroupTransferResponse{
+		GroupTransferId: gt.ID,
+		TotalChunks:     totalChunks,
+		Transfers:       transfers,
+		CreatedAt:       timestamppb.New(gt.CreatedAt),
+	}, nil
+}
+
+func (h *TransferHandler) ListGroupTransfers(ctx context.Context, req *transferv1.ListGroupTransfersRequest) (*transferv1.ListGroupTransfersResponse, error) {
+	if req.SessionId == "" {
+		return nil, status.Error(codes.InvalidArgument, "session_id is required")
+	}
+
+	sessionUUID, err := uuid.Parse(req.SessionId)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid session_id format")
+	}
+
+	groups, err := h.queries.ListGroupTransfersBySession(ctx, pgUUID(sessionUUID))
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to list group transfers")
+	}
+
+	result := make([]*transferv1.GroupTransferInfo, 0, len(groups))
+	for _, g := range groups {
+		childRows, err := h.queries.ListTransfersByGroupID(ctx, pgText(g.ID))
+		if err != nil {
+			continue
+		}
+
+		children := make([]*transferv1.TransferInfo, 0, len(childRows))
+		for _, t := range childRows {
+			progress := int32(0)
+			if t.TotalChunks > 0 {
+				progress = (t.ChunksDone * 100) / t.TotalChunks
+			}
+			children = append(children, &transferv1.TransferInfo{
+				TransferId:            t.TransferID,
+				SenderNodeId:          t.SenderNodeID,
+				ReceiverNodeId:        t.ReceiverNodeID,
+				Filename:              t.Filename,
+				TotalSizeBytes:        t.TotalSizeBytes,
+				Status:                transferv1.TransferStatus(t.Status),
+				ProgressPercent:       progress,
+				CreatedAt:             timestamppb.New(t.CreatedAt),
+				SenderEphemeralPubkey: t.SenderEphemeralPubkey,
+				ContentHash:           t.ContentHash,
+				GroupTransferId:       g.ID,
+				WrappedFileKey:        t.WrappedFileKey,
+			})
+		}
+
+		result = append(result, &transferv1.GroupTransferInfo{
+			GroupTransferId: g.ID,
+			SessionId:       req.SessionId,
+			SenderNodeId:    g.SenderNodeID,
+			Filename:        g.Filename,
+			TotalSizeBytes:  g.TotalSizeBytes,
+			TotalChunks:     g.TotalChunks,
+			Transfers:       children,
+			CreatedAt:       timestamppb.New(g.CreatedAt),
+		})
+	}
+
+	return &transferv1.ListGroupTransfersResponse{GroupTransfers: result}, nil
+}
+
+// pgUUID converts a google uuid to pgtype.UUID.
+func pgUUID(u uuid.UUID) pgtype.UUID {
+	return pgtype.UUID{Bytes: u, Valid: true}
+}
+
+// pgText converts a string to pgtype.Text.
+func pgText(s string) pgtype.Text {
+	return pgtype.Text{String: s, Valid: true}
 }
 
 func sha256Hex(data []byte) string {
