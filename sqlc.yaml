@@ -56,8 +56,10 @@ sql:
       - "scripts/migrations/004_create_transfers.sql"
       - "scripts/migrations/005_add_encryption_key.sql"
       - "scripts/migrations/006_add_route_hops.sql"
+      - "scripts/migrations/009_create_peer_sessions.sql"
       - "scripts/migrations/011_add_sender_ephemeral_pubkey.sql"
       - "scripts/migrations/012_add_transfer_mode.sql"
+      - "scripts/migrations/015_create_group_transfers.sql"
     queries: "services/transfer/repository/queries.sql"
     gen:
       go:

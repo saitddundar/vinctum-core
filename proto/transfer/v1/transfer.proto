@@ -38,6 +38,13 @@ service TransferService {
 
   // Accepts or rejects a pending incoming transfer.
   rpc RespondToTransfer(RespondToTransferRequest) returns (RespondToTransferResponse);
+
+  // Initiates a group transfer: sends a file to all devices in a session.
+  // Chunks are stored once; each recipient gets a wrapped file key.
+  rpc InitiateGroupTransfer(InitiateGroupTransferRequest) returns (InitiateGroupTransferResponse);
+
+  // Lists transfers belonging to a group transfer.
+  rpc ListGroupTransfers(ListGroupTransfersRequest) returns (ListGroupTransfersResponse);
 }
 
 // ─── InitiateTransfer ────────────────────────────────────
@@ -115,6 +122,8 @@ message GetTransferStatusResponse {
   google.protobuf.Timestamp started_at  = 7;
   google.protobuf.Timestamp updated_at  = 8;
   bytes  sender_ephemeral_pubkey = 9; // Ephemeral pubkey for receiver-side key derivation
+  string group_transfer_id = 10; // Non-empty if part of a group transfer
+  bytes  wrapped_file_key  = 11; // For group transfers: wrapped AES key for this recipient
 }
 
 // ─── ListTransfers ───────────────────────────────────────
@@ -140,6 +149,8 @@ message TransferInfo {
   bytes  sender_ephemeral_pubkey = 9; // Ephemeral X25519 pubkey; receiver needs this to derive the decryption key
   string content_hash = 10; // Content hash covering the ephemeral pubkey (MITM binding)
   TransferMode transfer_mode = 11; // How this transfer is being conducted
+  string group_transfer_id = 12; // Non-empty if part of a group transfer
+  bytes  wrapped_file_key  = 13; // For group transfers: AES file key wrapped for this recipient
 }
 
 // ─── CancelTransfer ─────────────────────────────────────
@@ -235,4 +246,50 @@ message RespondToTransferRequest {
 message RespondToTransferResponse {
   string         transfer_id = 1;
   TransferStatus status      = 2;
+}
+
+// ─── Group Transfer ────────────────────────────────
+
+// Per-recipient wrapped key: the random AES file key encrypted via
+// ECDH(sender_ephemeral, receiver_static_pub).
+message RecipientKey {
+  string receiver_node_id = 1;
+  bytes  wrapped_file_key = 2; // AES-256-GCM encrypted file key
+}
+
+message InitiateGroupTransferRequest {
+  string session_id              = 1; // Target session containing recipient devices
+  string sender_node_id          = 2;
+  string filename                = 3;
+  int64  total_size_bytes        = 4;
+  string content_hash            = 5;
+  int32  chunk_size_bytes        = 6;
+  bytes  sender_ephemeral_pubkey = 7; // Single ephemeral key for all recipients
+  repeated RecipientKey recipient_keys = 8; // One wrapped file key per recipient
+}
+
+message InitiateGroupTransferResponse {
+  string group_transfer_id          = 1; // Upload chunks using this ID
+  int32  total_chunks               = 2;
+  repeated TransferInfo transfers   = 3; // One per recipient (each has its own transfer_id)
+  google.protobuf.Timestamp created_at = 4;
+}
+
+message GroupTransferInfo {
+  string group_transfer_id          = 1;
+  string session_id                 = 2;
+  string sender_node_id             = 3;
+  string filename                   = 4;
+  int64  total_size_bytes           = 5;
+  int32  total_chunks               = 6;
+  repeated TransferInfo transfers   = 7; // Per-recipient transfer statuses
+  google.protobuf.Timestamp created_at = 8;
+}
+
+message ListGroupTransfersRequest {
+  string session_id = 1;
+}
+
+message ListGroupTransfersResponse {
+  repeated GroupTransferInfo group_transfers = 1;
 }

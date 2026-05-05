@@ -19,16 +19,18 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	TransferService_InitiateTransfer_FullMethodName     = "/transfer.v1.TransferService/InitiateTransfer"
-	TransferService_SendChunk_FullMethodName            = "/transfer.v1.TransferService/SendChunk"
-	TransferService_ReceiveChunks_FullMethodName        = "/transfer.v1.TransferService/ReceiveChunks"
-	TransferService_GetTransferStatus_FullMethodName    = "/transfer.v1.TransferService/GetTransferStatus"
-	TransferService_ListTransfers_FullMethodName        = "/transfer.v1.TransferService/ListTransfers"
-	TransferService_CancelTransfer_FullMethodName       = "/transfer.v1.TransferService/CancelTransfer"
-	TransferService_WatchTransfers_FullMethodName       = "/transfer.v1.TransferService/WatchTransfers"
-	TransferService_GetP2PConnectionInfo_FullMethodName = "/transfer.v1.TransferService/GetP2PConnectionInfo"
-	TransferService_ConfirmP2PTransfer_FullMethodName   = "/transfer.v1.TransferService/ConfirmP2PTransfer"
-	TransferService_RespondToTransfer_FullMethodName    = "/transfer.v1.TransferService/RespondToTransfer"
+	TransferService_InitiateTransfer_FullMethodName      = "/transfer.v1.TransferService/InitiateTransfer"
+	TransferService_SendChunk_FullMethodName             = "/transfer.v1.TransferService/SendChunk"
+	TransferService_ReceiveChunks_FullMethodName         = "/transfer.v1.TransferService/ReceiveChunks"
+	TransferService_GetTransferStatus_FullMethodName     = "/transfer.v1.TransferService/GetTransferStatus"
+	TransferService_ListTransfers_FullMethodName         = "/transfer.v1.TransferService/ListTransfers"
+	TransferService_CancelTransfer_FullMethodName        = "/transfer.v1.TransferService/CancelTransfer"
+	TransferService_WatchTransfers_FullMethodName        = "/transfer.v1.TransferService/WatchTransfers"
+	TransferService_GetP2PConnectionInfo_FullMethodName  = "/transfer.v1.TransferService/GetP2PConnectionInfo"
+	TransferService_ConfirmP2PTransfer_FullMethodName    = "/transfer.v1.TransferService/ConfirmP2PTransfer"
+	TransferService_RespondToTransfer_FullMethodName     = "/transfer.v1.TransferService/RespondToTransfer"
+	TransferService_InitiateGroupTransfer_FullMethodName = "/transfer.v1.TransferService/InitiateGroupTransfer"
+	TransferService_ListGroupTransfers_FullMethodName    = "/transfer.v1.TransferService/ListGroupTransfers"
 )
 
 // TransferServiceClient is the client API for TransferService service.
@@ -56,6 +58,11 @@ type TransferServiceClient interface {
 	ConfirmP2PTransfer(ctx context.Context, in *ConfirmP2PTransferRequest, opts ...grpc.CallOption) (*ConfirmP2PTransferResponse, error)
 	// Accepts or rejects a pending incoming transfer.
 	RespondToTransfer(ctx context.Context, in *RespondToTransferRequest, opts ...grpc.CallOption) (*RespondToTransferResponse, error)
+	// Initiates a group transfer: sends a file to all devices in a session.
+	// Chunks are stored once; each recipient gets a wrapped file key.
+	InitiateGroupTransfer(ctx context.Context, in *InitiateGroupTransferRequest, opts ...grpc.CallOption) (*InitiateGroupTransferResponse, error)
+	// Lists transfers belonging to a group transfer.
+	ListGroupTransfers(ctx context.Context, in *ListGroupTransfersRequest, opts ...grpc.CallOption) (*ListGroupTransfersResponse, error)
 }
 
 type transferServiceClient struct {
@@ -187,6 +194,26 @@ func (c *transferServiceClient) RespondToTransfer(ctx context.Context, in *Respo
 	return out, nil
 }
 
+func (c *transferServiceClient) InitiateGroupTransfer(ctx context.Context, in *InitiateGroupTransferRequest, opts ...grpc.CallOption) (*InitiateGroupTransferResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(InitiateGroupTransferResponse)
+	err := c.cc.Invoke(ctx, TransferService_InitiateGroupTransfer_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *transferServiceClient) ListGroupTransfers(ctx context.Context, in *ListGroupTransfersRequest, opts ...grpc.CallOption) (*ListGroupTransfersResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListGroupTransfersResponse)
+	err := c.cc.Invoke(ctx, TransferService_ListGroupTransfers_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TransferServiceServer is the server API for TransferService service.
 // All implementations should embed UnimplementedTransferServiceServer
 // for forward compatibility.
@@ -212,6 +239,11 @@ type TransferServiceServer interface {
 	ConfirmP2PTransfer(context.Context, *ConfirmP2PTransferRequest) (*ConfirmP2PTransferResponse, error)
 	// Accepts or rejects a pending incoming transfer.
 	RespondToTransfer(context.Context, *RespondToTransferRequest) (*RespondToTransferResponse, error)
+	// Initiates a group transfer: sends a file to all devices in a session.
+	// Chunks are stored once; each recipient gets a wrapped file key.
+	InitiateGroupTransfer(context.Context, *InitiateGroupTransferRequest) (*InitiateGroupTransferResponse, error)
+	// Lists transfers belonging to a group transfer.
+	ListGroupTransfers(context.Context, *ListGroupTransfersRequest) (*ListGroupTransfersResponse, error)
 }
 
 // UnimplementedTransferServiceServer should be embedded to have
@@ -250,6 +282,12 @@ func (UnimplementedTransferServiceServer) ConfirmP2PTransfer(context.Context, *C
 }
 func (UnimplementedTransferServiceServer) RespondToTransfer(context.Context, *RespondToTransferRequest) (*RespondToTransferResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method RespondToTransfer not implemented")
+}
+func (UnimplementedTransferServiceServer) InitiateGroupTransfer(context.Context, *InitiateGroupTransferRequest) (*InitiateGroupTransferResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method InitiateGroupTransfer not implemented")
+}
+func (UnimplementedTransferServiceServer) ListGroupTransfers(context.Context, *ListGroupTransfersRequest) (*ListGroupTransfersResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListGroupTransfers not implemented")
 }
 func (UnimplementedTransferServiceServer) testEmbeddedByValue() {}
 
@@ -426,6 +464,42 @@ func _TransferService_RespondToTransfer_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TransferService_InitiateGroupTransfer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(InitiateGroupTransferRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TransferServiceServer).InitiateGroupTransfer(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TransferService_InitiateGroupTransfer_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TransferServiceServer).InitiateGroupTransfer(ctx, req.(*InitiateGroupTransferRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TransferService_ListGroupTransfers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListGroupTransfersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TransferServiceServer).ListGroupTransfers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TransferService_ListGroupTransfers_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TransferServiceServer).ListGroupTransfers(ctx, req.(*ListGroupTransfersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TransferService_ServiceDesc is the grpc.ServiceDesc for TransferService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -460,6 +534,14 @@ var TransferService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RespondToTransfer",
 			Handler:    _TransferService_RespondToTransfer_Handler,
+		},
+		{
+			MethodName: "InitiateGroupTransfer",
+			Handler:    _TransferService_InitiateGroupTransfer_Handler,
+		},
+		{
+			MethodName: "ListGroupTransfers",
+			Handler:    _TransferService_ListGroupTransfers_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

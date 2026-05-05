@@ -744,6 +744,8 @@ type GetTransferStatusResponse struct {
 	StartedAt             *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
 	UpdatedAt             *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	SenderEphemeralPubkey []byte                 `protobuf:"bytes,9,opt,name=sender_ephemeral_pubkey,json=senderEphemeralPubkey,proto3" json:"sender_ephemeral_pubkey,omitempty"` // Ephemeral pubkey for receiver-side key derivation
+	GroupTransferId       string                 `protobuf:"bytes,10,opt,name=group_transfer_id,json=groupTransferId,proto3" json:"group_transfer_id,omitempty"`                  // Non-empty if part of a group transfer
+	WrappedFileKey        []byte                 `protobuf:"bytes,11,opt,name=wrapped_file_key,json=wrappedFileKey,proto3" json:"wrapped_file_key,omitempty"`                     // For group transfers: wrapped AES key for this recipient
 	unknownFields         protoimpl.UnknownFields
 	sizeCache             protoimpl.SizeCache
 }
@@ -837,6 +839,20 @@ func (x *GetTransferStatusResponse) GetUpdatedAt() *timestamppb.Timestamp {
 func (x *GetTransferStatusResponse) GetSenderEphemeralPubkey() []byte {
 	if x != nil {
 		return x.SenderEphemeralPubkey
+	}
+	return nil
+}
+
+func (x *GetTransferStatusResponse) GetGroupTransferId() string {
+	if x != nil {
+		return x.GroupTransferId
+	}
+	return ""
+}
+
+func (x *GetTransferStatusResponse) GetWrappedFileKey() []byte {
+	if x != nil {
+		return x.WrappedFileKey
 	}
 	return nil
 }
@@ -950,6 +966,8 @@ type TransferInfo struct {
 	SenderEphemeralPubkey []byte                 `protobuf:"bytes,9,opt,name=sender_ephemeral_pubkey,json=senderEphemeralPubkey,proto3" json:"sender_ephemeral_pubkey,omitempty"`    // Ephemeral X25519 pubkey; receiver needs this to derive the decryption key
 	ContentHash           string                 `protobuf:"bytes,10,opt,name=content_hash,json=contentHash,proto3" json:"content_hash,omitempty"`                                   // Content hash covering the ephemeral pubkey (MITM binding)
 	TransferMode          TransferMode           `protobuf:"varint,11,opt,name=transfer_mode,json=transferMode,proto3,enum=transfer.v1.TransferMode" json:"transfer_mode,omitempty"` // How this transfer is being conducted
+	GroupTransferId       string                 `protobuf:"bytes,12,opt,name=group_transfer_id,json=groupTransferId,proto3" json:"group_transfer_id,omitempty"`                     // Non-empty if part of a group transfer
+	WrappedFileKey        []byte                 `protobuf:"bytes,13,opt,name=wrapped_file_key,json=wrappedFileKey,proto3" json:"wrapped_file_key,omitempty"`                        // For group transfers: AES file key wrapped for this recipient
 	unknownFields         protoimpl.UnknownFields
 	sizeCache             protoimpl.SizeCache
 }
@@ -1059,6 +1077,20 @@ func (x *TransferInfo) GetTransferMode() TransferMode {
 		return x.TransferMode
 	}
 	return TransferMode_TRANSFER_MODE_UNSPECIFIED
+}
+
+func (x *TransferInfo) GetGroupTransferId() string {
+	if x != nil {
+		return x.GroupTransferId
+	}
+	return ""
+}
+
+func (x *TransferInfo) GetWrappedFileKey() []byte {
+	if x != nil {
+		return x.WrappedFileKey
+	}
+	return nil
 }
 
 type CancelTransferRequest struct {
@@ -1631,6 +1663,416 @@ func (x *RespondToTransferResponse) GetStatus() TransferStatus {
 	return TransferStatus_TRANSFER_STATUS_UNSPECIFIED
 }
 
+// Per-recipient wrapped key: the random AES file key encrypted via
+// ECDH(sender_ephemeral, receiver_static_pub).
+type RecipientKey struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	ReceiverNodeId string                 `protobuf:"bytes,1,opt,name=receiver_node_id,json=receiverNodeId,proto3" json:"receiver_node_id,omitempty"`
+	WrappedFileKey []byte                 `protobuf:"bytes,2,opt,name=wrapped_file_key,json=wrappedFileKey,proto3" json:"wrapped_file_key,omitempty"` // AES-256-GCM encrypted file key
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *RecipientKey) Reset() {
+	*x = RecipientKey{}
+	mi := &file_transfer_v1_transfer_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RecipientKey) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RecipientKey) ProtoMessage() {}
+
+func (x *RecipientKey) ProtoReflect() protoreflect.Message {
+	mi := &file_transfer_v1_transfer_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RecipientKey.ProtoReflect.Descriptor instead.
+func (*RecipientKey) Descriptor() ([]byte, []int) {
+	return file_transfer_v1_transfer_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *RecipientKey) GetReceiverNodeId() string {
+	if x != nil {
+		return x.ReceiverNodeId
+	}
+	return ""
+}
+
+func (x *RecipientKey) GetWrappedFileKey() []byte {
+	if x != nil {
+		return x.WrappedFileKey
+	}
+	return nil
+}
+
+type InitiateGroupTransferRequest struct {
+	state                 protoimpl.MessageState `protogen:"open.v1"`
+	SessionId             string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"` // Target session containing recipient devices
+	SenderNodeId          string                 `protobuf:"bytes,2,opt,name=sender_node_id,json=senderNodeId,proto3" json:"sender_node_id,omitempty"`
+	Filename              string                 `protobuf:"bytes,3,opt,name=filename,proto3" json:"filename,omitempty"`
+	TotalSizeBytes        int64                  `protobuf:"varint,4,opt,name=total_size_bytes,json=totalSizeBytes,proto3" json:"total_size_bytes,omitempty"`
+	ContentHash           string                 `protobuf:"bytes,5,opt,name=content_hash,json=contentHash,proto3" json:"content_hash,omitempty"`
+	ChunkSizeBytes        int32                  `protobuf:"varint,6,opt,name=chunk_size_bytes,json=chunkSizeBytes,proto3" json:"chunk_size_bytes,omitempty"`
+	SenderEphemeralPubkey []byte                 `protobuf:"bytes,7,opt,name=sender_ephemeral_pubkey,json=senderEphemeralPubkey,proto3" json:"sender_ephemeral_pubkey,omitempty"` // Single ephemeral key for all recipients
+	RecipientKeys         []*RecipientKey        `protobuf:"bytes,8,rep,name=recipient_keys,json=recipientKeys,proto3" json:"recipient_keys,omitempty"`                           // One wrapped file key per recipient
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
+}
+
+func (x *InitiateGroupTransferRequest) Reset() {
+	*x = InitiateGroupTransferRequest{}
+	mi := &file_transfer_v1_transfer_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *InitiateGroupTransferRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*InitiateGroupTransferRequest) ProtoMessage() {}
+
+func (x *InitiateGroupTransferRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_transfer_v1_transfer_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use InitiateGroupTransferRequest.ProtoReflect.Descriptor instead.
+func (*InitiateGroupTransferRequest) Descriptor() ([]byte, []int) {
+	return file_transfer_v1_transfer_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *InitiateGroupTransferRequest) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
+func (x *InitiateGroupTransferRequest) GetSenderNodeId() string {
+	if x != nil {
+		return x.SenderNodeId
+	}
+	return ""
+}
+
+func (x *InitiateGroupTransferRequest) GetFilename() string {
+	if x != nil {
+		return x.Filename
+	}
+	return ""
+}
+
+func (x *InitiateGroupTransferRequest) GetTotalSizeBytes() int64 {
+	if x != nil {
+		return x.TotalSizeBytes
+	}
+	return 0
+}
+
+func (x *InitiateGroupTransferRequest) GetContentHash() string {
+	if x != nil {
+		return x.ContentHash
+	}
+	return ""
+}
+
+func (x *InitiateGroupTransferRequest) GetChunkSizeBytes() int32 {
+	if x != nil {
+		return x.ChunkSizeBytes
+	}
+	return 0
+}
+
+func (x *InitiateGroupTransferRequest) GetSenderEphemeralPubkey() []byte {
+	if x != nil {
+		return x.SenderEphemeralPubkey
+	}
+	return nil
+}
+
+func (x *InitiateGroupTransferRequest) GetRecipientKeys() []*RecipientKey {
+	if x != nil {
+		return x.RecipientKeys
+	}
+	return nil
+}
+
+type InitiateGroupTransferResponse struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	GroupTransferId string                 `protobuf:"bytes,1,opt,name=group_transfer_id,json=groupTransferId,proto3" json:"group_transfer_id,omitempty"` // Upload chunks using this ID
+	TotalChunks     int32                  `protobuf:"varint,2,opt,name=total_chunks,json=totalChunks,proto3" json:"total_chunks,omitempty"`
+	Transfers       []*TransferInfo        `protobuf:"bytes,3,rep,name=transfers,proto3" json:"transfers,omitempty"` // One per recipient (each has its own transfer_id)
+	CreatedAt       *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *InitiateGroupTransferResponse) Reset() {
+	*x = InitiateGroupTransferResponse{}
+	mi := &file_transfer_v1_transfer_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *InitiateGroupTransferResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*InitiateGroupTransferResponse) ProtoMessage() {}
+
+func (x *InitiateGroupTransferResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_transfer_v1_transfer_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use InitiateGroupTransferResponse.ProtoReflect.Descriptor instead.
+func (*InitiateGroupTransferResponse) Descriptor() ([]byte, []int) {
+	return file_transfer_v1_transfer_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *InitiateGroupTransferResponse) GetGroupTransferId() string {
+	if x != nil {
+		return x.GroupTransferId
+	}
+	return ""
+}
+
+func (x *InitiateGroupTransferResponse) GetTotalChunks() int32 {
+	if x != nil {
+		return x.TotalChunks
+	}
+	return 0
+}
+
+func (x *InitiateGroupTransferResponse) GetTransfers() []*TransferInfo {
+	if x != nil {
+		return x.Transfers
+	}
+	return nil
+}
+
+func (x *InitiateGroupTransferResponse) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+type GroupTransferInfo struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	GroupTransferId string                 `protobuf:"bytes,1,opt,name=group_transfer_id,json=groupTransferId,proto3" json:"group_transfer_id,omitempty"`
+	SessionId       string                 `protobuf:"bytes,2,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	SenderNodeId    string                 `protobuf:"bytes,3,opt,name=sender_node_id,json=senderNodeId,proto3" json:"sender_node_id,omitempty"`
+	Filename        string                 `protobuf:"bytes,4,opt,name=filename,proto3" json:"filename,omitempty"`
+	TotalSizeBytes  int64                  `protobuf:"varint,5,opt,name=total_size_bytes,json=totalSizeBytes,proto3" json:"total_size_bytes,omitempty"`
+	TotalChunks     int32                  `protobuf:"varint,6,opt,name=total_chunks,json=totalChunks,proto3" json:"total_chunks,omitempty"`
+	Transfers       []*TransferInfo        `protobuf:"bytes,7,rep,name=transfers,proto3" json:"transfers,omitempty"` // Per-recipient transfer statuses
+	CreatedAt       *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *GroupTransferInfo) Reset() {
+	*x = GroupTransferInfo{}
+	mi := &file_transfer_v1_transfer_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GroupTransferInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GroupTransferInfo) ProtoMessage() {}
+
+func (x *GroupTransferInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_transfer_v1_transfer_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GroupTransferInfo.ProtoReflect.Descriptor instead.
+func (*GroupTransferInfo) Descriptor() ([]byte, []int) {
+	return file_transfer_v1_transfer_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *GroupTransferInfo) GetGroupTransferId() string {
+	if x != nil {
+		return x.GroupTransferId
+	}
+	return ""
+}
+
+func (x *GroupTransferInfo) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
+func (x *GroupTransferInfo) GetSenderNodeId() string {
+	if x != nil {
+		return x.SenderNodeId
+	}
+	return ""
+}
+
+func (x *GroupTransferInfo) GetFilename() string {
+	if x != nil {
+		return x.Filename
+	}
+	return ""
+}
+
+func (x *GroupTransferInfo) GetTotalSizeBytes() int64 {
+	if x != nil {
+		return x.TotalSizeBytes
+	}
+	return 0
+}
+
+func (x *GroupTransferInfo) GetTotalChunks() int32 {
+	if x != nil {
+		return x.TotalChunks
+	}
+	return 0
+}
+
+func (x *GroupTransferInfo) GetTransfers() []*TransferInfo {
+	if x != nil {
+		return x.Transfers
+	}
+	return nil
+}
+
+func (x *GroupTransferInfo) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+type ListGroupTransfersRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListGroupTransfersRequest) Reset() {
+	*x = ListGroupTransfersRequest{}
+	mi := &file_transfer_v1_transfer_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListGroupTransfersRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListGroupTransfersRequest) ProtoMessage() {}
+
+func (x *ListGroupTransfersRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_transfer_v1_transfer_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListGroupTransfersRequest.ProtoReflect.Descriptor instead.
+func (*ListGroupTransfersRequest) Descriptor() ([]byte, []int) {
+	return file_transfer_v1_transfer_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *ListGroupTransfersRequest) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
+type ListGroupTransfersResponse struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	GroupTransfers []*GroupTransferInfo   `protobuf:"bytes,1,rep,name=group_transfers,json=groupTransfers,proto3" json:"group_transfers,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *ListGroupTransfersResponse) Reset() {
+	*x = ListGroupTransfersResponse{}
+	mi := &file_transfer_v1_transfer_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListGroupTransfersResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListGroupTransfersResponse) ProtoMessage() {}
+
+func (x *ListGroupTransfersResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_transfer_v1_transfer_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListGroupTransfersResponse.ProtoReflect.Descriptor instead.
+func (*ListGroupTransfersResponse) Descriptor() ([]byte, []int) {
+	return file_transfer_v1_transfer_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *ListGroupTransfersResponse) GetGroupTransfers() []*GroupTransferInfo {
+	if x != nil {
+		return x.GroupTransfers
+	}
+	return nil
+}
+
 var File_transfer_v1_transfer_proto protoreflect.FileDescriptor
 
 const file_transfer_v1_transfer_proto_rawDesc = "" +
@@ -1692,7 +2134,7 @@ const file_transfer_v1_transfer_proto_rawDesc = "" +
 	"\ais_last\x18\x05 \x01(\bR\x06isLast\";\n" +
 	"\x18GetTransferStatusRequest\x12\x1f\n" +
 	"\vtransfer_id\x18\x01 \x01(\tR\n" +
-	"transferId\"\xbf\x03\n" +
+	"transferId\"\x95\x04\n" +
 	"\x19GetTransferStatusResponse\x12\x1f\n" +
 	"\vtransfer_id\x18\x01 \x01(\tR\n" +
 	"transferId\x123\n" +
@@ -1706,12 +2148,15 @@ const file_transfer_v1_transfer_proto_rawDesc = "" +
 	"started_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tstartedAt\x129\n" +
 	"\n" +
 	"updated_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x126\n" +
-	"\x17sender_ephemeral_pubkey\x18\t \x01(\fR\x15senderEphemeralPubkey\"q\n" +
+	"\x17sender_ephemeral_pubkey\x18\t \x01(\fR\x15senderEphemeralPubkey\x12*\n" +
+	"\x11group_transfer_id\x18\n" +
+	" \x01(\tR\x0fgroupTransferId\x12(\n" +
+	"\x10wrapped_file_key\x18\v \x01(\fR\x0ewrappedFileKey\"q\n" +
 	"\x14ListTransfersRequest\x12\x17\n" +
 	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12@\n" +
 	"\rfilter_status\x18\x02 \x01(\x0e2\x1b.transfer.v1.TransferStatusR\ffilterStatus\"P\n" +
 	"\x15ListTransfersResponse\x127\n" +
-	"\ttransfers\x18\x01 \x03(\v2\x19.transfer.v1.TransferInfoR\ttransfers\"\xfb\x03\n" +
+	"\ttransfers\x18\x01 \x03(\v2\x19.transfer.v1.TransferInfoR\ttransfers\"\xd1\x04\n" +
 	"\fTransferInfo\x12\x1f\n" +
 	"\vtransfer_id\x18\x01 \x01(\tR\n" +
 	"transferId\x12$\n" +
@@ -1726,7 +2171,9 @@ const file_transfer_v1_transfer_proto_rawDesc = "" +
 	"\x17sender_ephemeral_pubkey\x18\t \x01(\fR\x15senderEphemeralPubkey\x12!\n" +
 	"\fcontent_hash\x18\n" +
 	" \x01(\tR\vcontentHash\x12>\n" +
-	"\rtransfer_mode\x18\v \x01(\x0e2\x19.transfer.v1.TransferModeR\ftransferMode\"P\n" +
+	"\rtransfer_mode\x18\v \x01(\x0e2\x19.transfer.v1.TransferModeR\ftransferMode\x12*\n" +
+	"\x11group_transfer_id\x18\f \x01(\tR\x0fgroupTransferId\x12(\n" +
+	"\x10wrapped_file_key\x18\r \x01(\fR\x0ewrappedFileKey\"P\n" +
 	"\x15CancelTransferRequest\x12\x1f\n" +
 	"\vtransfer_id\x18\x01 \x01(\tR\n" +
 	"transferId\x12\x16\n" +
@@ -1774,7 +2221,42 @@ const file_transfer_v1_transfer_proto_rawDesc = "" +
 	"\x19RespondToTransferResponse\x12\x1f\n" +
 	"\vtransfer_id\x18\x01 \x01(\tR\n" +
 	"transferId\x123\n" +
-	"\x06status\x18\x02 \x01(\x0e2\x1b.transfer.v1.TransferStatusR\x06status*\xf0\x01\n" +
+	"\x06status\x18\x02 \x01(\x0e2\x1b.transfer.v1.TransferStatusR\x06status\"b\n" +
+	"\fRecipientKey\x12(\n" +
+	"\x10receiver_node_id\x18\x01 \x01(\tR\x0ereceiverNodeId\x12(\n" +
+	"\x10wrapped_file_key\x18\x02 \x01(\fR\x0ewrappedFileKey\"\xf0\x02\n" +
+	"\x1cInitiateGroupTransferRequest\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x01 \x01(\tR\tsessionId\x12$\n" +
+	"\x0esender_node_id\x18\x02 \x01(\tR\fsenderNodeId\x12\x1a\n" +
+	"\bfilename\x18\x03 \x01(\tR\bfilename\x12(\n" +
+	"\x10total_size_bytes\x18\x04 \x01(\x03R\x0etotalSizeBytes\x12!\n" +
+	"\fcontent_hash\x18\x05 \x01(\tR\vcontentHash\x12(\n" +
+	"\x10chunk_size_bytes\x18\x06 \x01(\x05R\x0echunkSizeBytes\x126\n" +
+	"\x17sender_ephemeral_pubkey\x18\a \x01(\fR\x15senderEphemeralPubkey\x12@\n" +
+	"\x0erecipient_keys\x18\b \x03(\v2\x19.transfer.v1.RecipientKeyR\rrecipientKeys\"\xe2\x01\n" +
+	"\x1dInitiateGroupTransferResponse\x12*\n" +
+	"\x11group_transfer_id\x18\x01 \x01(\tR\x0fgroupTransferId\x12!\n" +
+	"\ftotal_chunks\x18\x02 \x01(\x05R\vtotalChunks\x127\n" +
+	"\ttransfers\x18\x03 \x03(\v2\x19.transfer.v1.TransferInfoR\ttransfers\x129\n" +
+	"\n" +
+	"created_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\xe1\x02\n" +
+	"\x11GroupTransferInfo\x12*\n" +
+	"\x11group_transfer_id\x18\x01 \x01(\tR\x0fgroupTransferId\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x02 \x01(\tR\tsessionId\x12$\n" +
+	"\x0esender_node_id\x18\x03 \x01(\tR\fsenderNodeId\x12\x1a\n" +
+	"\bfilename\x18\x04 \x01(\tR\bfilename\x12(\n" +
+	"\x10total_size_bytes\x18\x05 \x01(\x03R\x0etotalSizeBytes\x12!\n" +
+	"\ftotal_chunks\x18\x06 \x01(\x05R\vtotalChunks\x127\n" +
+	"\ttransfers\x18\a \x03(\v2\x19.transfer.v1.TransferInfoR\ttransfers\x129\n" +
+	"\n" +
+	"created_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\":\n" +
+	"\x19ListGroupTransfersRequest\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x01 \x01(\tR\tsessionId\"e\n" +
+	"\x1aListGroupTransfersResponse\x12G\n" +
+	"\x0fgroup_transfers\x18\x01 \x03(\v2\x1e.transfer.v1.GroupTransferInfoR\x0egroupTransfers*\xf0\x01\n" +
 	"\x0eTransferStatus\x12\x1f\n" +
 	"\x1bTRANSFER_STATUS_UNSPECIFIED\x10\x00\x12\x1b\n" +
 	"\x17TRANSFER_STATUS_PENDING\x10\x01\x12\x1f\n" +
@@ -1787,7 +2269,7 @@ const file_transfer_v1_transfer_proto_rawDesc = "" +
 	"\x19TRANSFER_MODE_UNSPECIFIED\x10\x00\x12\x17\n" +
 	"\x13TRANSFER_MODE_RELAY\x10\x01\x12\x1c\n" +
 	"\x18TRANSFER_MODE_P2P_DIRECT\x10\x02\x12\x1d\n" +
-	"\x19TRANSFER_MODE_P2P_RELAYED\x10\x032\xb1\a\n" +
+	"\x19TRANSFER_MODE_P2P_RELAYED\x10\x032\x88\t\n" +
 	"\x0fTransferService\x12_\n" +
 	"\x10InitiateTransfer\x12$.transfer.v1.InitiateTransferRequest\x1a%.transfer.v1.InitiateTransferResponse\x12L\n" +
 	"\tSendChunk\x12\x1d.transfer.v1.SendChunkRequest\x1a\x1e.transfer.v1.SendChunkResponse(\x01\x12L\n" +
@@ -1798,7 +2280,9 @@ const file_transfer_v1_transfer_proto_rawDesc = "" +
 	"\x0eWatchTransfers\x12\".transfer.v1.WatchTransfersRequest\x1a\x1a.transfer.v1.TransferEvent0\x01\x12k\n" +
 	"\x14GetP2PConnectionInfo\x12(.transfer.v1.GetP2PConnectionInfoRequest\x1a).transfer.v1.GetP2PConnectionInfoResponse\x12e\n" +
 	"\x12ConfirmP2PTransfer\x12&.transfer.v1.ConfirmP2PTransferRequest\x1a'.transfer.v1.ConfirmP2PTransferResponse\x12b\n" +
-	"\x11RespondToTransfer\x12%.transfer.v1.RespondToTransferRequest\x1a&.transfer.v1.RespondToTransferResponseBBZ@github.com/saitddundar/vinctum-core/proto/transfer/v1;transferv1b\x06proto3"
+	"\x11RespondToTransfer\x12%.transfer.v1.RespondToTransferRequest\x1a&.transfer.v1.RespondToTransferResponse\x12n\n" +
+	"\x15InitiateGroupTransfer\x12).transfer.v1.InitiateGroupTransferRequest\x1a*.transfer.v1.InitiateGroupTransferResponse\x12e\n" +
+	"\x12ListGroupTransfers\x12&.transfer.v1.ListGroupTransfersRequest\x1a'.transfer.v1.ListGroupTransfersResponseBBZ@github.com/saitddundar/vinctum-core/proto/transfer/v1;transferv1b\x06proto3"
 
 var (
 	file_transfer_v1_transfer_proto_rawDescOnce sync.Once
@@ -1813,79 +2297,95 @@ func file_transfer_v1_transfer_proto_rawDescGZIP() []byte {
 }
 
 var file_transfer_v1_transfer_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_transfer_v1_transfer_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
+var file_transfer_v1_transfer_proto_msgTypes = make([]protoimpl.MessageInfo, 27)
 var file_transfer_v1_transfer_proto_goTypes = []any{
-	(TransferStatus)(0),                  // 0: transfer.v1.TransferStatus
-	(TransferMode)(0),                    // 1: transfer.v1.TransferMode
-	(TransferEvent_EventType)(0),         // 2: transfer.v1.TransferEvent.EventType
-	(*InitiateTransferRequest)(nil),      // 3: transfer.v1.InitiateTransferRequest
-	(*InitiateTransferResponse)(nil),     // 4: transfer.v1.InitiateTransferResponse
-	(*SendChunkRequest)(nil),             // 5: transfer.v1.SendChunkRequest
-	(*SendChunkResponse)(nil),            // 6: transfer.v1.SendChunkResponse
-	(*ReceiveChunksRequest)(nil),         // 7: transfer.v1.ReceiveChunksRequest
-	(*DataChunk)(nil),                    // 8: transfer.v1.DataChunk
-	(*GetTransferStatusRequest)(nil),     // 9: transfer.v1.GetTransferStatusRequest
-	(*GetTransferStatusResponse)(nil),    // 10: transfer.v1.GetTransferStatusResponse
-	(*ListTransfersRequest)(nil),         // 11: transfer.v1.ListTransfersRequest
-	(*ListTransfersResponse)(nil),        // 12: transfer.v1.ListTransfersResponse
-	(*TransferInfo)(nil),                 // 13: transfer.v1.TransferInfo
-	(*CancelTransferRequest)(nil),        // 14: transfer.v1.CancelTransferRequest
-	(*CancelTransferResponse)(nil),       // 15: transfer.v1.CancelTransferResponse
-	(*WatchTransfersRequest)(nil),        // 16: transfer.v1.WatchTransfersRequest
-	(*TransferEvent)(nil),                // 17: transfer.v1.TransferEvent
-	(*GetP2PConnectionInfoRequest)(nil),  // 18: transfer.v1.GetP2PConnectionInfoRequest
-	(*GetP2PConnectionInfoResponse)(nil), // 19: transfer.v1.GetP2PConnectionInfoResponse
-	(*ConfirmP2PTransferRequest)(nil),    // 20: transfer.v1.ConfirmP2PTransferRequest
-	(*ConfirmP2PTransferResponse)(nil),   // 21: transfer.v1.ConfirmP2PTransferResponse
-	(*RespondToTransferRequest)(nil),     // 22: transfer.v1.RespondToTransferRequest
-	(*RespondToTransferResponse)(nil),    // 23: transfer.v1.RespondToTransferResponse
-	(*timestamppb.Timestamp)(nil),        // 24: google.protobuf.Timestamp
-	(*v1.RouteHop)(nil),                  // 25: routing.v1.RouteHop
+	(TransferStatus)(0),                   // 0: transfer.v1.TransferStatus
+	(TransferMode)(0),                     // 1: transfer.v1.TransferMode
+	(TransferEvent_EventType)(0),          // 2: transfer.v1.TransferEvent.EventType
+	(*InitiateTransferRequest)(nil),       // 3: transfer.v1.InitiateTransferRequest
+	(*InitiateTransferResponse)(nil),      // 4: transfer.v1.InitiateTransferResponse
+	(*SendChunkRequest)(nil),              // 5: transfer.v1.SendChunkRequest
+	(*SendChunkResponse)(nil),             // 6: transfer.v1.SendChunkResponse
+	(*ReceiveChunksRequest)(nil),          // 7: transfer.v1.ReceiveChunksRequest
+	(*DataChunk)(nil),                     // 8: transfer.v1.DataChunk
+	(*GetTransferStatusRequest)(nil),      // 9: transfer.v1.GetTransferStatusRequest
+	(*GetTransferStatusResponse)(nil),     // 10: transfer.v1.GetTransferStatusResponse
+	(*ListTransfersRequest)(nil),          // 11: transfer.v1.ListTransfersRequest
+	(*ListTransfersResponse)(nil),         // 12: transfer.v1.ListTransfersResponse
+	(*TransferInfo)(nil),                  // 13: transfer.v1.TransferInfo
+	(*CancelTransferRequest)(nil),         // 14: transfer.v1.CancelTransferRequest
+	(*CancelTransferResponse)(nil),        // 15: transfer.v1.CancelTransferResponse
+	(*WatchTransfersRequest)(nil),         // 16: transfer.v1.WatchTransfersRequest
+	(*TransferEvent)(nil),                 // 17: transfer.v1.TransferEvent
+	(*GetP2PConnectionInfoRequest)(nil),   // 18: transfer.v1.GetP2PConnectionInfoRequest
+	(*GetP2PConnectionInfoResponse)(nil),  // 19: transfer.v1.GetP2PConnectionInfoResponse
+	(*ConfirmP2PTransferRequest)(nil),     // 20: transfer.v1.ConfirmP2PTransferRequest
+	(*ConfirmP2PTransferResponse)(nil),    // 21: transfer.v1.ConfirmP2PTransferResponse
+	(*RespondToTransferRequest)(nil),      // 22: transfer.v1.RespondToTransferRequest
+	(*RespondToTransferResponse)(nil),     // 23: transfer.v1.RespondToTransferResponse
+	(*RecipientKey)(nil),                  // 24: transfer.v1.RecipientKey
+	(*InitiateGroupTransferRequest)(nil),  // 25: transfer.v1.InitiateGroupTransferRequest
+	(*InitiateGroupTransferResponse)(nil), // 26: transfer.v1.InitiateGroupTransferResponse
+	(*GroupTransferInfo)(nil),             // 27: transfer.v1.GroupTransferInfo
+	(*ListGroupTransfersRequest)(nil),     // 28: transfer.v1.ListGroupTransfersRequest
+	(*ListGroupTransfersResponse)(nil),    // 29: transfer.v1.ListGroupTransfersResponse
+	(*timestamppb.Timestamp)(nil),         // 30: google.protobuf.Timestamp
+	(*v1.RouteHop)(nil),                   // 31: routing.v1.RouteHop
 }
 var file_transfer_v1_transfer_proto_depIdxs = []int32{
 	0,  // 0: transfer.v1.InitiateTransferResponse.status:type_name -> transfer.v1.TransferStatus
-	24, // 1: transfer.v1.InitiateTransferResponse.created_at:type_name -> google.protobuf.Timestamp
-	25, // 2: transfer.v1.InitiateTransferResponse.route_hops:type_name -> routing.v1.RouteHop
+	30, // 1: transfer.v1.InitiateTransferResponse.created_at:type_name -> google.protobuf.Timestamp
+	31, // 2: transfer.v1.InitiateTransferResponse.route_hops:type_name -> routing.v1.RouteHop
 	1,  // 3: transfer.v1.InitiateTransferResponse.transfer_mode:type_name -> transfer.v1.TransferMode
 	0,  // 4: transfer.v1.SendChunkResponse.status:type_name -> transfer.v1.TransferStatus
 	0,  // 5: transfer.v1.GetTransferStatusResponse.status:type_name -> transfer.v1.TransferStatus
-	24, // 6: transfer.v1.GetTransferStatusResponse.started_at:type_name -> google.protobuf.Timestamp
-	24, // 7: transfer.v1.GetTransferStatusResponse.updated_at:type_name -> google.protobuf.Timestamp
+	30, // 6: transfer.v1.GetTransferStatusResponse.started_at:type_name -> google.protobuf.Timestamp
+	30, // 7: transfer.v1.GetTransferStatusResponse.updated_at:type_name -> google.protobuf.Timestamp
 	0,  // 8: transfer.v1.ListTransfersRequest.filter_status:type_name -> transfer.v1.TransferStatus
 	13, // 9: transfer.v1.ListTransfersResponse.transfers:type_name -> transfer.v1.TransferInfo
 	0,  // 10: transfer.v1.TransferInfo.status:type_name -> transfer.v1.TransferStatus
-	24, // 11: transfer.v1.TransferInfo.created_at:type_name -> google.protobuf.Timestamp
+	30, // 11: transfer.v1.TransferInfo.created_at:type_name -> google.protobuf.Timestamp
 	1,  // 12: transfer.v1.TransferInfo.transfer_mode:type_name -> transfer.v1.TransferMode
 	2,  // 13: transfer.v1.TransferEvent.type:type_name -> transfer.v1.TransferEvent.EventType
 	13, // 14: transfer.v1.TransferEvent.transfer:type_name -> transfer.v1.TransferInfo
-	24, // 15: transfer.v1.TransferEvent.timestamp:type_name -> google.protobuf.Timestamp
+	30, // 15: transfer.v1.TransferEvent.timestamp:type_name -> google.protobuf.Timestamp
 	0,  // 16: transfer.v1.ConfirmP2PTransferResponse.status:type_name -> transfer.v1.TransferStatus
 	0,  // 17: transfer.v1.RespondToTransferResponse.status:type_name -> transfer.v1.TransferStatus
-	3,  // 18: transfer.v1.TransferService.InitiateTransfer:input_type -> transfer.v1.InitiateTransferRequest
-	5,  // 19: transfer.v1.TransferService.SendChunk:input_type -> transfer.v1.SendChunkRequest
-	7,  // 20: transfer.v1.TransferService.ReceiveChunks:input_type -> transfer.v1.ReceiveChunksRequest
-	9,  // 21: transfer.v1.TransferService.GetTransferStatus:input_type -> transfer.v1.GetTransferStatusRequest
-	11, // 22: transfer.v1.TransferService.ListTransfers:input_type -> transfer.v1.ListTransfersRequest
-	14, // 23: transfer.v1.TransferService.CancelTransfer:input_type -> transfer.v1.CancelTransferRequest
-	16, // 24: transfer.v1.TransferService.WatchTransfers:input_type -> transfer.v1.WatchTransfersRequest
-	18, // 25: transfer.v1.TransferService.GetP2PConnectionInfo:input_type -> transfer.v1.GetP2PConnectionInfoRequest
-	20, // 26: transfer.v1.TransferService.ConfirmP2PTransfer:input_type -> transfer.v1.ConfirmP2PTransferRequest
-	22, // 27: transfer.v1.TransferService.RespondToTransfer:input_type -> transfer.v1.RespondToTransferRequest
-	4,  // 28: transfer.v1.TransferService.InitiateTransfer:output_type -> transfer.v1.InitiateTransferResponse
-	6,  // 29: transfer.v1.TransferService.SendChunk:output_type -> transfer.v1.SendChunkResponse
-	8,  // 30: transfer.v1.TransferService.ReceiveChunks:output_type -> transfer.v1.DataChunk
-	10, // 31: transfer.v1.TransferService.GetTransferStatus:output_type -> transfer.v1.GetTransferStatusResponse
-	12, // 32: transfer.v1.TransferService.ListTransfers:output_type -> transfer.v1.ListTransfersResponse
-	15, // 33: transfer.v1.TransferService.CancelTransfer:output_type -> transfer.v1.CancelTransferResponse
-	17, // 34: transfer.v1.TransferService.WatchTransfers:output_type -> transfer.v1.TransferEvent
-	19, // 35: transfer.v1.TransferService.GetP2PConnectionInfo:output_type -> transfer.v1.GetP2PConnectionInfoResponse
-	21, // 36: transfer.v1.TransferService.ConfirmP2PTransfer:output_type -> transfer.v1.ConfirmP2PTransferResponse
-	23, // 37: transfer.v1.TransferService.RespondToTransfer:output_type -> transfer.v1.RespondToTransferResponse
-	28, // [28:38] is the sub-list for method output_type
-	18, // [18:28] is the sub-list for method input_type
-	18, // [18:18] is the sub-list for extension type_name
-	18, // [18:18] is the sub-list for extension extendee
-	0,  // [0:18] is the sub-list for field type_name
+	24, // 18: transfer.v1.InitiateGroupTransferRequest.recipient_keys:type_name -> transfer.v1.RecipientKey
+	13, // 19: transfer.v1.InitiateGroupTransferResponse.transfers:type_name -> transfer.v1.TransferInfo
+	30, // 20: transfer.v1.InitiateGroupTransferResponse.created_at:type_name -> google.protobuf.Timestamp
+	13, // 21: transfer.v1.GroupTransferInfo.transfers:type_name -> transfer.v1.TransferInfo
+	30, // 22: transfer.v1.GroupTransferInfo.created_at:type_name -> google.protobuf.Timestamp
+	27, // 23: transfer.v1.ListGroupTransfersResponse.group_transfers:type_name -> transfer.v1.GroupTransferInfo
+	3,  // 24: transfer.v1.TransferService.InitiateTransfer:input_type -> transfer.v1.InitiateTransferRequest
+	5,  // 25: transfer.v1.TransferService.SendChunk:input_type -> transfer.v1.SendChunkRequest
+	7,  // 26: transfer.v1.TransferService.ReceiveChunks:input_type -> transfer.v1.ReceiveChunksRequest
+	9,  // 27: transfer.v1.TransferService.GetTransferStatus:input_type -> transfer.v1.GetTransferStatusRequest
+	11, // 28: transfer.v1.TransferService.ListTransfers:input_type -> transfer.v1.ListTransfersRequest
+	14, // 29: transfer.v1.TransferService.CancelTransfer:input_type -> transfer.v1.CancelTransferRequest
+	16, // 30: transfer.v1.TransferService.WatchTransfers:input_type -> transfer.v1.WatchTransfersRequest
+	18, // 31: transfer.v1.TransferService.GetP2PConnectionInfo:input_type -> transfer.v1.GetP2PConnectionInfoRequest
+	20, // 32: transfer.v1.TransferService.ConfirmP2PTransfer:input_type -> transfer.v1.ConfirmP2PTransferRequest
+	22, // 33: transfer.v1.TransferService.RespondToTransfer:input_type -> transfer.v1.RespondToTransferRequest
+	25, // 34: transfer.v1.TransferService.InitiateGroupTransfer:input_type -> transfer.v1.InitiateGroupTransferRequest
+	28, // 35: transfer.v1.TransferService.ListGroupTransfers:input_type -> transfer.v1.ListGroupTransfersRequest
+	4,  // 36: transfer.v1.TransferService.InitiateTransfer:output_type -> transfer.v1.InitiateTransferResponse
+	6,  // 37: transfer.v1.TransferService.SendChunk:output_type -> transfer.v1.SendChunkResponse
+	8,  // 38: transfer.v1.TransferService.ReceiveChunks:output_type -> transfer.v1.DataChunk
+	10, // 39: transfer.v1.TransferService.GetTransferStatus:output_type -> transfer.v1.GetTransferStatusResponse
+	12, // 40: transfer.v1.TransferService.ListTransfers:output_type -> transfer.v1.ListTransfersResponse
+	15, // 41: transfer.v1.TransferService.CancelTransfer:output_type -> transfer.v1.CancelTransferResponse
+	17, // 42: transfer.v1.TransferService.WatchTransfers:output_type -> transfer.v1.TransferEvent
+	19, // 43: transfer.v1.TransferService.GetP2PConnectionInfo:output_type -> transfer.v1.GetP2PConnectionInfoResponse
+	21, // 44: transfer.v1.TransferService.ConfirmP2PTransfer:output_type -> transfer.v1.ConfirmP2PTransferResponse
+	23, // 45: transfer.v1.TransferService.RespondToTransfer:output_type -> transfer.v1.RespondToTransferResponse
+	26, // 46: transfer.v1.TransferService.InitiateGroupTransfer:output_type -> transfer.v1.InitiateGroupTransferResponse
+	29, // 47: transfer.v1.TransferService.ListGroupTransfers:output_type -> transfer.v1.ListGroupTransfersResponse
+	36, // [36:48] is the sub-list for method output_type
+	24, // [24:36] is the sub-list for method input_type
+	24, // [24:24] is the sub-list for extension type_name
+	24, // [24:24] is the sub-list for extension extendee
+	0,  // [0:24] is the sub-list for field type_name
 }
 
 func init() { file_transfer_v1_transfer_proto_init() }
@@ -1899,7 +2399,7 @@ func file_transfer_v1_transfer_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_transfer_v1_transfer_proto_rawDesc), len(file_transfer_v1_transfer_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   21,
+			NumMessages:   27,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
