@@ -7,6 +7,8 @@ package repository
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const completeTransfer = `-- name: CompleteTransfer :exec
@@ -39,26 +41,76 @@ func (q *Queries) ConfirmP2PTransfer(ctx context.Context, arg ConfirmP2PTransfer
 	return err
 }
 
+const createGroupTransfer = `-- name: CreateGroupTransfer :one
+
+INSERT INTO group_transfers (id, session_id, sender_node_id, filename, total_size_bytes, content_hash, chunk_size_bytes, total_chunks, sender_ephemeral_pubkey)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+RETURNING id, session_id, sender_node_id, filename, total_size_bytes, content_hash, chunk_size_bytes, total_chunks, sender_ephemeral_pubkey, created_at
+`
+
+type CreateGroupTransferParams struct {
+	ID                    string      `json:"id"`
+	SessionID             pgtype.UUID `json:"session_id"`
+	SenderNodeID          string      `json:"sender_node_id"`
+	Filename              string      `json:"filename"`
+	TotalSizeBytes        int64       `json:"total_size_bytes"`
+	ContentHash           string      `json:"content_hash"`
+	ChunkSizeBytes        int32       `json:"chunk_size_bytes"`
+	TotalChunks           int32       `json:"total_chunks"`
+	SenderEphemeralPubkey []byte      `json:"sender_ephemeral_pubkey"`
+}
+
+// ─── Group Transfers ────────────────────────────────────
+func (q *Queries) CreateGroupTransfer(ctx context.Context, arg CreateGroupTransferParams) (GroupTransfer, error) {
+	row := q.db.QueryRow(ctx, createGroupTransfer,
+		arg.ID,
+		arg.SessionID,
+		arg.SenderNodeID,
+		arg.Filename,
+		arg.TotalSizeBytes,
+		arg.ContentHash,
+		arg.ChunkSizeBytes,
+		arg.TotalChunks,
+		arg.SenderEphemeralPubkey,
+	)
+	var i GroupTransfer
+	err := row.Scan(
+		&i.ID,
+		&i.SessionID,
+		&i.SenderNodeID,
+		&i.Filename,
+		&i.TotalSizeBytes,
+		&i.ContentHash,
+		&i.ChunkSizeBytes,
+		&i.TotalChunks,
+		&i.SenderEphemeralPubkey,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const createTransfer = `-- name: CreateTransfer :one
-INSERT INTO transfers (transfer_id, sender_node_id, receiver_node_id, filename, total_size_bytes, content_hash, chunk_size_bytes, total_chunks, status, encryption_key, route_hops, replication_factor, sender_ephemeral_pubkey)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-RETURNING transfer_id, sender_node_id, receiver_node_id, filename, total_size_bytes, content_hash, chunk_size_bytes, total_chunks, chunks_done, status, created_at, updated_at, encryption_key, route_hops, replication_factor, sender_ephemeral_pubkey, transfer_mode
+INSERT INTO transfers (transfer_id, sender_node_id, receiver_node_id, filename, total_size_bytes, content_hash, chunk_size_bytes, total_chunks, status, encryption_key, route_hops, replication_factor, sender_ephemeral_pubkey, group_transfer_id, wrapped_file_key)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+RETURNING transfer_id, sender_node_id, receiver_node_id, filename, total_size_bytes, content_hash, chunk_size_bytes, total_chunks, chunks_done, status, created_at, updated_at, encryption_key, route_hops, replication_factor, sender_ephemeral_pubkey, transfer_mode, group_transfer_id, wrapped_file_key
 `
 
 type CreateTransferParams struct {
-	TransferID            string `json:"transfer_id"`
-	SenderNodeID          string `json:"sender_node_id"`
-	ReceiverNodeID        string `json:"receiver_node_id"`
-	Filename              string `json:"filename"`
-	TotalSizeBytes        int64  `json:"total_size_bytes"`
-	ContentHash           string `json:"content_hash"`
-	ChunkSizeBytes        int32  `json:"chunk_size_bytes"`
-	TotalChunks           int32  `json:"total_chunks"`
-	Status                int32  `json:"status"`
-	EncryptionKey         string `json:"encryption_key"`
-	RouteHops             []byte `json:"route_hops"`
-	ReplicationFactor     int32  `json:"replication_factor"`
-	SenderEphemeralPubkey []byte `json:"sender_ephemeral_pubkey"`
+	TransferID            string      `json:"transfer_id"`
+	SenderNodeID          string      `json:"sender_node_id"`
+	ReceiverNodeID        string      `json:"receiver_node_id"`
+	Filename              string      `json:"filename"`
+	TotalSizeBytes        int64       `json:"total_size_bytes"`
+	ContentHash           string      `json:"content_hash"`
+	ChunkSizeBytes        int32       `json:"chunk_size_bytes"`
+	TotalChunks           int32       `json:"total_chunks"`
+	Status                int32       `json:"status"`
+	EncryptionKey         string      `json:"encryption_key"`
+	RouteHops             []byte      `json:"route_hops"`
+	ReplicationFactor     int32       `json:"replication_factor"`
+	SenderEphemeralPubkey []byte      `json:"sender_ephemeral_pubkey"`
+	GroupTransferID       pgtype.Text `json:"group_transfer_id"`
+	WrappedFileKey        []byte      `json:"wrapped_file_key"`
 }
 
 func (q *Queries) CreateTransfer(ctx context.Context, arg CreateTransferParams) (Transfer, error) {
@@ -76,6 +128,8 @@ func (q *Queries) CreateTransfer(ctx context.Context, arg CreateTransferParams) 
 		arg.RouteHops,
 		arg.ReplicationFactor,
 		arg.SenderEphemeralPubkey,
+		arg.GroupTransferID,
+		arg.WrappedFileKey,
 	)
 	var i Transfer
 	err := row.Scan(
@@ -96,12 +150,36 @@ func (q *Queries) CreateTransfer(ctx context.Context, arg CreateTransferParams) 
 		&i.ReplicationFactor,
 		&i.SenderEphemeralPubkey,
 		&i.TransferMode,
+		&i.GroupTransferID,
+		&i.WrappedFileKey,
+	)
+	return i, err
+}
+
+const getGroupTransfer = `-- name: GetGroupTransfer :one
+SELECT id, session_id, sender_node_id, filename, total_size_bytes, content_hash, chunk_size_bytes, total_chunks, sender_ephemeral_pubkey, created_at FROM group_transfers WHERE id = $1
+`
+
+func (q *Queries) GetGroupTransfer(ctx context.Context, id string) (GroupTransfer, error) {
+	row := q.db.QueryRow(ctx, getGroupTransfer, id)
+	var i GroupTransfer
+	err := row.Scan(
+		&i.ID,
+		&i.SessionID,
+		&i.SenderNodeID,
+		&i.Filename,
+		&i.TotalSizeBytes,
+		&i.ContentHash,
+		&i.ChunkSizeBytes,
+		&i.TotalChunks,
+		&i.SenderEphemeralPubkey,
+		&i.CreatedAt,
 	)
 	return i, err
 }
 
 const getTransfer = `-- name: GetTransfer :one
-SELECT transfer_id, sender_node_id, receiver_node_id, filename, total_size_bytes, content_hash, chunk_size_bytes, total_chunks, chunks_done, status, created_at, updated_at, encryption_key, route_hops, replication_factor, sender_ephemeral_pubkey, transfer_mode FROM transfers WHERE transfer_id = $1
+SELECT transfer_id, sender_node_id, receiver_node_id, filename, total_size_bytes, content_hash, chunk_size_bytes, total_chunks, chunks_done, status, created_at, updated_at, encryption_key, route_hops, replication_factor, sender_ephemeral_pubkey, transfer_mode, group_transfer_id, wrapped_file_key FROM transfers WHERE transfer_id = $1
 `
 
 func (q *Queries) GetTransfer(ctx context.Context, transferID string) (Transfer, error) {
@@ -125,12 +203,93 @@ func (q *Queries) GetTransfer(ctx context.Context, transferID string) (Transfer,
 		&i.ReplicationFactor,
 		&i.SenderEphemeralPubkey,
 		&i.TransferMode,
+		&i.GroupTransferID,
+		&i.WrappedFileKey,
 	)
 	return i, err
 }
 
+const listGroupTransfersBySession = `-- name: ListGroupTransfersBySession :many
+SELECT id, session_id, sender_node_id, filename, total_size_bytes, content_hash, chunk_size_bytes, total_chunks, sender_ephemeral_pubkey, created_at FROM group_transfers WHERE session_id = $1 ORDER BY created_at DESC
+`
+
+func (q *Queries) ListGroupTransfersBySession(ctx context.Context, sessionID pgtype.UUID) ([]GroupTransfer, error) {
+	rows, err := q.db.Query(ctx, listGroupTransfersBySession, sessionID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GroupTransfer
+	for rows.Next() {
+		var i GroupTransfer
+		if err := rows.Scan(
+			&i.ID,
+			&i.SessionID,
+			&i.SenderNodeID,
+			&i.Filename,
+			&i.TotalSizeBytes,
+			&i.ContentHash,
+			&i.ChunkSizeBytes,
+			&i.TotalChunks,
+			&i.SenderEphemeralPubkey,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listTransfersByGroupID = `-- name: ListTransfersByGroupID :many
+SELECT transfer_id, sender_node_id, receiver_node_id, filename, total_size_bytes, content_hash, chunk_size_bytes, total_chunks, chunks_done, status, created_at, updated_at, encryption_key, route_hops, replication_factor, sender_ephemeral_pubkey, transfer_mode, group_transfer_id, wrapped_file_key FROM transfers WHERE group_transfer_id = $1 ORDER BY created_at ASC
+`
+
+func (q *Queries) ListTransfersByGroupID(ctx context.Context, groupTransferID pgtype.Text) ([]Transfer, error) {
+	rows, err := q.db.Query(ctx, listTransfersByGroupID, groupTransferID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Transfer
+	for rows.Next() {
+		var i Transfer
+		if err := rows.Scan(
+			&i.TransferID,
+			&i.SenderNodeID,
+			&i.ReceiverNodeID,
+			&i.Filename,
+			&i.TotalSizeBytes,
+			&i.ContentHash,
+			&i.ChunkSizeBytes,
+			&i.TotalChunks,
+			&i.ChunksDone,
+			&i.Status,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.EncryptionKey,
+			&i.RouteHops,
+			&i.ReplicationFactor,
+			&i.SenderEphemeralPubkey,
+			&i.TransferMode,
+			&i.GroupTransferID,
+			&i.WrappedFileKey,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listTransfersByNode = `-- name: ListTransfersByNode :many
-SELECT transfer_id, sender_node_id, receiver_node_id, filename, total_size_bytes, content_hash, chunk_size_bytes, total_chunks, chunks_done, status, created_at, updated_at, encryption_key, route_hops, replication_factor, sender_ephemeral_pubkey, transfer_mode FROM transfers WHERE sender_node_id = $1 OR receiver_node_id = $1 ORDER BY created_at DESC
+SELECT transfer_id, sender_node_id, receiver_node_id, filename, total_size_bytes, content_hash, chunk_size_bytes, total_chunks, chunks_done, status, created_at, updated_at, encryption_key, route_hops, replication_factor, sender_ephemeral_pubkey, transfer_mode, group_transfer_id, wrapped_file_key FROM transfers WHERE sender_node_id = $1 OR receiver_node_id = $1 ORDER BY created_at DESC
 `
 
 func (q *Queries) ListTransfersByNode(ctx context.Context, senderNodeID string) ([]Transfer, error) {
@@ -160,6 +319,8 @@ func (q *Queries) ListTransfersByNode(ctx context.Context, senderNodeID string) 
 			&i.ReplicationFactor,
 			&i.SenderEphemeralPubkey,
 			&i.TransferMode,
+			&i.GroupTransferID,
+			&i.WrappedFileKey,
 		); err != nil {
 			return nil, err
 		}
@@ -172,7 +333,7 @@ func (q *Queries) ListTransfersByNode(ctx context.Context, senderNodeID string) 
 }
 
 const listTransfersByStatus = `-- name: ListTransfersByStatus :many
-SELECT transfer_id, sender_node_id, receiver_node_id, filename, total_size_bytes, content_hash, chunk_size_bytes, total_chunks, chunks_done, status, created_at, updated_at, encryption_key, route_hops, replication_factor, sender_ephemeral_pubkey, transfer_mode FROM transfers WHERE (sender_node_id = $1 OR receiver_node_id = $1) AND status = $2 ORDER BY created_at DESC
+SELECT transfer_id, sender_node_id, receiver_node_id, filename, total_size_bytes, content_hash, chunk_size_bytes, total_chunks, chunks_done, status, created_at, updated_at, encryption_key, route_hops, replication_factor, sender_ephemeral_pubkey, transfer_mode, group_transfer_id, wrapped_file_key FROM transfers WHERE (sender_node_id = $1 OR receiver_node_id = $1) AND status = $2 ORDER BY created_at DESC
 `
 
 type ListTransfersByStatusParams struct {
@@ -207,6 +368,8 @@ func (q *Queries) ListTransfersByStatus(ctx context.Context, arg ListTransfersBy
 			&i.ReplicationFactor,
 			&i.SenderEphemeralPubkey,
 			&i.TransferMode,
+			&i.GroupTransferID,
+			&i.WrappedFileKey,
 		); err != nil {
 			return nil, err
 		}

@@ -6,24 +6,57 @@ package repository
 
 import (
 	"time"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type GroupTransfer struct {
+	ID                    string      `json:"id"`
+	SessionID             pgtype.UUID `json:"session_id"`
+	SenderNodeID          string      `json:"sender_node_id"`
+	Filename              string      `json:"filename"`
+	TotalSizeBytes        int64       `json:"total_size_bytes"`
+	ContentHash           string      `json:"content_hash"`
+	ChunkSizeBytes        int32       `json:"chunk_size_bytes"`
+	TotalChunks           int32       `json:"total_chunks"`
+	SenderEphemeralPubkey []byte      `json:"sender_ephemeral_pubkey"`
+	CreatedAt             time.Time   `json:"created_at"`
+}
+
+type PeerSession struct {
+	ID        pgtype.UUID        `json:"id"`
+	UserID    pgtype.UUID        `json:"user_id"`
+	Name      string             `json:"name"`
+	IsActive  bool               `json:"is_active"`
+	CreatedAt time.Time          `json:"created_at"`
+	ClosedAt  pgtype.Timestamptz `json:"closed_at"`
+}
+
+type PeerSessionDevice struct {
+	SessionID pgtype.UUID        `json:"session_id"`
+	DeviceID  pgtype.UUID        `json:"device_id"`
+	JoinedAt  time.Time          `json:"joined_at"`
+	LeftAt    pgtype.Timestamptz `json:"left_at"`
+}
+
 type Transfer struct {
-	TransferID            string    `json:"transfer_id"`
-	SenderNodeID          string    `json:"sender_node_id"`
-	ReceiverNodeID        string    `json:"receiver_node_id"`
-	Filename              string    `json:"filename"`
-	TotalSizeBytes        int64     `json:"total_size_bytes"`
-	ContentHash           string    `json:"content_hash"`
-	ChunkSizeBytes        int32     `json:"chunk_size_bytes"`
-	TotalChunks           int32     `json:"total_chunks"`
-	ChunksDone            int32     `json:"chunks_done"`
-	Status                int32     `json:"status"`
-	CreatedAt             time.Time `json:"created_at"`
-	UpdatedAt             time.Time `json:"updated_at"`
-	EncryptionKey         string    `json:"encryption_key"`
-	RouteHops             []byte    `json:"route_hops"`
-	ReplicationFactor     int32     `json:"replication_factor"`
-	SenderEphemeralPubkey []byte    `json:"sender_ephemeral_pubkey"`
-	TransferMode          int32     `json:"transfer_mode"`
+	TransferID            string      `json:"transfer_id"`
+	SenderNodeID          string      `json:"sender_node_id"`
+	ReceiverNodeID        string      `json:"receiver_node_id"`
+	Filename              string      `json:"filename"`
+	TotalSizeBytes        int64       `json:"total_size_bytes"`
+	ContentHash           string      `json:"content_hash"`
+	ChunkSizeBytes        int32       `json:"chunk_size_bytes"`
+	TotalChunks           int32       `json:"total_chunks"`
+	ChunksDone            int32       `json:"chunks_done"`
+	Status                int32       `json:"status"`
+	CreatedAt             time.Time   `json:"created_at"`
+	UpdatedAt             time.Time   `json:"updated_at"`
+	EncryptionKey         string      `json:"encryption_key"`
+	RouteHops             []byte      `json:"route_hops"`
+	ReplicationFactor     int32       `json:"replication_factor"`
+	SenderEphemeralPubkey []byte      `json:"sender_ephemeral_pubkey"`
+	TransferMode          int32       `json:"transfer_mode"`
+	GroupTransferID       pgtype.Text `json:"group_transfer_id"`
+	WrappedFileKey        []byte      `json:"wrapped_file_key"`
 }

@@ -1,6 +1,6 @@
 -- name: CreateTransfer :one
-INSERT INTO transfers (transfer_id, sender_node_id, receiver_node_id, filename, total_size_bytes, content_hash, chunk_size_bytes, total_chunks, status, encryption_key, route_hops, replication_factor, sender_ephemeral_pubkey)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+INSERT INTO transfers (transfer_id, sender_node_id, receiver_node_id, filename, total_size_bytes, content_hash, chunk_size_bytes, total_chunks, status, encryption_key, route_hops, replication_factor, sender_ephemeral_pubkey, group_transfer_id, wrapped_file_key)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
 RETURNING *;
 
 -- name: GetTransfer :one
@@ -29,3 +29,19 @@ UPDATE transfers SET transfer_mode = $2, updated_at = NOW() WHERE transfer_id = 
 
 -- name: ConfirmP2PTransfer :exec
 UPDATE transfers SET status = $2, chunks_done = $3, transfer_mode = $4, updated_at = NOW() WHERE transfer_id = $1;
+
+-- ─── Group Transfers ────────────────────────────────────
+
+-- name: CreateGroupTransfer :one
+INSERT INTO group_transfers (id, session_id, sender_node_id, filename, total_size_bytes, content_hash, chunk_size_bytes, total_chunks, sender_ephemeral_pubkey)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+RETURNING *;
+
+-- name: GetGroupTransfer :one
+SELECT * FROM group_transfers WHERE id = $1;
+
+-- name: ListGroupTransfersBySession :many
+SELECT * FROM group_transfers WHERE session_id = $1 ORDER BY created_at DESC;
+
+-- name: ListTransfersByGroupID :many
+SELECT * FROM transfers WHERE group_transfer_id = $1 ORDER BY created_at ASC;

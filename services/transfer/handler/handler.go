@@ -123,17 +123,17 @@ func (h *TransferHandler) InitiateTransfer(ctx context.Context, req *transferv1.
 	}
 
 	t, err := h.queries.CreateTransfer(ctx, repository.CreateTransferParams{
-		TransferID:        transferID,
-		SenderNodeID:      req.SenderNodeId,
-		ReceiverNodeID:    req.ReceiverNodeId,
-		Filename:          req.Filename,
-		TotalSizeBytes:    req.TotalSizeBytes,
-		ContentHash:       req.ContentHash,
-		ChunkSizeBytes:    chunkSize,
-		TotalChunks:       totalChunks,
-		Status:            int32(initialStatus),
-		EncryptionKey:     "", // never stored; chunks are E2E encrypted client-side
-		RouteHops:         routeJSON,
+		TransferID:            transferID,
+		SenderNodeID:          req.SenderNodeId,
+		ReceiverNodeID:        req.ReceiverNodeId,
+		Filename:              req.Filename,
+		TotalSizeBytes:        req.TotalSizeBytes,
+		ContentHash:           req.ContentHash,
+		ChunkSizeBytes:        chunkSize,
+		TotalChunks:           totalChunks,
+		Status:                int32(initialStatus),
+		EncryptionKey:         "", // never stored; chunks are E2E encrypted client-side
+		RouteHops:             routeJSON,
 		ReplicationFactor:     replicationFactor,
 		SenderEphemeralPubkey: req.SenderEphemeralPubkey,
 	})
