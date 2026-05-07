@@ -117,6 +117,7 @@ func (h *GatewayHandler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/devices/{deviceId}", h.handleGetDevice)
 	mux.HandleFunc("DELETE /api/v1/devices/{deviceId}", h.handleRevokeDevice)
 	mux.HandleFunc("PUT /api/v1/devices/{deviceId}/activity", h.handleUpdateDeviceActivity)
+	mux.HandleFunc("PUT /api/v1/devices/{deviceId}/visibility", h.handleUpdateDeviceVisibility)
 
 	// pairing
 	mux.HandleFunc("POST /api/v1/devices/pairing/generate", h.handleGeneratePairingCode)
@@ -449,6 +450,31 @@ func (h *GatewayHandler) handleUpdateDeviceActivity(w http.ResponseWriter, r *ht
 	resp, err := h.identityClient.UpdateDeviceActivity(ctx, &identityv1.UpdateDeviceActivityRequest{
 		DeviceId: deviceID,
 		NodeId:   body.NodeID,
+	})
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+func (h *GatewayHandler) handleUpdateDeviceVisibility(w http.ResponseWriter, r *http.Request) {
+	if h.identityClient == nil {
+		writeError(w, http.StatusServiceUnavailable, "identity service unavailable")
+		return
+	}
+	deviceID := r.PathValue("deviceId")
+	var body struct {
+		IsPublic bool `json:"is_public"`
+	}
+	if err := decodeJSON(r, &body); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	ctx := forwardAuth(r)
+	resp, err := h.identityClient.UpdateDeviceVisibility(ctx, &identityv1.UpdateDeviceVisibilityRequest{
+		DeviceId: deviceID,
+		IsPublic: body.IsPublic,
 	})
 	if err != nil {
 		writeGRPCError(w, err)
