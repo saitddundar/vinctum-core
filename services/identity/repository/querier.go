@@ -48,6 +48,7 @@ type Querier interface {
 	SearchUsersByUsername(ctx context.Context, arg SearchUsersByUsernameParams) ([]SearchUsersByUsernameRow, error)
 	SetVerificationToken(ctx context.Context, arg SetVerificationTokenParams) error
 	UpdateDeviceActivity(ctx context.Context, arg UpdateDeviceActivityParams) error
+	UpdateDeviceVisibility(ctx context.Context, arg UpdateDeviceVisibilityParams) error
 	// ─── Device Keys ────────────────────────────────────
 	UpsertDeviceKey(ctx context.Context, arg UpsertDeviceKeyParams) (DeviceKey, error)
 	VerifyUserEmail(ctx context.Context, dollar_1 string) error

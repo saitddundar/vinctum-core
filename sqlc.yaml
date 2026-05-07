@@ -9,6 +9,7 @@ sql:
       - "scripts/migrations/009_create_peer_sessions.sql"
       - "scripts/migrations/010_create_device_keys.sql"
       - "scripts/migrations/014_create_friends.sql"
+      - "scripts/migrations/016_add_device_is_public.sql"
     queries: "services/identity/repository/queries.sql"
     gen:
       go:

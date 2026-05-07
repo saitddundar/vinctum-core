@@ -23,6 +23,7 @@ type Device struct {
 	LastActive  time.Time          `json:"last_active"`
 	CreatedAt   time.Time          `json:"created_at"`
 	RevokedAt   pgtype.Timestamptz `json:"revoked_at"`
+	IsPublic    bool               `json:"is_public"`
 }
 
 type DeviceKey struct {

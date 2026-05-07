@@ -27,8 +27,8 @@ WHERE id = $1::uuid;
 -- ─── Devices ────────────────────────────────────────
 
 -- name: CreateDevice :one
-INSERT INTO devices (user_id, name, device_type, node_id, fingerprint, is_approved, approved_at, approved_by)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+INSERT INTO devices (user_id, name, device_type, node_id, fingerprint, is_approved, approved_at, approved_by, is_public)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 RETURNING *;
 
 -- name: GetDeviceByID :one
@@ -156,5 +156,8 @@ WHERE username ILIKE '%' || $1 || '%' AND id != $2::uuid
 LIMIT 20;
 
 -- name: ListDevicesByUserPublic :many
-SELECT * FROM devices WHERE user_id = $1::uuid AND revoked_at IS NULL AND is_approved = TRUE
+SELECT * FROM devices WHERE user_id = $1::uuid AND revoked_at IS NULL AND is_approved = TRUE AND is_public = TRUE
 ORDER BY last_active DESC;
+
+-- name: UpdateDeviceVisibility :exec
+UPDATE devices SET is_public = $2 WHERE id = $1::uuid AND revoked_at IS NULL;

@@ -84,9 +84,9 @@ func (q *Queries) CountPendingFriendRequests(ctx context.Context, dollar_1 strin
 
 const createDevice = `-- name: CreateDevice :one
 
-INSERT INTO devices (user_id, name, device_type, node_id, fingerprint, is_approved, approved_at, approved_by)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-RETURNING id, user_id, name, device_type, node_id, fingerprint, is_approved, approved_at, approved_by, last_active, created_at, revoked_at
+INSERT INTO devices (user_id, name, device_type, node_id, fingerprint, is_approved, approved_at, approved_by, is_public)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+RETURNING id, user_id, name, device_type, node_id, fingerprint, is_approved, approved_at, approved_by, last_active, created_at, revoked_at, is_public
 `
 
 type CreateDeviceParams struct {
@@ -98,6 +98,7 @@ type CreateDeviceParams struct {
 	IsApproved  bool               `json:"is_approved"`
 	ApprovedAt  pgtype.Timestamptz `json:"approved_at"`
 	ApprovedBy  pgtype.UUID        `json:"approved_by"`
+	IsPublic    bool               `json:"is_public"`
 }
 
 // ─── Devices ────────────────────────────────────────
@@ -111,6 +112,7 @@ func (q *Queries) CreateDevice(ctx context.Context, arg CreateDeviceParams) (Dev
 		arg.IsApproved,
 		arg.ApprovedAt,
 		arg.ApprovedBy,
+		arg.IsPublic,
 	)
 	var i Device
 	err := row.Scan(
@@ -126,6 +128,7 @@ func (q *Queries) CreateDevice(ctx context.Context, arg CreateDeviceParams) (Dev
 		&i.LastActive,
 		&i.CreatedAt,
 		&i.RevokedAt,
+		&i.IsPublic,
 	)
 	return i, err
 }
@@ -211,7 +214,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 }
 
 const getDeviceByFingerprint = `-- name: GetDeviceByFingerprint :one
-SELECT id, user_id, name, device_type, node_id, fingerprint, is_approved, approved_at, approved_by, last_active, created_at, revoked_at FROM devices WHERE user_id = $1::uuid AND fingerprint = $2 AND revoked_at IS NULL
+SELECT id, user_id, name, device_type, node_id, fingerprint, is_approved, approved_at, approved_by, last_active, created_at, revoked_at, is_public FROM devices WHERE user_id = $1::uuid AND fingerprint = $2 AND revoked_at IS NULL
 `
 
 type GetDeviceByFingerprintParams struct {
@@ -235,12 +238,13 @@ func (q *Queries) GetDeviceByFingerprint(ctx context.Context, arg GetDeviceByFin
 		&i.LastActive,
 		&i.CreatedAt,
 		&i.RevokedAt,
+		&i.IsPublic,
 	)
 	return i, err
 }
 
 const getDeviceByID = `-- name: GetDeviceByID :one
-SELECT id, user_id, name, device_type, node_id, fingerprint, is_approved, approved_at, approved_by, last_active, created_at, revoked_at FROM devices WHERE id = $1::uuid AND revoked_at IS NULL
+SELECT id, user_id, name, device_type, node_id, fingerprint, is_approved, approved_at, approved_by, last_active, created_at, revoked_at, is_public FROM devices WHERE id = $1::uuid AND revoked_at IS NULL
 `
 
 func (q *Queries) GetDeviceByID(ctx context.Context, dollar_1 string) (Device, error) {
@@ -259,6 +263,7 @@ func (q *Queries) GetDeviceByID(ctx context.Context, dollar_1 string) (Device, e
 		&i.LastActive,
 		&i.CreatedAt,
 		&i.RevokedAt,
+		&i.IsPublic,
 	)
 	return i, err
 }
@@ -505,7 +510,7 @@ func (q *Queries) ListActivePeerSessions(ctx context.Context, dollar_1 string) (
 }
 
 const listDevicesByUser = `-- name: ListDevicesByUser :many
-SELECT id, user_id, name, device_type, node_id, fingerprint, is_approved, approved_at, approved_by, last_active, created_at, revoked_at FROM devices WHERE user_id = $1::uuid AND revoked_at IS NULL ORDER BY created_at DESC
+SELECT id, user_id, name, device_type, node_id, fingerprint, is_approved, approved_at, approved_by, last_active, created_at, revoked_at, is_public FROM devices WHERE user_id = $1::uuid AND revoked_at IS NULL ORDER BY created_at DESC
 `
 
 func (q *Queries) ListDevicesByUser(ctx context.Context, dollar_1 string) ([]Device, error) {
@@ -530,6 +535,7 @@ func (q *Queries) ListDevicesByUser(ctx context.Context, dollar_1 string) ([]Dev
 			&i.LastActive,
 			&i.CreatedAt,
 			&i.RevokedAt,
+			&i.IsPublic,
 		); err != nil {
 			return nil, err
 		}
@@ -542,7 +548,7 @@ func (q *Queries) ListDevicesByUser(ctx context.Context, dollar_1 string) ([]Dev
 }
 
 const listDevicesByUserPublic = `-- name: ListDevicesByUserPublic :many
-SELECT id, user_id, name, device_type, node_id, fingerprint, is_approved, approved_at, approved_by, last_active, created_at, revoked_at FROM devices WHERE user_id = $1::uuid AND revoked_at IS NULL AND is_approved = TRUE
+SELECT id, user_id, name, device_type, node_id, fingerprint, is_approved, approved_at, approved_by, last_active, created_at, revoked_at, is_public FROM devices WHERE user_id = $1::uuid AND revoked_at IS NULL AND is_approved = TRUE AND is_public = TRUE
 ORDER BY last_active DESC
 `
 
@@ -568,6 +574,7 @@ func (q *Queries) ListDevicesByUserPublic(ctx context.Context, dollar_1 string) 
 			&i.LastActive,
 			&i.CreatedAt,
 			&i.RevokedAt,
+			&i.IsPublic,
 		); err != nil {
 			return nil, err
 		}
@@ -663,7 +670,7 @@ func (q *Queries) ListSessionDeviceKeys(ctx context.Context, dollar_1 string) ([
 }
 
 const listSessionDevices = `-- name: ListSessionDevices :many
-SELECT d.id, d.user_id, d.name, d.device_type, d.node_id, d.fingerprint, d.is_approved, d.approved_at, d.approved_by, d.last_active, d.created_at, d.revoked_at FROM devices d
+SELECT d.id, d.user_id, d.name, d.device_type, d.node_id, d.fingerprint, d.is_approved, d.approved_at, d.approved_by, d.last_active, d.created_at, d.revoked_at, d.is_public FROM devices d
 JOIN peer_session_devices psd ON d.id = psd.device_id
 WHERE psd.session_id = $1::uuid AND psd.left_at IS NULL AND d.revoked_at IS NULL
 `
@@ -690,6 +697,7 @@ func (q *Queries) ListSessionDevices(ctx context.Context, dollar_1 string) ([]De
 			&i.LastActive,
 			&i.CreatedAt,
 			&i.RevokedAt,
+			&i.IsPublic,
 		); err != nil {
 			return nil, err
 		}
@@ -834,6 +842,20 @@ type UpdateDeviceActivityParams struct {
 
 func (q *Queries) UpdateDeviceActivity(ctx context.Context, arg UpdateDeviceActivityParams) error {
 	_, err := q.db.Exec(ctx, updateDeviceActivity, arg.Column1, arg.NodeID)
+	return err
+}
+
+const updateDeviceVisibility = `-- name: UpdateDeviceVisibility :exec
+UPDATE devices SET is_public = $2 WHERE id = $1::uuid AND revoked_at IS NULL
+`
+
+type UpdateDeviceVisibilityParams struct {
+	Column1  string `json:"column_1"`
+	IsPublic bool   `json:"is_public"`
+}
+
+func (q *Queries) UpdateDeviceVisibility(ctx context.Context, arg UpdateDeviceVisibilityParams) error {
+	_, err := q.db.Exec(ctx, updateDeviceVisibility, arg.Column1, arg.IsPublic)
 	return err
 }
 
