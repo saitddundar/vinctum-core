@@ -443,6 +443,33 @@ func (h *IdentityHandler) UpdateDeviceActivity(ctx context.Context, req *identit
 	return &identityv1.UpdateDeviceActivityResponse{Success: true}, nil
 }
 
+func (h *IdentityHandler) UpdateDeviceVisibility(ctx context.Context, req *identityv1.UpdateDeviceVisibilityRequest) (*identityv1.UpdateDeviceVisibilityResponse, error) {
+	userID, ok := middleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "not authenticated")
+	}
+	if req.DeviceId == "" {
+		return nil, status.Error(codes.InvalidArgument, "device_id is required")
+	}
+
+	device, err := h.queries.GetDeviceByID(ctx, req.DeviceId)
+	if err != nil {
+		return nil, status.Error(codes.NotFound, "device not found")
+	}
+	if device.UserID != userID {
+		return nil, status.Error(codes.PermissionDenied, "not your device")
+	}
+
+	err = h.queries.UpdateDeviceVisibility(ctx, repository.UpdateDeviceVisibilityParams{
+		Column1:  req.DeviceId,
+		IsPublic: req.IsPublic,
+	})
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to update visibility")
+	}
+	return &identityv1.UpdateDeviceVisibilityResponse{Success: true}, nil
+}
+
 func (h *IdentityHandler) GeneratePairingCode(ctx context.Context, req *identityv1.GeneratePairingCodeRequest) (*identityv1.GeneratePairingCodeResponse, error) {
 	userID, ok := middleware.UserIDFromContext(ctx)
 	if !ok {
