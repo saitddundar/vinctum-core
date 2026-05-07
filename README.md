@@ -35,7 +35,7 @@ Each gRPC service also exposes a Prometheus `/metrics` endpoint on `grpcPort + 1
 
 | Service       | Port  | Transport | Description                                                                                |
 |---------------|-------|-----------|--------------------------------------------------------------------------------------------|
-| **Identity**  | 50051 | gRPC      | Users, JWT auth, email verification, devices, pairing, peer sessions, X25519 device keys   |
+| **Identity**  | 50051 | gRPC      | Users, JWT auth, email verification, devices, pairing, peer sessions, X25519 device keys, friends, notifications |
 | **Discovery** | 50052 | gRPC      | Peer registry, Kademlia DHT bootstrap, peer streaming                                      |
 | **Routing**   | 50053 | gRPC      | Route computation, relay pool management, intelligence-aware path scoring                  |
 | **Transfer**  | 50054 | gRPC      | Chunk-based file transfer (server holds only ciphertext), watch streams, in-process Relay  |
@@ -109,7 +109,7 @@ vinctum-core/
 │   ├── logger/                 #   Zerolog setup
 │   ├── mailer/                 #   SMTP verification mailer
 │   └── middleware/             #   gRPC auth + Prometheus metrics interceptors
-├── scripts/migrations/         # SQL schema files (010 migrations, embedded, auto-applied)
+├── scripts/migrations/         # SQL schema files (016 migrations, embedded, auto-applied)
 ├── config/                     # YAML configs (config.dev.yaml)
 ├── deployments/docker/         # Dockerfiles (5 services) + docker-compose.yml
 ├── docs/                       # Architecture doc, threat model, ADRs, project plan
@@ -179,6 +179,7 @@ All routes are exposed by the gateway on `:8080`. JWT bearer tokens are required
 |               | `GET  /api/v1/devices/{deviceId}`               |                                        |
 |               | `DELETE /api/v1/devices/{deviceId}`             | Revoke                                 |
 |               | `PUT  /api/v1/devices/{deviceId}/activity`      | Heartbeat                              |
+|               | `PUT  /api/v1/devices/{deviceId}/visibility`    | Toggle public/private                  |
 | Pairing       | `POST /api/v1/devices/pairing/generate`         | Issue 6-char code (5 min TTL)          |
 |               | `POST /api/v1/devices/pairing/redeem`           | Redeem code, create pending device     |
 |               | `POST /api/v1/devices/pairing/approve`          | Approver-side accept/reject            |
@@ -191,6 +192,15 @@ All routes are exposed by the gateway on `:8080`. JWT bearer tokens are required
 | Device Keys   | `POST /api/v1/devices/{deviceId}/key`           | Upload X25519 public key (32B)         |
 |               | `GET  /api/v1/devices/{deviceId}/key`           |                                        |
 |               | `GET  /api/v1/sessions/{sessionId}/keys`        | All device keys in a session           |
+|               | `GET  /api/v1/nodes/{nodeId}/key`               | Cross-user key lookup by node ID       |
+| Friends       | `POST /api/v1/friends/request`                  | Send friend request                    |
+|               | `POST /api/v1/friends/respond`                  | Accept/reject friend request           |
+|               | `GET  /api/v1/friends`                          | List accepted friends                  |
+|               | `GET  /api/v1/friends/requests`                 | List pending incoming requests         |
+|               | `DELETE /api/v1/friends/{friendshipId}`          | Remove friend                          |
+|               | `GET  /api/v1/friends/{userId}/devices`         | Friend's public devices                |
+|               | `GET  /api/v1/users/search`                     | Search users by username               |
+| Notifications | `GET  /api/v1/notifications/count`              | Pending friend requests + transfer count |
 | Routing       | `POST /api/v1/routes/find`                      |                                        |
 |               | `GET  /api/v1/routes/table/{nodeId}`            |                                        |
 |               | `GET  /api/v1/relays`                           |                                        |
@@ -266,6 +276,7 @@ Key controls:
 - **Parameterized SQL** via sqlc (no injection surface, no hand-rolled string concatenation)
 - **gRPC auth interceptors** on every service with method-level bypass only for public endpoints (Register/Login/RefreshToken/VerifyEmail/ResendVerification + Discovery FindPeers/GetNodeInfo)
 - **Optional mTLS** between gRPC services via `pkg/grpcutil` (`grpc.tls_enabled: true` + cert/key/CA)
+- **Device visibility** -- devices can be public (visible to friends) or private (owner only). `ListFriendDevices` only returns public + approved + non-revoked devices for accepted friendships
 - **Security headers + CORS whitelist + body size limits** on the gateway
 - **Prometheus metrics** on every service for auditing latency / error rates
 
