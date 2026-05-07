@@ -908,6 +908,7 @@ type Device struct {
 	LastActive         *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=last_active,json=lastActive,proto3" json:"last_active,omitempty"`
 	CreatedAt          *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	IsRevoked          bool                   `protobuf:"varint,12,opt,name=is_revoked,json=isRevoked,proto3" json:"is_revoked,omitempty"`
+	IsPublic           bool                   `protobuf:"varint,13,opt,name=is_public,json=isPublic,proto3" json:"is_public,omitempty"`
 	unknownFields      protoimpl.UnknownFields
 	sizeCache          protoimpl.SizeCache
 }
@@ -1026,12 +1027,20 @@ func (x *Device) GetIsRevoked() bool {
 	return false
 }
 
+func (x *Device) GetIsPublic() bool {
+	if x != nil {
+		return x.IsPublic
+	}
+	return false
+}
+
 type RegisterDeviceRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	DeviceType    DeviceType             `protobuf:"varint,2,opt,name=device_type,json=deviceType,proto3,enum=identity.v1.DeviceType" json:"device_type,omitempty"`
 	Fingerprint   string                 `protobuf:"bytes,3,opt,name=fingerprint,proto3" json:"fingerprint,omitempty"`
 	NodeId        string                 `protobuf:"bytes,4,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
+	IsPublic      bool                   `protobuf:"varint,5,opt,name=is_public,json=isPublic,proto3" json:"is_public,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1092,6 +1101,13 @@ func (x *RegisterDeviceRequest) GetNodeId() string {
 		return x.NodeId
 	}
 	return ""
+}
+
+func (x *RegisterDeviceRequest) GetIsPublic() bool {
+	if x != nil {
+		return x.IsPublic
+	}
+	return false
 }
 
 type RegisterDeviceResponse struct {
@@ -3708,7 +3724,7 @@ const file_identity_v1_identity_proto_rawDesc = "" +
 	"\x05email\x18\x01 \x01(\tR\x05email\"P\n" +
 	"\x1aResendVerificationResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\"\xef\x03\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"\x8c\x04\n" +
 	"\x06Device\x12\x1b\n" +
 	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x12\n" +
@@ -3728,13 +3744,15 @@ const file_identity_v1_identity_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12\x1d\n" +
 	"\n" +
-	"is_revoked\x18\f \x01(\bR\tisRevoked\"\xa0\x01\n" +
+	"is_revoked\x18\f \x01(\bR\tisRevoked\x12\x1b\n" +
+	"\tis_public\x18\r \x01(\bR\bisPublic\"\xbd\x01\n" +
 	"\x15RegisterDeviceRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x128\n" +
 	"\vdevice_type\x18\x02 \x01(\x0e2\x17.identity.v1.DeviceTypeR\n" +
 	"deviceType\x12 \n" +
 	"\vfingerprint\x18\x03 \x01(\tR\vfingerprint\x12\x17\n" +
-	"\anode_id\x18\x04 \x01(\tR\x06nodeId\"E\n" +
+	"\anode_id\x18\x04 \x01(\tR\x06nodeId\x12\x1b\n" +
+	"\tis_public\x18\x05 \x01(\bR\bisPublic\"E\n" +
 	"\x16RegisterDeviceResponse\x12+\n" +
 	"\x06device\x18\x01 \x01(\v2\x13.identity.v1.DeviceR\x06device\"\x14\n" +
 	"\x12ListDevicesRequest\"D\n" +

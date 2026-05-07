@@ -153,6 +153,7 @@ message Device {
   google.protobuf.Timestamp last_active    = 10;
   google.protobuf.Timestamp created_at     = 11;
   bool   is_revoked                        = 12;
+  bool   is_public                         = 13;
 }
 
 message RegisterDeviceRequest {
@@ -160,6 +161,7 @@ message RegisterDeviceRequest {
   DeviceType device_type = 2;
   string fingerprint     = 3;
   string node_id         = 4;
+  bool   is_public       = 5;
 }
 message RegisterDeviceResponse {
   Device device = 1;
