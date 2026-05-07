@@ -350,6 +350,7 @@ func (h *IdentityHandler) RegisterDevice(ctx context.Context, req *identityv1.Re
 		IsApproved:  true, // Self-registered via login = auto-approved
 		ApprovedAt:  pgtype.Timestamptz{Time: now, Valid: true},
 		ApprovedBy:  pgtype.UUID{}, // NULL = self-approved
+		IsPublic:    req.IsPublic,
 	})
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to register device")
@@ -1092,6 +1093,7 @@ func deviceToProto(d repository.Device) *identityv1.Device {
 		LastActive:  timestamppb.New(d.LastActive),
 		CreatedAt:   timestamppb.New(d.CreatedAt),
 		IsRevoked:   d.RevokedAt.Valid,
+		IsPublic:    d.IsPublic,
 	}
 	if d.NodeID.Valid {
 		pb.NodeId = d.NodeID.String
