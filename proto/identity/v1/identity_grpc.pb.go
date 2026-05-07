@@ -31,6 +31,7 @@ const (
 	IdentityService_GetDevice_FullMethodName              = "/identity.v1.IdentityService/GetDevice"
 	IdentityService_RevokeDevice_FullMethodName           = "/identity.v1.IdentityService/RevokeDevice"
 	IdentityService_UpdateDeviceActivity_FullMethodName   = "/identity.v1.IdentityService/UpdateDeviceActivity"
+	IdentityService_UpdateDeviceVisibility_FullMethodName = "/identity.v1.IdentityService/UpdateDeviceVisibility"
 	IdentityService_GeneratePairingCode_FullMethodName    = "/identity.v1.IdentityService/GeneratePairingCode"
 	IdentityService_RedeemPairingCode_FullMethodName      = "/identity.v1.IdentityService/RedeemPairingCode"
 	IdentityService_ApprovePairing_FullMethodName         = "/identity.v1.IdentityService/ApprovePairing"
@@ -70,6 +71,7 @@ type IdentityServiceClient interface {
 	GetDevice(ctx context.Context, in *GetDeviceRequest, opts ...grpc.CallOption) (*GetDeviceResponse, error)
 	RevokeDevice(ctx context.Context, in *RevokeDeviceRequest, opts ...grpc.CallOption) (*RevokeDeviceResponse, error)
 	UpdateDeviceActivity(ctx context.Context, in *UpdateDeviceActivityRequest, opts ...grpc.CallOption) (*UpdateDeviceActivityResponse, error)
+	UpdateDeviceVisibility(ctx context.Context, in *UpdateDeviceVisibilityRequest, opts ...grpc.CallOption) (*UpdateDeviceVisibilityResponse, error)
 	// Device Pairing
 	GeneratePairingCode(ctx context.Context, in *GeneratePairingCodeRequest, opts ...grpc.CallOption) (*GeneratePairingCodeResponse, error)
 	RedeemPairingCode(ctx context.Context, in *RedeemPairingCodeRequest, opts ...grpc.CallOption) (*RedeemPairingCodeResponse, error)
@@ -218,6 +220,16 @@ func (c *identityServiceClient) UpdateDeviceActivity(ctx context.Context, in *Up
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(UpdateDeviceActivityResponse)
 	err := c.cc.Invoke(ctx, IdentityService_UpdateDeviceActivity_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) UpdateDeviceVisibility(ctx context.Context, in *UpdateDeviceVisibilityRequest, opts ...grpc.CallOption) (*UpdateDeviceVisibilityResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateDeviceVisibilityResponse)
+	err := c.cc.Invoke(ctx, IdentityService_UpdateDeviceVisibility_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -441,6 +453,7 @@ type IdentityServiceServer interface {
 	GetDevice(context.Context, *GetDeviceRequest) (*GetDeviceResponse, error)
 	RevokeDevice(context.Context, *RevokeDeviceRequest) (*RevokeDeviceResponse, error)
 	UpdateDeviceActivity(context.Context, *UpdateDeviceActivityRequest) (*UpdateDeviceActivityResponse, error)
+	UpdateDeviceVisibility(context.Context, *UpdateDeviceVisibilityRequest) (*UpdateDeviceVisibilityResponse, error)
 	// Device Pairing
 	GeneratePairingCode(context.Context, *GeneratePairingCodeRequest) (*GeneratePairingCodeResponse, error)
 	RedeemPairingCode(context.Context, *RedeemPairingCodeRequest) (*RedeemPairingCodeResponse, error)
@@ -509,6 +522,9 @@ func (UnimplementedIdentityServiceServer) RevokeDevice(context.Context, *RevokeD
 }
 func (UnimplementedIdentityServiceServer) UpdateDeviceActivity(context.Context, *UpdateDeviceActivityRequest) (*UpdateDeviceActivityResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateDeviceActivity not implemented")
+}
+func (UnimplementedIdentityServiceServer) UpdateDeviceVisibility(context.Context, *UpdateDeviceVisibilityRequest) (*UpdateDeviceVisibilityResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateDeviceVisibility not implemented")
 }
 func (UnimplementedIdentityServiceServer) GeneratePairingCode(context.Context, *GeneratePairingCodeRequest) (*GeneratePairingCodeResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GeneratePairingCode not implemented")
@@ -802,6 +818,24 @@ func _IdentityService_UpdateDeviceActivity_Handler(srv interface{}, ctx context.
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(IdentityServiceServer).UpdateDeviceActivity(ctx, req.(*UpdateDeviceActivityRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_UpdateDeviceVisibility_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateDeviceVisibilityRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).UpdateDeviceVisibility(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_UpdateDeviceVisibility_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).UpdateDeviceVisibility(ctx, req.(*UpdateDeviceVisibilityRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1220,6 +1254,10 @@ var IdentityService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateDeviceActivity",
 			Handler:    _IdentityService_UpdateDeviceActivity_Handler,
+		},
+		{
+			MethodName: "UpdateDeviceVisibility",
+			Handler:    _IdentityService_UpdateDeviceVisibility_Handler,
 		},
 		{
 			MethodName: "GeneratePairingCode",

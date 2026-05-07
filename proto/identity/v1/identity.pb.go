@@ -1506,6 +1506,102 @@ func (x *UpdateDeviceActivityResponse) GetSuccess() bool {
 	return false
 }
 
+type UpdateDeviceVisibilityRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DeviceId      string                 `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
+	IsPublic      bool                   `protobuf:"varint,2,opt,name=is_public,json=isPublic,proto3" json:"is_public,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateDeviceVisibilityRequest) Reset() {
+	*x = UpdateDeviceVisibilityRequest{}
+	mi := &file_identity_v1_identity_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateDeviceVisibilityRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateDeviceVisibilityRequest) ProtoMessage() {}
+
+func (x *UpdateDeviceVisibilityRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_identity_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateDeviceVisibilityRequest.ProtoReflect.Descriptor instead.
+func (*UpdateDeviceVisibilityRequest) Descriptor() ([]byte, []int) {
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *UpdateDeviceVisibilityRequest) GetDeviceId() string {
+	if x != nil {
+		return x.DeviceId
+	}
+	return ""
+}
+
+func (x *UpdateDeviceVisibilityRequest) GetIsPublic() bool {
+	if x != nil {
+		return x.IsPublic
+	}
+	return false
+}
+
+type UpdateDeviceVisibilityResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateDeviceVisibilityResponse) Reset() {
+	*x = UpdateDeviceVisibilityResponse{}
+	mi := &file_identity_v1_identity_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateDeviceVisibilityResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateDeviceVisibilityResponse) ProtoMessage() {}
+
+func (x *UpdateDeviceVisibilityResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_identity_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateDeviceVisibilityResponse.ProtoReflect.Descriptor instead.
+func (*UpdateDeviceVisibilityResponse) Descriptor() ([]byte, []int) {
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *UpdateDeviceVisibilityResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
 type GeneratePairingCodeRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	DeviceId      string                 `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
@@ -1515,7 +1611,7 @@ type GeneratePairingCodeRequest struct {
 
 func (x *GeneratePairingCodeRequest) Reset() {
 	*x = GeneratePairingCodeRequest{}
-	mi := &file_identity_v1_identity_proto_msgTypes[26]
+	mi := &file_identity_v1_identity_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1527,7 +1623,7 @@ func (x *GeneratePairingCodeRequest) String() string {
 func (*GeneratePairingCodeRequest) ProtoMessage() {}
 
 func (x *GeneratePairingCodeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[26]
+	mi := &file_identity_v1_identity_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1540,7 +1636,7 @@ func (x *GeneratePairingCodeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GeneratePairingCodeRequest.ProtoReflect.Descriptor instead.
 func (*GeneratePairingCodeRequest) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{26}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *GeneratePairingCodeRequest) GetDeviceId() string {
@@ -1560,7 +1656,7 @@ type GeneratePairingCodeResponse struct {
 
 func (x *GeneratePairingCodeResponse) Reset() {
 	*x = GeneratePairingCodeResponse{}
-	mi := &file_identity_v1_identity_proto_msgTypes[27]
+	mi := &file_identity_v1_identity_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1572,7 +1668,7 @@ func (x *GeneratePairingCodeResponse) String() string {
 func (*GeneratePairingCodeResponse) ProtoMessage() {}
 
 func (x *GeneratePairingCodeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[27]
+	mi := &file_identity_v1_identity_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1585,7 +1681,7 @@ func (x *GeneratePairingCodeResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GeneratePairingCodeResponse.ProtoReflect.Descriptor instead.
 func (*GeneratePairingCodeResponse) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{27}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *GeneratePairingCodeResponse) GetPairingCode() string {
@@ -1615,7 +1711,7 @@ type RedeemPairingCodeRequest struct {
 
 func (x *RedeemPairingCodeRequest) Reset() {
 	*x = RedeemPairingCodeRequest{}
-	mi := &file_identity_v1_identity_proto_msgTypes[28]
+	mi := &file_identity_v1_identity_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1627,7 +1723,7 @@ func (x *RedeemPairingCodeRequest) String() string {
 func (*RedeemPairingCodeRequest) ProtoMessage() {}
 
 func (x *RedeemPairingCodeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[28]
+	mi := &file_identity_v1_identity_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1640,7 +1736,7 @@ func (x *RedeemPairingCodeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RedeemPairingCodeRequest.ProtoReflect.Descriptor instead.
 func (*RedeemPairingCodeRequest) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{28}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *RedeemPairingCodeRequest) GetPairingCode() string {
@@ -1688,7 +1784,7 @@ type RedeemPairingCodeResponse struct {
 
 func (x *RedeemPairingCodeResponse) Reset() {
 	*x = RedeemPairingCodeResponse{}
-	mi := &file_identity_v1_identity_proto_msgTypes[29]
+	mi := &file_identity_v1_identity_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1700,7 +1796,7 @@ func (x *RedeemPairingCodeResponse) String() string {
 func (*RedeemPairingCodeResponse) ProtoMessage() {}
 
 func (x *RedeemPairingCodeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[29]
+	mi := &file_identity_v1_identity_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1713,7 +1809,7 @@ func (x *RedeemPairingCodeResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RedeemPairingCodeResponse.ProtoReflect.Descriptor instead.
 func (*RedeemPairingCodeResponse) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{29}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *RedeemPairingCodeResponse) GetDeviceId() string {
@@ -1741,7 +1837,7 @@ type ApprovePairingRequest struct {
 
 func (x *ApprovePairingRequest) Reset() {
 	*x = ApprovePairingRequest{}
-	mi := &file_identity_v1_identity_proto_msgTypes[30]
+	mi := &file_identity_v1_identity_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1753,7 +1849,7 @@ func (x *ApprovePairingRequest) String() string {
 func (*ApprovePairingRequest) ProtoMessage() {}
 
 func (x *ApprovePairingRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[30]
+	mi := &file_identity_v1_identity_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1766,7 +1862,7 @@ func (x *ApprovePairingRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ApprovePairingRequest.ProtoReflect.Descriptor instead.
 func (*ApprovePairingRequest) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{30}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *ApprovePairingRequest) GetApproverDeviceId() string {
@@ -1800,7 +1896,7 @@ type ApprovePairingResponse struct {
 
 func (x *ApprovePairingResponse) Reset() {
 	*x = ApprovePairingResponse{}
-	mi := &file_identity_v1_identity_proto_msgTypes[31]
+	mi := &file_identity_v1_identity_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1812,7 +1908,7 @@ func (x *ApprovePairingResponse) String() string {
 func (*ApprovePairingResponse) ProtoMessage() {}
 
 func (x *ApprovePairingResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[31]
+	mi := &file_identity_v1_identity_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1825,7 +1921,7 @@ func (x *ApprovePairingResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ApprovePairingResponse.ProtoReflect.Descriptor instead.
 func (*ApprovePairingResponse) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{31}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *ApprovePairingResponse) GetSuccess() bool {
@@ -1857,7 +1953,7 @@ type PeerSession struct {
 
 func (x *PeerSession) Reset() {
 	*x = PeerSession{}
-	mi := &file_identity_v1_identity_proto_msgTypes[32]
+	mi := &file_identity_v1_identity_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1869,7 +1965,7 @@ func (x *PeerSession) String() string {
 func (*PeerSession) ProtoMessage() {}
 
 func (x *PeerSession) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[32]
+	mi := &file_identity_v1_identity_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1882,7 +1978,7 @@ func (x *PeerSession) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PeerSession.ProtoReflect.Descriptor instead.
 func (*PeerSession) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{32}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *PeerSession) GetSessionId() string {
@@ -1944,7 +2040,7 @@ type CreatePeerSessionRequest struct {
 
 func (x *CreatePeerSessionRequest) Reset() {
 	*x = CreatePeerSessionRequest{}
-	mi := &file_identity_v1_identity_proto_msgTypes[33]
+	mi := &file_identity_v1_identity_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1956,7 +2052,7 @@ func (x *CreatePeerSessionRequest) String() string {
 func (*CreatePeerSessionRequest) ProtoMessage() {}
 
 func (x *CreatePeerSessionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[33]
+	mi := &file_identity_v1_identity_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1969,7 +2065,7 @@ func (x *CreatePeerSessionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreatePeerSessionRequest.ProtoReflect.Descriptor instead.
 func (*CreatePeerSessionRequest) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{33}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *CreatePeerSessionRequest) GetName() string {
@@ -1995,7 +2091,7 @@ type CreatePeerSessionResponse struct {
 
 func (x *CreatePeerSessionResponse) Reset() {
 	*x = CreatePeerSessionResponse{}
-	mi := &file_identity_v1_identity_proto_msgTypes[34]
+	mi := &file_identity_v1_identity_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2007,7 +2103,7 @@ func (x *CreatePeerSessionResponse) String() string {
 func (*CreatePeerSessionResponse) ProtoMessage() {}
 
 func (x *CreatePeerSessionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[34]
+	mi := &file_identity_v1_identity_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2020,7 +2116,7 @@ func (x *CreatePeerSessionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreatePeerSessionResponse.ProtoReflect.Descriptor instead.
 func (*CreatePeerSessionResponse) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{34}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *CreatePeerSessionResponse) GetSession() *PeerSession {
@@ -2038,7 +2134,7 @@ type ListPeerSessionsRequest struct {
 
 func (x *ListPeerSessionsRequest) Reset() {
 	*x = ListPeerSessionsRequest{}
-	mi := &file_identity_v1_identity_proto_msgTypes[35]
+	mi := &file_identity_v1_identity_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2050,7 +2146,7 @@ func (x *ListPeerSessionsRequest) String() string {
 func (*ListPeerSessionsRequest) ProtoMessage() {}
 
 func (x *ListPeerSessionsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[35]
+	mi := &file_identity_v1_identity_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2063,7 +2159,7 @@ func (x *ListPeerSessionsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPeerSessionsRequest.ProtoReflect.Descriptor instead.
 func (*ListPeerSessionsRequest) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{35}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{37}
 }
 
 type ListPeerSessionsResponse struct {
@@ -2075,7 +2171,7 @@ type ListPeerSessionsResponse struct {
 
 func (x *ListPeerSessionsResponse) Reset() {
 	*x = ListPeerSessionsResponse{}
-	mi := &file_identity_v1_identity_proto_msgTypes[36]
+	mi := &file_identity_v1_identity_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2087,7 +2183,7 @@ func (x *ListPeerSessionsResponse) String() string {
 func (*ListPeerSessionsResponse) ProtoMessage() {}
 
 func (x *ListPeerSessionsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[36]
+	mi := &file_identity_v1_identity_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2100,7 +2196,7 @@ func (x *ListPeerSessionsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPeerSessionsResponse.ProtoReflect.Descriptor instead.
 func (*ListPeerSessionsResponse) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{36}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *ListPeerSessionsResponse) GetSessions() []*PeerSession {
@@ -2119,7 +2215,7 @@ type ClosePeerSessionRequest struct {
 
 func (x *ClosePeerSessionRequest) Reset() {
 	*x = ClosePeerSessionRequest{}
-	mi := &file_identity_v1_identity_proto_msgTypes[37]
+	mi := &file_identity_v1_identity_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2131,7 +2227,7 @@ func (x *ClosePeerSessionRequest) String() string {
 func (*ClosePeerSessionRequest) ProtoMessage() {}
 
 func (x *ClosePeerSessionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[37]
+	mi := &file_identity_v1_identity_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2144,7 +2240,7 @@ func (x *ClosePeerSessionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ClosePeerSessionRequest.ProtoReflect.Descriptor instead.
 func (*ClosePeerSessionRequest) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{37}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *ClosePeerSessionRequest) GetSessionId() string {
@@ -2163,7 +2259,7 @@ type ClosePeerSessionResponse struct {
 
 func (x *ClosePeerSessionResponse) Reset() {
 	*x = ClosePeerSessionResponse{}
-	mi := &file_identity_v1_identity_proto_msgTypes[38]
+	mi := &file_identity_v1_identity_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2175,7 +2271,7 @@ func (x *ClosePeerSessionResponse) String() string {
 func (*ClosePeerSessionResponse) ProtoMessage() {}
 
 func (x *ClosePeerSessionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[38]
+	mi := &file_identity_v1_identity_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2188,7 +2284,7 @@ func (x *ClosePeerSessionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ClosePeerSessionResponse.ProtoReflect.Descriptor instead.
 func (*ClosePeerSessionResponse) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{38}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{40}
 }
 
 func (x *ClosePeerSessionResponse) GetSuccess() bool {
@@ -2208,7 +2304,7 @@ type JoinPeerSessionRequest struct {
 
 func (x *JoinPeerSessionRequest) Reset() {
 	*x = JoinPeerSessionRequest{}
-	mi := &file_identity_v1_identity_proto_msgTypes[39]
+	mi := &file_identity_v1_identity_proto_msgTypes[41]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2220,7 +2316,7 @@ func (x *JoinPeerSessionRequest) String() string {
 func (*JoinPeerSessionRequest) ProtoMessage() {}
 
 func (x *JoinPeerSessionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[39]
+	mi := &file_identity_v1_identity_proto_msgTypes[41]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2233,7 +2329,7 @@ func (x *JoinPeerSessionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use JoinPeerSessionRequest.ProtoReflect.Descriptor instead.
 func (*JoinPeerSessionRequest) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{39}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{41}
 }
 
 func (x *JoinPeerSessionRequest) GetSessionId() string {
@@ -2259,7 +2355,7 @@ type JoinPeerSessionResponse struct {
 
 func (x *JoinPeerSessionResponse) Reset() {
 	*x = JoinPeerSessionResponse{}
-	mi := &file_identity_v1_identity_proto_msgTypes[40]
+	mi := &file_identity_v1_identity_proto_msgTypes[42]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2271,7 +2367,7 @@ func (x *JoinPeerSessionResponse) String() string {
 func (*JoinPeerSessionResponse) ProtoMessage() {}
 
 func (x *JoinPeerSessionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[40]
+	mi := &file_identity_v1_identity_proto_msgTypes[42]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2284,7 +2380,7 @@ func (x *JoinPeerSessionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use JoinPeerSessionResponse.ProtoReflect.Descriptor instead.
 func (*JoinPeerSessionResponse) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{40}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{42}
 }
 
 func (x *JoinPeerSessionResponse) GetSuccess() bool {
@@ -2304,7 +2400,7 @@ type LeavePeerSessionRequest struct {
 
 func (x *LeavePeerSessionRequest) Reset() {
 	*x = LeavePeerSessionRequest{}
-	mi := &file_identity_v1_identity_proto_msgTypes[41]
+	mi := &file_identity_v1_identity_proto_msgTypes[43]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2316,7 +2412,7 @@ func (x *LeavePeerSessionRequest) String() string {
 func (*LeavePeerSessionRequest) ProtoMessage() {}
 
 func (x *LeavePeerSessionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[41]
+	mi := &file_identity_v1_identity_proto_msgTypes[43]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2329,7 +2425,7 @@ func (x *LeavePeerSessionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LeavePeerSessionRequest.ProtoReflect.Descriptor instead.
 func (*LeavePeerSessionRequest) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{41}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{43}
 }
 
 func (x *LeavePeerSessionRequest) GetSessionId() string {
@@ -2355,7 +2451,7 @@ type LeavePeerSessionResponse struct {
 
 func (x *LeavePeerSessionResponse) Reset() {
 	*x = LeavePeerSessionResponse{}
-	mi := &file_identity_v1_identity_proto_msgTypes[42]
+	mi := &file_identity_v1_identity_proto_msgTypes[44]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2367,7 +2463,7 @@ func (x *LeavePeerSessionResponse) String() string {
 func (*LeavePeerSessionResponse) ProtoMessage() {}
 
 func (x *LeavePeerSessionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[42]
+	mi := &file_identity_v1_identity_proto_msgTypes[44]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2380,7 +2476,7 @@ func (x *LeavePeerSessionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LeavePeerSessionResponse.ProtoReflect.Descriptor instead.
 func (*LeavePeerSessionResponse) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{42}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{44}
 }
 
 func (x *LeavePeerSessionResponse) GetSuccess() bool {
@@ -2399,7 +2495,7 @@ type ListSessionDevicesRequest struct {
 
 func (x *ListSessionDevicesRequest) Reset() {
 	*x = ListSessionDevicesRequest{}
-	mi := &file_identity_v1_identity_proto_msgTypes[43]
+	mi := &file_identity_v1_identity_proto_msgTypes[45]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2411,7 +2507,7 @@ func (x *ListSessionDevicesRequest) String() string {
 func (*ListSessionDevicesRequest) ProtoMessage() {}
 
 func (x *ListSessionDevicesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[43]
+	mi := &file_identity_v1_identity_proto_msgTypes[45]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2424,7 +2520,7 @@ func (x *ListSessionDevicesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListSessionDevicesRequest.ProtoReflect.Descriptor instead.
 func (*ListSessionDevicesRequest) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{43}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{45}
 }
 
 func (x *ListSessionDevicesRequest) GetSessionId() string {
@@ -2443,7 +2539,7 @@ type ListSessionDevicesResponse struct {
 
 func (x *ListSessionDevicesResponse) Reset() {
 	*x = ListSessionDevicesResponse{}
-	mi := &file_identity_v1_identity_proto_msgTypes[44]
+	mi := &file_identity_v1_identity_proto_msgTypes[46]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2455,7 +2551,7 @@ func (x *ListSessionDevicesResponse) String() string {
 func (*ListSessionDevicesResponse) ProtoMessage() {}
 
 func (x *ListSessionDevicesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[44]
+	mi := &file_identity_v1_identity_proto_msgTypes[46]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2468,7 +2564,7 @@ func (x *ListSessionDevicesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListSessionDevicesResponse.ProtoReflect.Descriptor instead.
 func (*ListSessionDevicesResponse) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{44}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{46}
 }
 
 func (x *ListSessionDevicesResponse) GetDevices() []*Device {
@@ -2491,7 +2587,7 @@ type DeviceKey struct {
 
 func (x *DeviceKey) Reset() {
 	*x = DeviceKey{}
-	mi := &file_identity_v1_identity_proto_msgTypes[45]
+	mi := &file_identity_v1_identity_proto_msgTypes[47]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2503,7 +2599,7 @@ func (x *DeviceKey) String() string {
 func (*DeviceKey) ProtoMessage() {}
 
 func (x *DeviceKey) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[45]
+	mi := &file_identity_v1_identity_proto_msgTypes[47]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2516,7 +2612,7 @@ func (x *DeviceKey) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeviceKey.ProtoReflect.Descriptor instead.
 func (*DeviceKey) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{45}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{47}
 }
 
 func (x *DeviceKey) GetDeviceId() string {
@@ -2565,7 +2661,7 @@ type UploadDeviceKeyRequest struct {
 
 func (x *UploadDeviceKeyRequest) Reset() {
 	*x = UploadDeviceKeyRequest{}
-	mi := &file_identity_v1_identity_proto_msgTypes[46]
+	mi := &file_identity_v1_identity_proto_msgTypes[48]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2577,7 +2673,7 @@ func (x *UploadDeviceKeyRequest) String() string {
 func (*UploadDeviceKeyRequest) ProtoMessage() {}
 
 func (x *UploadDeviceKeyRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[46]
+	mi := &file_identity_v1_identity_proto_msgTypes[48]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2590,7 +2686,7 @@ func (x *UploadDeviceKeyRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UploadDeviceKeyRequest.ProtoReflect.Descriptor instead.
 func (*UploadDeviceKeyRequest) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{46}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{48}
 }
 
 func (x *UploadDeviceKeyRequest) GetDeviceId() string {
@@ -2623,7 +2719,7 @@ type UploadDeviceKeyResponse struct {
 
 func (x *UploadDeviceKeyResponse) Reset() {
 	*x = UploadDeviceKeyResponse{}
-	mi := &file_identity_v1_identity_proto_msgTypes[47]
+	mi := &file_identity_v1_identity_proto_msgTypes[49]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2635,7 +2731,7 @@ func (x *UploadDeviceKeyResponse) String() string {
 func (*UploadDeviceKeyResponse) ProtoMessage() {}
 
 func (x *UploadDeviceKeyResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[47]
+	mi := &file_identity_v1_identity_proto_msgTypes[49]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2648,7 +2744,7 @@ func (x *UploadDeviceKeyResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UploadDeviceKeyResponse.ProtoReflect.Descriptor instead.
 func (*UploadDeviceKeyResponse) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{47}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{49}
 }
 
 func (x *UploadDeviceKeyResponse) GetKey() *DeviceKey {
@@ -2667,7 +2763,7 @@ type GetDeviceKeyRequest struct {
 
 func (x *GetDeviceKeyRequest) Reset() {
 	*x = GetDeviceKeyRequest{}
-	mi := &file_identity_v1_identity_proto_msgTypes[48]
+	mi := &file_identity_v1_identity_proto_msgTypes[50]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2679,7 +2775,7 @@ func (x *GetDeviceKeyRequest) String() string {
 func (*GetDeviceKeyRequest) ProtoMessage() {}
 
 func (x *GetDeviceKeyRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[48]
+	mi := &file_identity_v1_identity_proto_msgTypes[50]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2692,7 +2788,7 @@ func (x *GetDeviceKeyRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDeviceKeyRequest.ProtoReflect.Descriptor instead.
 func (*GetDeviceKeyRequest) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{48}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{50}
 }
 
 func (x *GetDeviceKeyRequest) GetDeviceId() string {
@@ -2711,7 +2807,7 @@ type GetDeviceKeyResponse struct {
 
 func (x *GetDeviceKeyResponse) Reset() {
 	*x = GetDeviceKeyResponse{}
-	mi := &file_identity_v1_identity_proto_msgTypes[49]
+	mi := &file_identity_v1_identity_proto_msgTypes[51]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2723,7 +2819,7 @@ func (x *GetDeviceKeyResponse) String() string {
 func (*GetDeviceKeyResponse) ProtoMessage() {}
 
 func (x *GetDeviceKeyResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[49]
+	mi := &file_identity_v1_identity_proto_msgTypes[51]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2736,7 +2832,7 @@ func (x *GetDeviceKeyResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDeviceKeyResponse.ProtoReflect.Descriptor instead.
 func (*GetDeviceKeyResponse) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{49}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{51}
 }
 
 func (x *GetDeviceKeyResponse) GetKey() *DeviceKey {
@@ -2755,7 +2851,7 @@ type GetSessionDeviceKeysRequest struct {
 
 func (x *GetSessionDeviceKeysRequest) Reset() {
 	*x = GetSessionDeviceKeysRequest{}
-	mi := &file_identity_v1_identity_proto_msgTypes[50]
+	mi := &file_identity_v1_identity_proto_msgTypes[52]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2767,7 +2863,7 @@ func (x *GetSessionDeviceKeysRequest) String() string {
 func (*GetSessionDeviceKeysRequest) ProtoMessage() {}
 
 func (x *GetSessionDeviceKeysRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[50]
+	mi := &file_identity_v1_identity_proto_msgTypes[52]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2780,7 +2876,7 @@ func (x *GetSessionDeviceKeysRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSessionDeviceKeysRequest.ProtoReflect.Descriptor instead.
 func (*GetSessionDeviceKeysRequest) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{50}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{52}
 }
 
 func (x *GetSessionDeviceKeysRequest) GetSessionId() string {
@@ -2799,7 +2895,7 @@ type GetSessionDeviceKeysResponse struct {
 
 func (x *GetSessionDeviceKeysResponse) Reset() {
 	*x = GetSessionDeviceKeysResponse{}
-	mi := &file_identity_v1_identity_proto_msgTypes[51]
+	mi := &file_identity_v1_identity_proto_msgTypes[53]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2811,7 +2907,7 @@ func (x *GetSessionDeviceKeysResponse) String() string {
 func (*GetSessionDeviceKeysResponse) ProtoMessage() {}
 
 func (x *GetSessionDeviceKeysResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[51]
+	mi := &file_identity_v1_identity_proto_msgTypes[53]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2824,7 +2920,7 @@ func (x *GetSessionDeviceKeysResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSessionDeviceKeysResponse.ProtoReflect.Descriptor instead.
 func (*GetSessionDeviceKeysResponse) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{51}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{53}
 }
 
 func (x *GetSessionDeviceKeysResponse) GetKeys() []*DeviceKey {
@@ -2845,7 +2941,7 @@ type UserInfo struct {
 
 func (x *UserInfo) Reset() {
 	*x = UserInfo{}
-	mi := &file_identity_v1_identity_proto_msgTypes[52]
+	mi := &file_identity_v1_identity_proto_msgTypes[54]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2857,7 +2953,7 @@ func (x *UserInfo) String() string {
 func (*UserInfo) ProtoMessage() {}
 
 func (x *UserInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[52]
+	mi := &file_identity_v1_identity_proto_msgTypes[54]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2870,7 +2966,7 @@ func (x *UserInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserInfo.ProtoReflect.Descriptor instead.
 func (*UserInfo) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{52}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{54}
 }
 
 func (x *UserInfo) GetUserId() string {
@@ -2906,7 +3002,7 @@ type Friend struct {
 
 func (x *Friend) Reset() {
 	*x = Friend{}
-	mi := &file_identity_v1_identity_proto_msgTypes[53]
+	mi := &file_identity_v1_identity_proto_msgTypes[55]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2918,7 +3014,7 @@ func (x *Friend) String() string {
 func (*Friend) ProtoMessage() {}
 
 func (x *Friend) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[53]
+	mi := &file_identity_v1_identity_proto_msgTypes[55]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2931,7 +3027,7 @@ func (x *Friend) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Friend.ProtoReflect.Descriptor instead.
 func (*Friend) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{53}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{55}
 }
 
 func (x *Friend) GetId() string {
@@ -2971,7 +3067,7 @@ type SendFriendRequestReq struct {
 
 func (x *SendFriendRequestReq) Reset() {
 	*x = SendFriendRequestReq{}
-	mi := &file_identity_v1_identity_proto_msgTypes[54]
+	mi := &file_identity_v1_identity_proto_msgTypes[56]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2983,7 +3079,7 @@ func (x *SendFriendRequestReq) String() string {
 func (*SendFriendRequestReq) ProtoMessage() {}
 
 func (x *SendFriendRequestReq) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[54]
+	mi := &file_identity_v1_identity_proto_msgTypes[56]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2996,7 +3092,7 @@ func (x *SendFriendRequestReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SendFriendRequestReq.ProtoReflect.Descriptor instead.
 func (*SendFriendRequestReq) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{54}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{56}
 }
 
 func (x *SendFriendRequestReq) GetAddresseeUserId() string {
@@ -3015,7 +3111,7 @@ type SendFriendRequestResp struct {
 
 func (x *SendFriendRequestResp) Reset() {
 	*x = SendFriendRequestResp{}
-	mi := &file_identity_v1_identity_proto_msgTypes[55]
+	mi := &file_identity_v1_identity_proto_msgTypes[57]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3027,7 +3123,7 @@ func (x *SendFriendRequestResp) String() string {
 func (*SendFriendRequestResp) ProtoMessage() {}
 
 func (x *SendFriendRequestResp) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[55]
+	mi := &file_identity_v1_identity_proto_msgTypes[57]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3040,7 +3136,7 @@ func (x *SendFriendRequestResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SendFriendRequestResp.ProtoReflect.Descriptor instead.
 func (*SendFriendRequestResp) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{55}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{57}
 }
 
 func (x *SendFriendRequestResp) GetFriendship() *Friend {
@@ -3060,7 +3156,7 @@ type RespondToFriendRequestReq struct {
 
 func (x *RespondToFriendRequestReq) Reset() {
 	*x = RespondToFriendRequestReq{}
-	mi := &file_identity_v1_identity_proto_msgTypes[56]
+	mi := &file_identity_v1_identity_proto_msgTypes[58]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3072,7 +3168,7 @@ func (x *RespondToFriendRequestReq) String() string {
 func (*RespondToFriendRequestReq) ProtoMessage() {}
 
 func (x *RespondToFriendRequestReq) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[56]
+	mi := &file_identity_v1_identity_proto_msgTypes[58]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3085,7 +3181,7 @@ func (x *RespondToFriendRequestReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RespondToFriendRequestReq.ProtoReflect.Descriptor instead.
 func (*RespondToFriendRequestReq) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{56}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{58}
 }
 
 func (x *RespondToFriendRequestReq) GetFriendshipId() string {
@@ -3111,7 +3207,7 @@ type RespondToFriendRequestResp struct {
 
 func (x *RespondToFriendRequestResp) Reset() {
 	*x = RespondToFriendRequestResp{}
-	mi := &file_identity_v1_identity_proto_msgTypes[57]
+	mi := &file_identity_v1_identity_proto_msgTypes[59]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3123,7 +3219,7 @@ func (x *RespondToFriendRequestResp) String() string {
 func (*RespondToFriendRequestResp) ProtoMessage() {}
 
 func (x *RespondToFriendRequestResp) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[57]
+	mi := &file_identity_v1_identity_proto_msgTypes[59]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3136,7 +3232,7 @@ func (x *RespondToFriendRequestResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RespondToFriendRequestResp.ProtoReflect.Descriptor instead.
 func (*RespondToFriendRequestResp) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{57}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{59}
 }
 
 func (x *RespondToFriendRequestResp) GetFriendship() *Friend {
@@ -3154,7 +3250,7 @@ type ListFriendsRequest struct {
 
 func (x *ListFriendsRequest) Reset() {
 	*x = ListFriendsRequest{}
-	mi := &file_identity_v1_identity_proto_msgTypes[58]
+	mi := &file_identity_v1_identity_proto_msgTypes[60]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3166,7 +3262,7 @@ func (x *ListFriendsRequest) String() string {
 func (*ListFriendsRequest) ProtoMessage() {}
 
 func (x *ListFriendsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[58]
+	mi := &file_identity_v1_identity_proto_msgTypes[60]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3179,7 +3275,7 @@ func (x *ListFriendsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListFriendsRequest.ProtoReflect.Descriptor instead.
 func (*ListFriendsRequest) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{58}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{60}
 }
 
 type ListFriendsResponse struct {
@@ -3191,7 +3287,7 @@ type ListFriendsResponse struct {
 
 func (x *ListFriendsResponse) Reset() {
 	*x = ListFriendsResponse{}
-	mi := &file_identity_v1_identity_proto_msgTypes[59]
+	mi := &file_identity_v1_identity_proto_msgTypes[61]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3203,7 +3299,7 @@ func (x *ListFriendsResponse) String() string {
 func (*ListFriendsResponse) ProtoMessage() {}
 
 func (x *ListFriendsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[59]
+	mi := &file_identity_v1_identity_proto_msgTypes[61]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3216,7 +3312,7 @@ func (x *ListFriendsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListFriendsResponse.ProtoReflect.Descriptor instead.
 func (*ListFriendsResponse) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{59}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{61}
 }
 
 func (x *ListFriendsResponse) GetFriends() []*Friend {
@@ -3234,7 +3330,7 @@ type ListFriendRequestsRequest struct {
 
 func (x *ListFriendRequestsRequest) Reset() {
 	*x = ListFriendRequestsRequest{}
-	mi := &file_identity_v1_identity_proto_msgTypes[60]
+	mi := &file_identity_v1_identity_proto_msgTypes[62]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3246,7 +3342,7 @@ func (x *ListFriendRequestsRequest) String() string {
 func (*ListFriendRequestsRequest) ProtoMessage() {}
 
 func (x *ListFriendRequestsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[60]
+	mi := &file_identity_v1_identity_proto_msgTypes[62]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3259,7 +3355,7 @@ func (x *ListFriendRequestsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListFriendRequestsRequest.ProtoReflect.Descriptor instead.
 func (*ListFriendRequestsRequest) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{60}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{62}
 }
 
 type ListFriendRequestsResponse struct {
@@ -3271,7 +3367,7 @@ type ListFriendRequestsResponse struct {
 
 func (x *ListFriendRequestsResponse) Reset() {
 	*x = ListFriendRequestsResponse{}
-	mi := &file_identity_v1_identity_proto_msgTypes[61]
+	mi := &file_identity_v1_identity_proto_msgTypes[63]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3283,7 +3379,7 @@ func (x *ListFriendRequestsResponse) String() string {
 func (*ListFriendRequestsResponse) ProtoMessage() {}
 
 func (x *ListFriendRequestsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[61]
+	mi := &file_identity_v1_identity_proto_msgTypes[63]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3296,7 +3392,7 @@ func (x *ListFriendRequestsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListFriendRequestsResponse.ProtoReflect.Descriptor instead.
 func (*ListFriendRequestsResponse) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{61}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{63}
 }
 
 func (x *ListFriendRequestsResponse) GetRequests() []*Friend {
@@ -3315,7 +3411,7 @@ type RemoveFriendRequest struct {
 
 func (x *RemoveFriendRequest) Reset() {
 	*x = RemoveFriendRequest{}
-	mi := &file_identity_v1_identity_proto_msgTypes[62]
+	mi := &file_identity_v1_identity_proto_msgTypes[64]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3327,7 +3423,7 @@ func (x *RemoveFriendRequest) String() string {
 func (*RemoveFriendRequest) ProtoMessage() {}
 
 func (x *RemoveFriendRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[62]
+	mi := &file_identity_v1_identity_proto_msgTypes[64]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3340,7 +3436,7 @@ func (x *RemoveFriendRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveFriendRequest.ProtoReflect.Descriptor instead.
 func (*RemoveFriendRequest) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{62}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{64}
 }
 
 func (x *RemoveFriendRequest) GetFriendshipId() string {
@@ -3359,7 +3455,7 @@ type RemoveFriendResponse struct {
 
 func (x *RemoveFriendResponse) Reset() {
 	*x = RemoveFriendResponse{}
-	mi := &file_identity_v1_identity_proto_msgTypes[63]
+	mi := &file_identity_v1_identity_proto_msgTypes[65]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3371,7 +3467,7 @@ func (x *RemoveFriendResponse) String() string {
 func (*RemoveFriendResponse) ProtoMessage() {}
 
 func (x *RemoveFriendResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[63]
+	mi := &file_identity_v1_identity_proto_msgTypes[65]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3384,7 +3480,7 @@ func (x *RemoveFriendResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveFriendResponse.ProtoReflect.Descriptor instead.
 func (*RemoveFriendResponse) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{63}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{65}
 }
 
 func (x *RemoveFriendResponse) GetSuccess() bool {
@@ -3403,7 +3499,7 @@ type SearchUsersRequest struct {
 
 func (x *SearchUsersRequest) Reset() {
 	*x = SearchUsersRequest{}
-	mi := &file_identity_v1_identity_proto_msgTypes[64]
+	mi := &file_identity_v1_identity_proto_msgTypes[66]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3415,7 +3511,7 @@ func (x *SearchUsersRequest) String() string {
 func (*SearchUsersRequest) ProtoMessage() {}
 
 func (x *SearchUsersRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[64]
+	mi := &file_identity_v1_identity_proto_msgTypes[66]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3428,7 +3524,7 @@ func (x *SearchUsersRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SearchUsersRequest.ProtoReflect.Descriptor instead.
 func (*SearchUsersRequest) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{64}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{66}
 }
 
 func (x *SearchUsersRequest) GetQuery() string {
@@ -3447,7 +3543,7 @@ type SearchUsersResponse struct {
 
 func (x *SearchUsersResponse) Reset() {
 	*x = SearchUsersResponse{}
-	mi := &file_identity_v1_identity_proto_msgTypes[65]
+	mi := &file_identity_v1_identity_proto_msgTypes[67]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3459,7 +3555,7 @@ func (x *SearchUsersResponse) String() string {
 func (*SearchUsersResponse) ProtoMessage() {}
 
 func (x *SearchUsersResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[65]
+	mi := &file_identity_v1_identity_proto_msgTypes[67]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3472,7 +3568,7 @@ func (x *SearchUsersResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SearchUsersResponse.ProtoReflect.Descriptor instead.
 func (*SearchUsersResponse) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{65}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{67}
 }
 
 func (x *SearchUsersResponse) GetUsers() []*UserInfo {
@@ -3490,7 +3586,7 @@ type GetNotificationCountRequest struct {
 
 func (x *GetNotificationCountRequest) Reset() {
 	*x = GetNotificationCountRequest{}
-	mi := &file_identity_v1_identity_proto_msgTypes[66]
+	mi := &file_identity_v1_identity_proto_msgTypes[68]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3502,7 +3598,7 @@ func (x *GetNotificationCountRequest) String() string {
 func (*GetNotificationCountRequest) ProtoMessage() {}
 
 func (x *GetNotificationCountRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[66]
+	mi := &file_identity_v1_identity_proto_msgTypes[68]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3515,7 +3611,7 @@ func (x *GetNotificationCountRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetNotificationCountRequest.ProtoReflect.Descriptor instead.
 func (*GetNotificationCountRequest) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{66}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{68}
 }
 
 type GetNotificationCountResponse struct {
@@ -3529,7 +3625,7 @@ type GetNotificationCountResponse struct {
 
 func (x *GetNotificationCountResponse) Reset() {
 	*x = GetNotificationCountResponse{}
-	mi := &file_identity_v1_identity_proto_msgTypes[67]
+	mi := &file_identity_v1_identity_proto_msgTypes[69]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3541,7 +3637,7 @@ func (x *GetNotificationCountResponse) String() string {
 func (*GetNotificationCountResponse) ProtoMessage() {}
 
 func (x *GetNotificationCountResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[67]
+	mi := &file_identity_v1_identity_proto_msgTypes[69]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3554,7 +3650,7 @@ func (x *GetNotificationCountResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetNotificationCountResponse.ProtoReflect.Descriptor instead.
 func (*GetNotificationCountResponse) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{67}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{69}
 }
 
 func (x *GetNotificationCountResponse) GetFriendRequests() int32 {
@@ -3587,7 +3683,7 @@ type ListFriendDevicesRequest struct {
 
 func (x *ListFriendDevicesRequest) Reset() {
 	*x = ListFriendDevicesRequest{}
-	mi := &file_identity_v1_identity_proto_msgTypes[68]
+	mi := &file_identity_v1_identity_proto_msgTypes[70]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3599,7 +3695,7 @@ func (x *ListFriendDevicesRequest) String() string {
 func (*ListFriendDevicesRequest) ProtoMessage() {}
 
 func (x *ListFriendDevicesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[68]
+	mi := &file_identity_v1_identity_proto_msgTypes[70]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3612,7 +3708,7 @@ func (x *ListFriendDevicesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListFriendDevicesRequest.ProtoReflect.Descriptor instead.
 func (*ListFriendDevicesRequest) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{68}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{70}
 }
 
 func (x *ListFriendDevicesRequest) GetFriendUserId() string {
@@ -3631,7 +3727,7 @@ type ListFriendDevicesResponse struct {
 
 func (x *ListFriendDevicesResponse) Reset() {
 	*x = ListFriendDevicesResponse{}
-	mi := &file_identity_v1_identity_proto_msgTypes[69]
+	mi := &file_identity_v1_identity_proto_msgTypes[71]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3643,7 +3739,7 @@ func (x *ListFriendDevicesResponse) String() string {
 func (*ListFriendDevicesResponse) ProtoMessage() {}
 
 func (x *ListFriendDevicesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_identity_v1_identity_proto_msgTypes[69]
+	mi := &file_identity_v1_identity_proto_msgTypes[71]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3656,7 +3752,7 @@ func (x *ListFriendDevicesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListFriendDevicesResponse.ProtoReflect.Descriptor instead.
 func (*ListFriendDevicesResponse) Descriptor() ([]byte, []int) {
-	return file_identity_v1_identity_proto_rawDescGZIP(), []int{69}
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{71}
 }
 
 func (x *ListFriendDevicesResponse) GetDevices() []*Device {
@@ -3770,6 +3866,11 @@ const file_identity_v1_identity_proto_rawDesc = "" +
 	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\x12\x17\n" +
 	"\anode_id\x18\x02 \x01(\tR\x06nodeId\"8\n" +
 	"\x1cUpdateDeviceActivityResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"Y\n" +
+	"\x1dUpdateDeviceVisibilityRequest\x12\x1b\n" +
+	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\x12\x1b\n" +
+	"\tis_public\x18\x02 \x01(\bR\bisPublic\":\n" +
+	"\x1eUpdateDeviceVisibilityResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\"9\n" +
 	"\x1aGeneratePairingCodeRequest\x12\x1b\n" +
 	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\"b\n" +
@@ -3908,7 +4009,7 @@ const file_identity_v1_identity_proto_rawDesc = "" +
 	"\x17DEVICE_TYPE_UNSPECIFIED\x10\x00\x12\x12\n" +
 	"\x0eDEVICE_TYPE_PC\x10\x01\x12\x15\n" +
 	"\x11DEVICE_TYPE_PHONE\x10\x02\x12\x16\n" +
-	"\x12DEVICE_TYPE_TABLET\x10\x032\x8b\x17\n" +
+	"\x12DEVICE_TYPE_TABLET\x10\x032\xfe\x17\n" +
 	"\x0fIdentityService\x12G\n" +
 	"\bRegister\x12\x1c.identity.v1.RegisterRequest\x1a\x1d.identity.v1.RegisterResponse\x12>\n" +
 	"\x05Login\x12\x19.identity.v1.LoginRequest\x1a\x1a.identity.v1.LoginResponse\x12V\n" +
@@ -3921,7 +4022,8 @@ const file_identity_v1_identity_proto_rawDesc = "" +
 	"\vListDevices\x12\x1f.identity.v1.ListDevicesRequest\x1a .identity.v1.ListDevicesResponse\x12J\n" +
 	"\tGetDevice\x12\x1d.identity.v1.GetDeviceRequest\x1a\x1e.identity.v1.GetDeviceResponse\x12S\n" +
 	"\fRevokeDevice\x12 .identity.v1.RevokeDeviceRequest\x1a!.identity.v1.RevokeDeviceResponse\x12k\n" +
-	"\x14UpdateDeviceActivity\x12(.identity.v1.UpdateDeviceActivityRequest\x1a).identity.v1.UpdateDeviceActivityResponse\x12h\n" +
+	"\x14UpdateDeviceActivity\x12(.identity.v1.UpdateDeviceActivityRequest\x1a).identity.v1.UpdateDeviceActivityResponse\x12q\n" +
+	"\x16UpdateDeviceVisibility\x12*.identity.v1.UpdateDeviceVisibilityRequest\x1a+.identity.v1.UpdateDeviceVisibilityResponse\x12h\n" +
 	"\x13GeneratePairingCode\x12'.identity.v1.GeneratePairingCodeRequest\x1a(.identity.v1.GeneratePairingCodeResponse\x12b\n" +
 	"\x11RedeemPairingCode\x12%.identity.v1.RedeemPairingCodeRequest\x1a&.identity.v1.RedeemPairingCodeResponse\x12Y\n" +
 	"\x0eApprovePairing\x12\".identity.v1.ApprovePairingRequest\x1a#.identity.v1.ApprovePairingResponse\x12b\n" +
@@ -3956,89 +4058,91 @@ func file_identity_v1_identity_proto_rawDescGZIP() []byte {
 }
 
 var file_identity_v1_identity_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_identity_v1_identity_proto_msgTypes = make([]protoimpl.MessageInfo, 70)
+var file_identity_v1_identity_proto_msgTypes = make([]protoimpl.MessageInfo, 72)
 var file_identity_v1_identity_proto_goTypes = []any{
-	(DeviceType)(0),                      // 0: identity.v1.DeviceType
-	(*RegisterRequest)(nil),              // 1: identity.v1.RegisterRequest
-	(*RegisterResponse)(nil),             // 2: identity.v1.RegisterResponse
-	(*LoginRequest)(nil),                 // 3: identity.v1.LoginRequest
-	(*LoginResponse)(nil),                // 4: identity.v1.LoginResponse
-	(*ValidateTokenRequest)(nil),         // 5: identity.v1.ValidateTokenRequest
-	(*ValidateTokenResponse)(nil),        // 6: identity.v1.ValidateTokenResponse
-	(*RefreshTokenRequest)(nil),          // 7: identity.v1.RefreshTokenRequest
-	(*RefreshTokenResponse)(nil),         // 8: identity.v1.RefreshTokenResponse
-	(*LogoutRequest)(nil),                // 9: identity.v1.LogoutRequest
-	(*LogoutResponse)(nil),               // 10: identity.v1.LogoutResponse
-	(*User)(nil),                         // 11: identity.v1.User
-	(*VerifyEmailRequest)(nil),           // 12: identity.v1.VerifyEmailRequest
-	(*VerifyEmailResponse)(nil),          // 13: identity.v1.VerifyEmailResponse
-	(*ResendVerificationRequest)(nil),    // 14: identity.v1.ResendVerificationRequest
-	(*ResendVerificationResponse)(nil),   // 15: identity.v1.ResendVerificationResponse
-	(*Device)(nil),                       // 16: identity.v1.Device
-	(*RegisterDeviceRequest)(nil),        // 17: identity.v1.RegisterDeviceRequest
-	(*RegisterDeviceResponse)(nil),       // 18: identity.v1.RegisterDeviceResponse
-	(*ListDevicesRequest)(nil),           // 19: identity.v1.ListDevicesRequest
-	(*ListDevicesResponse)(nil),          // 20: identity.v1.ListDevicesResponse
-	(*GetDeviceRequest)(nil),             // 21: identity.v1.GetDeviceRequest
-	(*GetDeviceResponse)(nil),            // 22: identity.v1.GetDeviceResponse
-	(*RevokeDeviceRequest)(nil),          // 23: identity.v1.RevokeDeviceRequest
-	(*RevokeDeviceResponse)(nil),         // 24: identity.v1.RevokeDeviceResponse
-	(*UpdateDeviceActivityRequest)(nil),  // 25: identity.v1.UpdateDeviceActivityRequest
-	(*UpdateDeviceActivityResponse)(nil), // 26: identity.v1.UpdateDeviceActivityResponse
-	(*GeneratePairingCodeRequest)(nil),   // 27: identity.v1.GeneratePairingCodeRequest
-	(*GeneratePairingCodeResponse)(nil),  // 28: identity.v1.GeneratePairingCodeResponse
-	(*RedeemPairingCodeRequest)(nil),     // 29: identity.v1.RedeemPairingCodeRequest
-	(*RedeemPairingCodeResponse)(nil),    // 30: identity.v1.RedeemPairingCodeResponse
-	(*ApprovePairingRequest)(nil),        // 31: identity.v1.ApprovePairingRequest
-	(*ApprovePairingResponse)(nil),       // 32: identity.v1.ApprovePairingResponse
-	(*PeerSession)(nil),                  // 33: identity.v1.PeerSession
-	(*CreatePeerSessionRequest)(nil),     // 34: identity.v1.CreatePeerSessionRequest
-	(*CreatePeerSessionResponse)(nil),    // 35: identity.v1.CreatePeerSessionResponse
-	(*ListPeerSessionsRequest)(nil),      // 36: identity.v1.ListPeerSessionsRequest
-	(*ListPeerSessionsResponse)(nil),     // 37: identity.v1.ListPeerSessionsResponse
-	(*ClosePeerSessionRequest)(nil),      // 38: identity.v1.ClosePeerSessionRequest
-	(*ClosePeerSessionResponse)(nil),     // 39: identity.v1.ClosePeerSessionResponse
-	(*JoinPeerSessionRequest)(nil),       // 40: identity.v1.JoinPeerSessionRequest
-	(*JoinPeerSessionResponse)(nil),      // 41: identity.v1.JoinPeerSessionResponse
-	(*LeavePeerSessionRequest)(nil),      // 42: identity.v1.LeavePeerSessionRequest
-	(*LeavePeerSessionResponse)(nil),     // 43: identity.v1.LeavePeerSessionResponse
-	(*ListSessionDevicesRequest)(nil),    // 44: identity.v1.ListSessionDevicesRequest
-	(*ListSessionDevicesResponse)(nil),   // 45: identity.v1.ListSessionDevicesResponse
-	(*DeviceKey)(nil),                    // 46: identity.v1.DeviceKey
-	(*UploadDeviceKeyRequest)(nil),       // 47: identity.v1.UploadDeviceKeyRequest
-	(*UploadDeviceKeyResponse)(nil),      // 48: identity.v1.UploadDeviceKeyResponse
-	(*GetDeviceKeyRequest)(nil),          // 49: identity.v1.GetDeviceKeyRequest
-	(*GetDeviceKeyResponse)(nil),         // 50: identity.v1.GetDeviceKeyResponse
-	(*GetSessionDeviceKeysRequest)(nil),  // 51: identity.v1.GetSessionDeviceKeysRequest
-	(*GetSessionDeviceKeysResponse)(nil), // 52: identity.v1.GetSessionDeviceKeysResponse
-	(*UserInfo)(nil),                     // 53: identity.v1.UserInfo
-	(*Friend)(nil),                       // 54: identity.v1.Friend
-	(*SendFriendRequestReq)(nil),         // 55: identity.v1.SendFriendRequestReq
-	(*SendFriendRequestResp)(nil),        // 56: identity.v1.SendFriendRequestResp
-	(*RespondToFriendRequestReq)(nil),    // 57: identity.v1.RespondToFriendRequestReq
-	(*RespondToFriendRequestResp)(nil),   // 58: identity.v1.RespondToFriendRequestResp
-	(*ListFriendsRequest)(nil),           // 59: identity.v1.ListFriendsRequest
-	(*ListFriendsResponse)(nil),          // 60: identity.v1.ListFriendsResponse
-	(*ListFriendRequestsRequest)(nil),    // 61: identity.v1.ListFriendRequestsRequest
-	(*ListFriendRequestsResponse)(nil),   // 62: identity.v1.ListFriendRequestsResponse
-	(*RemoveFriendRequest)(nil),          // 63: identity.v1.RemoveFriendRequest
-	(*RemoveFriendResponse)(nil),         // 64: identity.v1.RemoveFriendResponse
-	(*SearchUsersRequest)(nil),           // 65: identity.v1.SearchUsersRequest
-	(*SearchUsersResponse)(nil),          // 66: identity.v1.SearchUsersResponse
-	(*GetNotificationCountRequest)(nil),  // 67: identity.v1.GetNotificationCountRequest
-	(*GetNotificationCountResponse)(nil), // 68: identity.v1.GetNotificationCountResponse
-	(*ListFriendDevicesRequest)(nil),     // 69: identity.v1.ListFriendDevicesRequest
-	(*ListFriendDevicesResponse)(nil),    // 70: identity.v1.ListFriendDevicesResponse
-	(*timestamppb.Timestamp)(nil),        // 71: google.protobuf.Timestamp
+	(DeviceType)(0),                        // 0: identity.v1.DeviceType
+	(*RegisterRequest)(nil),                // 1: identity.v1.RegisterRequest
+	(*RegisterResponse)(nil),               // 2: identity.v1.RegisterResponse
+	(*LoginRequest)(nil),                   // 3: identity.v1.LoginRequest
+	(*LoginResponse)(nil),                  // 4: identity.v1.LoginResponse
+	(*ValidateTokenRequest)(nil),           // 5: identity.v1.ValidateTokenRequest
+	(*ValidateTokenResponse)(nil),          // 6: identity.v1.ValidateTokenResponse
+	(*RefreshTokenRequest)(nil),            // 7: identity.v1.RefreshTokenRequest
+	(*RefreshTokenResponse)(nil),           // 8: identity.v1.RefreshTokenResponse
+	(*LogoutRequest)(nil),                  // 9: identity.v1.LogoutRequest
+	(*LogoutResponse)(nil),                 // 10: identity.v1.LogoutResponse
+	(*User)(nil),                           // 11: identity.v1.User
+	(*VerifyEmailRequest)(nil),             // 12: identity.v1.VerifyEmailRequest
+	(*VerifyEmailResponse)(nil),            // 13: identity.v1.VerifyEmailResponse
+	(*ResendVerificationRequest)(nil),      // 14: identity.v1.ResendVerificationRequest
+	(*ResendVerificationResponse)(nil),     // 15: identity.v1.ResendVerificationResponse
+	(*Device)(nil),                         // 16: identity.v1.Device
+	(*RegisterDeviceRequest)(nil),          // 17: identity.v1.RegisterDeviceRequest
+	(*RegisterDeviceResponse)(nil),         // 18: identity.v1.RegisterDeviceResponse
+	(*ListDevicesRequest)(nil),             // 19: identity.v1.ListDevicesRequest
+	(*ListDevicesResponse)(nil),            // 20: identity.v1.ListDevicesResponse
+	(*GetDeviceRequest)(nil),               // 21: identity.v1.GetDeviceRequest
+	(*GetDeviceResponse)(nil),              // 22: identity.v1.GetDeviceResponse
+	(*RevokeDeviceRequest)(nil),            // 23: identity.v1.RevokeDeviceRequest
+	(*RevokeDeviceResponse)(nil),           // 24: identity.v1.RevokeDeviceResponse
+	(*UpdateDeviceActivityRequest)(nil),    // 25: identity.v1.UpdateDeviceActivityRequest
+	(*UpdateDeviceActivityResponse)(nil),   // 26: identity.v1.UpdateDeviceActivityResponse
+	(*UpdateDeviceVisibilityRequest)(nil),  // 27: identity.v1.UpdateDeviceVisibilityRequest
+	(*UpdateDeviceVisibilityResponse)(nil), // 28: identity.v1.UpdateDeviceVisibilityResponse
+	(*GeneratePairingCodeRequest)(nil),     // 29: identity.v1.GeneratePairingCodeRequest
+	(*GeneratePairingCodeResponse)(nil),    // 30: identity.v1.GeneratePairingCodeResponse
+	(*RedeemPairingCodeRequest)(nil),       // 31: identity.v1.RedeemPairingCodeRequest
+	(*RedeemPairingCodeResponse)(nil),      // 32: identity.v1.RedeemPairingCodeResponse
+	(*ApprovePairingRequest)(nil),          // 33: identity.v1.ApprovePairingRequest
+	(*ApprovePairingResponse)(nil),         // 34: identity.v1.ApprovePairingResponse
+	(*PeerSession)(nil),                    // 35: identity.v1.PeerSession
+	(*CreatePeerSessionRequest)(nil),       // 36: identity.v1.CreatePeerSessionRequest
+	(*CreatePeerSessionResponse)(nil),      // 37: identity.v1.CreatePeerSessionResponse
+	(*ListPeerSessionsRequest)(nil),        // 38: identity.v1.ListPeerSessionsRequest
+	(*ListPeerSessionsResponse)(nil),       // 39: identity.v1.ListPeerSessionsResponse
+	(*ClosePeerSessionRequest)(nil),        // 40: identity.v1.ClosePeerSessionRequest
+	(*ClosePeerSessionResponse)(nil),       // 41: identity.v1.ClosePeerSessionResponse
+	(*JoinPeerSessionRequest)(nil),         // 42: identity.v1.JoinPeerSessionRequest
+	(*JoinPeerSessionResponse)(nil),        // 43: identity.v1.JoinPeerSessionResponse
+	(*LeavePeerSessionRequest)(nil),        // 44: identity.v1.LeavePeerSessionRequest
+	(*LeavePeerSessionResponse)(nil),       // 45: identity.v1.LeavePeerSessionResponse
+	(*ListSessionDevicesRequest)(nil),      // 46: identity.v1.ListSessionDevicesRequest
+	(*ListSessionDevicesResponse)(nil),     // 47: identity.v1.ListSessionDevicesResponse
+	(*DeviceKey)(nil),                      // 48: identity.v1.DeviceKey
+	(*UploadDeviceKeyRequest)(nil),         // 49: identity.v1.UploadDeviceKeyRequest
+	(*UploadDeviceKeyResponse)(nil),        // 50: identity.v1.UploadDeviceKeyResponse
+	(*GetDeviceKeyRequest)(nil),            // 51: identity.v1.GetDeviceKeyRequest
+	(*GetDeviceKeyResponse)(nil),           // 52: identity.v1.GetDeviceKeyResponse
+	(*GetSessionDeviceKeysRequest)(nil),    // 53: identity.v1.GetSessionDeviceKeysRequest
+	(*GetSessionDeviceKeysResponse)(nil),   // 54: identity.v1.GetSessionDeviceKeysResponse
+	(*UserInfo)(nil),                       // 55: identity.v1.UserInfo
+	(*Friend)(nil),                         // 56: identity.v1.Friend
+	(*SendFriendRequestReq)(nil),           // 57: identity.v1.SendFriendRequestReq
+	(*SendFriendRequestResp)(nil),          // 58: identity.v1.SendFriendRequestResp
+	(*RespondToFriendRequestReq)(nil),      // 59: identity.v1.RespondToFriendRequestReq
+	(*RespondToFriendRequestResp)(nil),     // 60: identity.v1.RespondToFriendRequestResp
+	(*ListFriendsRequest)(nil),             // 61: identity.v1.ListFriendsRequest
+	(*ListFriendsResponse)(nil),            // 62: identity.v1.ListFriendsResponse
+	(*ListFriendRequestsRequest)(nil),      // 63: identity.v1.ListFriendRequestsRequest
+	(*ListFriendRequestsResponse)(nil),     // 64: identity.v1.ListFriendRequestsResponse
+	(*RemoveFriendRequest)(nil),            // 65: identity.v1.RemoveFriendRequest
+	(*RemoveFriendResponse)(nil),           // 66: identity.v1.RemoveFriendResponse
+	(*SearchUsersRequest)(nil),             // 67: identity.v1.SearchUsersRequest
+	(*SearchUsersResponse)(nil),            // 68: identity.v1.SearchUsersResponse
+	(*GetNotificationCountRequest)(nil),    // 69: identity.v1.GetNotificationCountRequest
+	(*GetNotificationCountResponse)(nil),   // 70: identity.v1.GetNotificationCountResponse
+	(*ListFriendDevicesRequest)(nil),       // 71: identity.v1.ListFriendDevicesRequest
+	(*ListFriendDevicesResponse)(nil),      // 72: identity.v1.ListFriendDevicesResponse
+	(*timestamppb.Timestamp)(nil),          // 73: google.protobuf.Timestamp
 }
 var file_identity_v1_identity_proto_depIdxs = []int32{
-	71, // 0: identity.v1.RegisterResponse.created_at:type_name -> google.protobuf.Timestamp
+	73, // 0: identity.v1.RegisterResponse.created_at:type_name -> google.protobuf.Timestamp
 	11, // 1: identity.v1.LoginResponse.user:type_name -> identity.v1.User
-	71, // 2: identity.v1.User.created_at:type_name -> google.protobuf.Timestamp
+	73, // 2: identity.v1.User.created_at:type_name -> google.protobuf.Timestamp
 	0,  // 3: identity.v1.Device.device_type:type_name -> identity.v1.DeviceType
-	71, // 4: identity.v1.Device.approved_at:type_name -> google.protobuf.Timestamp
-	71, // 5: identity.v1.Device.last_active:type_name -> google.protobuf.Timestamp
-	71, // 6: identity.v1.Device.created_at:type_name -> google.protobuf.Timestamp
+	73, // 4: identity.v1.Device.approved_at:type_name -> google.protobuf.Timestamp
+	73, // 5: identity.v1.Device.last_active:type_name -> google.protobuf.Timestamp
+	73, // 6: identity.v1.Device.created_at:type_name -> google.protobuf.Timestamp
 	0,  // 7: identity.v1.RegisterDeviceRequest.device_type:type_name -> identity.v1.DeviceType
 	16, // 8: identity.v1.RegisterDeviceResponse.device:type_name -> identity.v1.Device
 	16, // 9: identity.v1.ListDevicesResponse.devices:type_name -> identity.v1.Device
@@ -4046,23 +4150,23 @@ var file_identity_v1_identity_proto_depIdxs = []int32{
 	0,  // 11: identity.v1.RedeemPairingCodeRequest.device_type:type_name -> identity.v1.DeviceType
 	16, // 12: identity.v1.ApprovePairingResponse.device:type_name -> identity.v1.Device
 	16, // 13: identity.v1.PeerSession.devices:type_name -> identity.v1.Device
-	71, // 14: identity.v1.PeerSession.created_at:type_name -> google.protobuf.Timestamp
-	71, // 15: identity.v1.PeerSession.closed_at:type_name -> google.protobuf.Timestamp
-	33, // 16: identity.v1.CreatePeerSessionResponse.session:type_name -> identity.v1.PeerSession
-	33, // 17: identity.v1.ListPeerSessionsResponse.sessions:type_name -> identity.v1.PeerSession
+	73, // 14: identity.v1.PeerSession.created_at:type_name -> google.protobuf.Timestamp
+	73, // 15: identity.v1.PeerSession.closed_at:type_name -> google.protobuf.Timestamp
+	35, // 16: identity.v1.CreatePeerSessionResponse.session:type_name -> identity.v1.PeerSession
+	35, // 17: identity.v1.ListPeerSessionsResponse.sessions:type_name -> identity.v1.PeerSession
 	16, // 18: identity.v1.ListSessionDevicesResponse.devices:type_name -> identity.v1.Device
-	71, // 19: identity.v1.DeviceKey.created_at:type_name -> google.protobuf.Timestamp
-	71, // 20: identity.v1.DeviceKey.rotated_at:type_name -> google.protobuf.Timestamp
-	46, // 21: identity.v1.UploadDeviceKeyResponse.key:type_name -> identity.v1.DeviceKey
-	46, // 22: identity.v1.GetDeviceKeyResponse.key:type_name -> identity.v1.DeviceKey
-	46, // 23: identity.v1.GetSessionDeviceKeysResponse.keys:type_name -> identity.v1.DeviceKey
-	53, // 24: identity.v1.Friend.user:type_name -> identity.v1.UserInfo
-	71, // 25: identity.v1.Friend.created_at:type_name -> google.protobuf.Timestamp
-	54, // 26: identity.v1.SendFriendRequestResp.friendship:type_name -> identity.v1.Friend
-	54, // 27: identity.v1.RespondToFriendRequestResp.friendship:type_name -> identity.v1.Friend
-	54, // 28: identity.v1.ListFriendsResponse.friends:type_name -> identity.v1.Friend
-	54, // 29: identity.v1.ListFriendRequestsResponse.requests:type_name -> identity.v1.Friend
-	53, // 30: identity.v1.SearchUsersResponse.users:type_name -> identity.v1.UserInfo
+	73, // 19: identity.v1.DeviceKey.created_at:type_name -> google.protobuf.Timestamp
+	73, // 20: identity.v1.DeviceKey.rotated_at:type_name -> google.protobuf.Timestamp
+	48, // 21: identity.v1.UploadDeviceKeyResponse.key:type_name -> identity.v1.DeviceKey
+	48, // 22: identity.v1.GetDeviceKeyResponse.key:type_name -> identity.v1.DeviceKey
+	48, // 23: identity.v1.GetSessionDeviceKeysResponse.keys:type_name -> identity.v1.DeviceKey
+	55, // 24: identity.v1.Friend.user:type_name -> identity.v1.UserInfo
+	73, // 25: identity.v1.Friend.created_at:type_name -> google.protobuf.Timestamp
+	56, // 26: identity.v1.SendFriendRequestResp.friendship:type_name -> identity.v1.Friend
+	56, // 27: identity.v1.RespondToFriendRequestResp.friendship:type_name -> identity.v1.Friend
+	56, // 28: identity.v1.ListFriendsResponse.friends:type_name -> identity.v1.Friend
+	56, // 29: identity.v1.ListFriendRequestsResponse.requests:type_name -> identity.v1.Friend
+	55, // 30: identity.v1.SearchUsersResponse.users:type_name -> identity.v1.UserInfo
 	16, // 31: identity.v1.ListFriendDevicesResponse.devices:type_name -> identity.v1.Device
 	1,  // 32: identity.v1.IdentityService.Register:input_type -> identity.v1.RegisterRequest
 	3,  // 33: identity.v1.IdentityService.Login:input_type -> identity.v1.LoginRequest
@@ -4076,60 +4180,62 @@ var file_identity_v1_identity_proto_depIdxs = []int32{
 	21, // 41: identity.v1.IdentityService.GetDevice:input_type -> identity.v1.GetDeviceRequest
 	23, // 42: identity.v1.IdentityService.RevokeDevice:input_type -> identity.v1.RevokeDeviceRequest
 	25, // 43: identity.v1.IdentityService.UpdateDeviceActivity:input_type -> identity.v1.UpdateDeviceActivityRequest
-	27, // 44: identity.v1.IdentityService.GeneratePairingCode:input_type -> identity.v1.GeneratePairingCodeRequest
-	29, // 45: identity.v1.IdentityService.RedeemPairingCode:input_type -> identity.v1.RedeemPairingCodeRequest
-	31, // 46: identity.v1.IdentityService.ApprovePairing:input_type -> identity.v1.ApprovePairingRequest
-	34, // 47: identity.v1.IdentityService.CreatePeerSession:input_type -> identity.v1.CreatePeerSessionRequest
-	36, // 48: identity.v1.IdentityService.ListPeerSessions:input_type -> identity.v1.ListPeerSessionsRequest
-	38, // 49: identity.v1.IdentityService.ClosePeerSession:input_type -> identity.v1.ClosePeerSessionRequest
-	40, // 50: identity.v1.IdentityService.JoinPeerSession:input_type -> identity.v1.JoinPeerSessionRequest
-	42, // 51: identity.v1.IdentityService.LeavePeerSession:input_type -> identity.v1.LeavePeerSessionRequest
-	44, // 52: identity.v1.IdentityService.ListSessionDevices:input_type -> identity.v1.ListSessionDevicesRequest
-	47, // 53: identity.v1.IdentityService.UploadDeviceKey:input_type -> identity.v1.UploadDeviceKeyRequest
-	49, // 54: identity.v1.IdentityService.GetDeviceKey:input_type -> identity.v1.GetDeviceKeyRequest
-	51, // 55: identity.v1.IdentityService.GetSessionDeviceKeys:input_type -> identity.v1.GetSessionDeviceKeysRequest
-	55, // 56: identity.v1.IdentityService.SendFriendRequest:input_type -> identity.v1.SendFriendRequestReq
-	57, // 57: identity.v1.IdentityService.RespondToFriendRequest:input_type -> identity.v1.RespondToFriendRequestReq
-	59, // 58: identity.v1.IdentityService.ListFriends:input_type -> identity.v1.ListFriendsRequest
-	61, // 59: identity.v1.IdentityService.ListFriendRequests:input_type -> identity.v1.ListFriendRequestsRequest
-	63, // 60: identity.v1.IdentityService.RemoveFriend:input_type -> identity.v1.RemoveFriendRequest
-	65, // 61: identity.v1.IdentityService.SearchUsers:input_type -> identity.v1.SearchUsersRequest
-	67, // 62: identity.v1.IdentityService.GetNotificationCount:input_type -> identity.v1.GetNotificationCountRequest
-	69, // 63: identity.v1.IdentityService.ListFriendDevices:input_type -> identity.v1.ListFriendDevicesRequest
-	2,  // 64: identity.v1.IdentityService.Register:output_type -> identity.v1.RegisterResponse
-	4,  // 65: identity.v1.IdentityService.Login:output_type -> identity.v1.LoginResponse
-	6,  // 66: identity.v1.IdentityService.ValidateToken:output_type -> identity.v1.ValidateTokenResponse
-	8,  // 67: identity.v1.IdentityService.RefreshToken:output_type -> identity.v1.RefreshTokenResponse
-	10, // 68: identity.v1.IdentityService.Logout:output_type -> identity.v1.LogoutResponse
-	13, // 69: identity.v1.IdentityService.VerifyEmail:output_type -> identity.v1.VerifyEmailResponse
-	15, // 70: identity.v1.IdentityService.ResendVerification:output_type -> identity.v1.ResendVerificationResponse
-	18, // 71: identity.v1.IdentityService.RegisterDevice:output_type -> identity.v1.RegisterDeviceResponse
-	20, // 72: identity.v1.IdentityService.ListDevices:output_type -> identity.v1.ListDevicesResponse
-	22, // 73: identity.v1.IdentityService.GetDevice:output_type -> identity.v1.GetDeviceResponse
-	24, // 74: identity.v1.IdentityService.RevokeDevice:output_type -> identity.v1.RevokeDeviceResponse
-	26, // 75: identity.v1.IdentityService.UpdateDeviceActivity:output_type -> identity.v1.UpdateDeviceActivityResponse
-	28, // 76: identity.v1.IdentityService.GeneratePairingCode:output_type -> identity.v1.GeneratePairingCodeResponse
-	30, // 77: identity.v1.IdentityService.RedeemPairingCode:output_type -> identity.v1.RedeemPairingCodeResponse
-	32, // 78: identity.v1.IdentityService.ApprovePairing:output_type -> identity.v1.ApprovePairingResponse
-	35, // 79: identity.v1.IdentityService.CreatePeerSession:output_type -> identity.v1.CreatePeerSessionResponse
-	37, // 80: identity.v1.IdentityService.ListPeerSessions:output_type -> identity.v1.ListPeerSessionsResponse
-	39, // 81: identity.v1.IdentityService.ClosePeerSession:output_type -> identity.v1.ClosePeerSessionResponse
-	41, // 82: identity.v1.IdentityService.JoinPeerSession:output_type -> identity.v1.JoinPeerSessionResponse
-	43, // 83: identity.v1.IdentityService.LeavePeerSession:output_type -> identity.v1.LeavePeerSessionResponse
-	45, // 84: identity.v1.IdentityService.ListSessionDevices:output_type -> identity.v1.ListSessionDevicesResponse
-	48, // 85: identity.v1.IdentityService.UploadDeviceKey:output_type -> identity.v1.UploadDeviceKeyResponse
-	50, // 86: identity.v1.IdentityService.GetDeviceKey:output_type -> identity.v1.GetDeviceKeyResponse
-	52, // 87: identity.v1.IdentityService.GetSessionDeviceKeys:output_type -> identity.v1.GetSessionDeviceKeysResponse
-	56, // 88: identity.v1.IdentityService.SendFriendRequest:output_type -> identity.v1.SendFriendRequestResp
-	58, // 89: identity.v1.IdentityService.RespondToFriendRequest:output_type -> identity.v1.RespondToFriendRequestResp
-	60, // 90: identity.v1.IdentityService.ListFriends:output_type -> identity.v1.ListFriendsResponse
-	62, // 91: identity.v1.IdentityService.ListFriendRequests:output_type -> identity.v1.ListFriendRequestsResponse
-	64, // 92: identity.v1.IdentityService.RemoveFriend:output_type -> identity.v1.RemoveFriendResponse
-	66, // 93: identity.v1.IdentityService.SearchUsers:output_type -> identity.v1.SearchUsersResponse
-	68, // 94: identity.v1.IdentityService.GetNotificationCount:output_type -> identity.v1.GetNotificationCountResponse
-	70, // 95: identity.v1.IdentityService.ListFriendDevices:output_type -> identity.v1.ListFriendDevicesResponse
-	64, // [64:96] is the sub-list for method output_type
-	32, // [32:64] is the sub-list for method input_type
+	27, // 44: identity.v1.IdentityService.UpdateDeviceVisibility:input_type -> identity.v1.UpdateDeviceVisibilityRequest
+	29, // 45: identity.v1.IdentityService.GeneratePairingCode:input_type -> identity.v1.GeneratePairingCodeRequest
+	31, // 46: identity.v1.IdentityService.RedeemPairingCode:input_type -> identity.v1.RedeemPairingCodeRequest
+	33, // 47: identity.v1.IdentityService.ApprovePairing:input_type -> identity.v1.ApprovePairingRequest
+	36, // 48: identity.v1.IdentityService.CreatePeerSession:input_type -> identity.v1.CreatePeerSessionRequest
+	38, // 49: identity.v1.IdentityService.ListPeerSessions:input_type -> identity.v1.ListPeerSessionsRequest
+	40, // 50: identity.v1.IdentityService.ClosePeerSession:input_type -> identity.v1.ClosePeerSessionRequest
+	42, // 51: identity.v1.IdentityService.JoinPeerSession:input_type -> identity.v1.JoinPeerSessionRequest
+	44, // 52: identity.v1.IdentityService.LeavePeerSession:input_type -> identity.v1.LeavePeerSessionRequest
+	46, // 53: identity.v1.IdentityService.ListSessionDevices:input_type -> identity.v1.ListSessionDevicesRequest
+	49, // 54: identity.v1.IdentityService.UploadDeviceKey:input_type -> identity.v1.UploadDeviceKeyRequest
+	51, // 55: identity.v1.IdentityService.GetDeviceKey:input_type -> identity.v1.GetDeviceKeyRequest
+	53, // 56: identity.v1.IdentityService.GetSessionDeviceKeys:input_type -> identity.v1.GetSessionDeviceKeysRequest
+	57, // 57: identity.v1.IdentityService.SendFriendRequest:input_type -> identity.v1.SendFriendRequestReq
+	59, // 58: identity.v1.IdentityService.RespondToFriendRequest:input_type -> identity.v1.RespondToFriendRequestReq
+	61, // 59: identity.v1.IdentityService.ListFriends:input_type -> identity.v1.ListFriendsRequest
+	63, // 60: identity.v1.IdentityService.ListFriendRequests:input_type -> identity.v1.ListFriendRequestsRequest
+	65, // 61: identity.v1.IdentityService.RemoveFriend:input_type -> identity.v1.RemoveFriendRequest
+	67, // 62: identity.v1.IdentityService.SearchUsers:input_type -> identity.v1.SearchUsersRequest
+	69, // 63: identity.v1.IdentityService.GetNotificationCount:input_type -> identity.v1.GetNotificationCountRequest
+	71, // 64: identity.v1.IdentityService.ListFriendDevices:input_type -> identity.v1.ListFriendDevicesRequest
+	2,  // 65: identity.v1.IdentityService.Register:output_type -> identity.v1.RegisterResponse
+	4,  // 66: identity.v1.IdentityService.Login:output_type -> identity.v1.LoginResponse
+	6,  // 67: identity.v1.IdentityService.ValidateToken:output_type -> identity.v1.ValidateTokenResponse
+	8,  // 68: identity.v1.IdentityService.RefreshToken:output_type -> identity.v1.RefreshTokenResponse
+	10, // 69: identity.v1.IdentityService.Logout:output_type -> identity.v1.LogoutResponse
+	13, // 70: identity.v1.IdentityService.VerifyEmail:output_type -> identity.v1.VerifyEmailResponse
+	15, // 71: identity.v1.IdentityService.ResendVerification:output_type -> identity.v1.ResendVerificationResponse
+	18, // 72: identity.v1.IdentityService.RegisterDevice:output_type -> identity.v1.RegisterDeviceResponse
+	20, // 73: identity.v1.IdentityService.ListDevices:output_type -> identity.v1.ListDevicesResponse
+	22, // 74: identity.v1.IdentityService.GetDevice:output_type -> identity.v1.GetDeviceResponse
+	24, // 75: identity.v1.IdentityService.RevokeDevice:output_type -> identity.v1.RevokeDeviceResponse
+	26, // 76: identity.v1.IdentityService.UpdateDeviceActivity:output_type -> identity.v1.UpdateDeviceActivityResponse
+	28, // 77: identity.v1.IdentityService.UpdateDeviceVisibility:output_type -> identity.v1.UpdateDeviceVisibilityResponse
+	30, // 78: identity.v1.IdentityService.GeneratePairingCode:output_type -> identity.v1.GeneratePairingCodeResponse
+	32, // 79: identity.v1.IdentityService.RedeemPairingCode:output_type -> identity.v1.RedeemPairingCodeResponse
+	34, // 80: identity.v1.IdentityService.ApprovePairing:output_type -> identity.v1.ApprovePairingResponse
+	37, // 81: identity.v1.IdentityService.CreatePeerSession:output_type -> identity.v1.CreatePeerSessionResponse
+	39, // 82: identity.v1.IdentityService.ListPeerSessions:output_type -> identity.v1.ListPeerSessionsResponse
+	41, // 83: identity.v1.IdentityService.ClosePeerSession:output_type -> identity.v1.ClosePeerSessionResponse
+	43, // 84: identity.v1.IdentityService.JoinPeerSession:output_type -> identity.v1.JoinPeerSessionResponse
+	45, // 85: identity.v1.IdentityService.LeavePeerSession:output_type -> identity.v1.LeavePeerSessionResponse
+	47, // 86: identity.v1.IdentityService.ListSessionDevices:output_type -> identity.v1.ListSessionDevicesResponse
+	50, // 87: identity.v1.IdentityService.UploadDeviceKey:output_type -> identity.v1.UploadDeviceKeyResponse
+	52, // 88: identity.v1.IdentityService.GetDeviceKey:output_type -> identity.v1.GetDeviceKeyResponse
+	54, // 89: identity.v1.IdentityService.GetSessionDeviceKeys:output_type -> identity.v1.GetSessionDeviceKeysResponse
+	58, // 90: identity.v1.IdentityService.SendFriendRequest:output_type -> identity.v1.SendFriendRequestResp
+	60, // 91: identity.v1.IdentityService.RespondToFriendRequest:output_type -> identity.v1.RespondToFriendRequestResp
+	62, // 92: identity.v1.IdentityService.ListFriends:output_type -> identity.v1.ListFriendsResponse
+	64, // 93: identity.v1.IdentityService.ListFriendRequests:output_type -> identity.v1.ListFriendRequestsResponse
+	66, // 94: identity.v1.IdentityService.RemoveFriend:output_type -> identity.v1.RemoveFriendResponse
+	68, // 95: identity.v1.IdentityService.SearchUsers:output_type -> identity.v1.SearchUsersResponse
+	70, // 96: identity.v1.IdentityService.GetNotificationCount:output_type -> identity.v1.GetNotificationCountResponse
+	72, // 97: identity.v1.IdentityService.ListFriendDevices:output_type -> identity.v1.ListFriendDevicesResponse
+	65, // [65:98] is the sub-list for method output_type
+	32, // [32:65] is the sub-list for method input_type
 	32, // [32:32] is the sub-list for extension type_name
 	32, // [32:32] is the sub-list for extension extendee
 	0,  // [0:32] is the sub-list for field type_name
@@ -4146,7 +4252,7 @@ func file_identity_v1_identity_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_identity_v1_identity_proto_rawDesc), len(file_identity_v1_identity_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   70,
+			NumMessages:   72,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

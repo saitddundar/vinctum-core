@@ -21,6 +21,7 @@ service IdentityService {
   rpc GetDevice(GetDeviceRequest) returns (GetDeviceResponse);
   rpc RevokeDevice(RevokeDeviceRequest) returns (RevokeDeviceResponse);
   rpc UpdateDeviceActivity(UpdateDeviceActivityRequest) returns (UpdateDeviceActivityResponse);
+  rpc UpdateDeviceVisibility(UpdateDeviceVisibilityRequest) returns (UpdateDeviceVisibilityResponse);
 
   // Device Pairing
   rpc GeneratePairingCode(GeneratePairingCodeRequest) returns (GeneratePairingCodeResponse);
@@ -191,6 +192,14 @@ message UpdateDeviceActivityRequest {
   string node_id   = 2;
 }
 message UpdateDeviceActivityResponse {
+  bool success = 1;
+}
+
+message UpdateDeviceVisibilityRequest {
+  string device_id = 1;
+  bool   is_public = 2;
+}
+message UpdateDeviceVisibilityResponse {
   bool success = 1;
 }
 
