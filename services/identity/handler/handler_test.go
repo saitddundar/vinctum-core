@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -28,6 +29,7 @@ type fakeQuerier struct {
 	deviceKeys     map[string]repository.DeviceKey
 	sessions       map[string]repository.PeerSession
 	sessionDevices map[string]map[string]bool // session_id -> set of device_id
+	friends        map[string]repository.Friend
 	nextID         int
 }
 
@@ -38,6 +40,7 @@ func newFakeQuerier() *fakeQuerier {
 		deviceKeys:     make(map[string]repository.DeviceKey),
 		sessions:       make(map[string]repository.PeerSession),
 		sessionDevices: make(map[string]map[string]bool),
+		friends:        make(map[string]repository.Friend),
 	}
 }
 
@@ -338,40 +341,178 @@ func (f *fakeQuerier) ListSessionDeviceKeys(_ context.Context, sessionID string)
 	return out, nil
 }
 
-// ─── Friends stubs ──────────────────────────────────
+// ─── Friends ────────────────────────────────────────
 
-func (f *fakeQuerier) CreateFriendRequest(_ context.Context, _ repository.CreateFriendRequestParams) (repository.Friend, error) {
-	return repository.Friend{}, nil
+func (f *fakeQuerier) CreateFriendRequest(_ context.Context, arg repository.CreateFriendRequestParams) (repository.Friend, error) {
+	fr := repository.Friend{
+		ID:          f.newID("friend"),
+		RequesterID: arg.Column1,
+		AddresseeID: arg.Column2,
+		Status:      "pending",
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	}
+	f.friends[fr.ID] = fr
+	return fr, nil
 }
-func (f *fakeQuerier) GetFriendship(_ context.Context, _ string) (repository.Friend, error) {
+
+func (f *fakeQuerier) GetFriendship(_ context.Context, id string) (repository.Friend, error) {
+	fr, ok := f.friends[id]
+	if !ok {
+		return repository.Friend{}, pgx.ErrNoRows
+	}
+	return fr, nil
+}
+
+func (f *fakeQuerier) GetFriendshipBetween(_ context.Context, arg repository.GetFriendshipBetweenParams) (repository.Friend, error) {
+	for _, fr := range f.friends {
+		if (fr.RequesterID == arg.Column1 && fr.AddresseeID == arg.Column2) ||
+			(fr.RequesterID == arg.Column2 && fr.AddresseeID == arg.Column1) {
+			return fr, nil
+		}
+	}
 	return repository.Friend{}, pgx.ErrNoRows
 }
-func (f *fakeQuerier) GetFriendshipBetween(_ context.Context, _ repository.GetFriendshipBetweenParams) (repository.Friend, error) {
-	return repository.Friend{}, pgx.ErrNoRows
-}
-func (f *fakeQuerier) AcceptFriendRequest(_ context.Context, _ repository.AcceptFriendRequestParams) error {
+
+func (f *fakeQuerier) AcceptFriendRequest(_ context.Context, arg repository.AcceptFriendRequestParams) error {
+	fr, ok := f.friends[arg.Column1]
+	if !ok || fr.AddresseeID != arg.Column2 {
+		return nil
+	}
+	fr.Status = "accepted"
+	fr.UpdatedAt = time.Now()
+	f.friends[fr.ID] = fr
 	return nil
 }
-func (f *fakeQuerier) RejectFriendRequest(_ context.Context, _ repository.RejectFriendRequestParams) error {
+
+func (f *fakeQuerier) RejectFriendRequest(_ context.Context, arg repository.RejectFriendRequestParams) error {
+	fr, ok := f.friends[arg.Column1]
+	if !ok || fr.AddresseeID != arg.Column2 {
+		return nil
+	}
+	fr.Status = "rejected"
+	fr.UpdatedAt = time.Now()
+	f.friends[fr.ID] = fr
 	return nil
 }
-func (f *fakeQuerier) ListAcceptedFriends(_ context.Context, _ string) ([]repository.ListAcceptedFriendsRow, error) {
-	return nil, nil
+
+func (f *fakeQuerier) ListAcceptedFriends(_ context.Context, userID string) ([]repository.ListAcceptedFriendsRow, error) {
+	var out []repository.ListAcceptedFriendsRow
+	for _, fr := range f.friends {
+		if fr.Status != "accepted" {
+			continue
+		}
+		var friendUID string
+		if fr.RequesterID == userID {
+			friendUID = fr.AddresseeID
+		} else if fr.AddresseeID == userID {
+			friendUID = fr.RequesterID
+		} else {
+			continue
+		}
+		u, ok := f.users[friendUID]
+		if !ok {
+			continue
+		}
+		out = append(out, repository.ListAcceptedFriendsRow{
+			ID:             fr.ID,
+			RequesterID:    fr.RequesterID,
+			AddresseeID:    fr.AddresseeID,
+			Status:         fr.Status,
+			CreatedAt:      fr.CreatedAt,
+			UpdatedAt:      fr.UpdatedAt,
+			FriendUserID:   u.ID,
+			FriendUsername: u.Username,
+			FriendEmail:    u.Email,
+		})
+	}
+	return out, nil
 }
-func (f *fakeQuerier) ListPendingFriendRequests(_ context.Context, _ string) ([]repository.ListPendingFriendRequestsRow, error) {
-	return nil, nil
+
+func (f *fakeQuerier) ListPendingFriendRequests(_ context.Context, userID string) ([]repository.ListPendingFriendRequestsRow, error) {
+	var out []repository.ListPendingFriendRequestsRow
+	for _, fr := range f.friends {
+		if fr.Status != "pending" || fr.AddresseeID != userID {
+			continue
+		}
+		u, ok := f.users[fr.RequesterID]
+		if !ok {
+			continue
+		}
+		out = append(out, repository.ListPendingFriendRequestsRow{
+			ID:             fr.ID,
+			RequesterID:    fr.RequesterID,
+			AddresseeID:    fr.AddresseeID,
+			Status:         fr.Status,
+			CreatedAt:      fr.CreatedAt,
+			UpdatedAt:      fr.UpdatedAt,
+			FriendUserID:   u.ID,
+			FriendUsername: u.Username,
+			FriendEmail:    u.Email,
+		})
+	}
+	return out, nil
 }
-func (f *fakeQuerier) RemoveFriend(_ context.Context, _ repository.RemoveFriendParams) error {
+
+func (f *fakeQuerier) RemoveFriend(_ context.Context, arg repository.RemoveFriendParams) error {
+	fr, ok := f.friends[arg.Column1]
+	if !ok {
+		return nil
+	}
+	if fr.RequesterID == arg.Column2 || fr.AddresseeID == arg.Column2 {
+		delete(f.friends, arg.Column1)
+	}
 	return nil
 }
-func (f *fakeQuerier) CountPendingFriendRequests(_ context.Context, _ string) (int64, error) {
-	return 0, nil
+
+func (f *fakeQuerier) CountPendingFriendRequests(_ context.Context, userID string) (int64, error) {
+	var count int64
+	for _, fr := range f.friends {
+		if fr.Status == "pending" && fr.AddresseeID == userID {
+			count++
+		}
+	}
+	return count, nil
 }
-func (f *fakeQuerier) SearchUsersByUsername(_ context.Context, _ repository.SearchUsersByUsernameParams) ([]repository.SearchUsersByUsernameRow, error) {
-	return nil, nil
+
+func (f *fakeQuerier) SearchUsersByUsername(_ context.Context, arg repository.SearchUsersByUsernameParams) ([]repository.SearchUsersByUsernameRow, error) {
+	var out []repository.SearchUsersByUsernameRow
+	query := arg.Column1.String
+	for _, u := range f.users {
+		if u.ID == arg.Column2 {
+			continue // exclude self
+		}
+		if len(query) > 0 && strings.Contains(strings.ToLower(u.Username), strings.ToLower(query)) {
+			out = append(out, repository.SearchUsersByUsernameRow{
+				ID:       u.ID,
+				Username: u.Username,
+				Email:    u.Email,
+			})
+		}
+	}
+	return out, nil
 }
-func (f *fakeQuerier) ListDevicesByUserPublic(_ context.Context, _ string) ([]repository.Device, error) {
-	return nil, nil
+
+func (f *fakeQuerier) ListDevicesByUserPublic(_ context.Context, userID string) ([]repository.Device, error) {
+	var out []repository.Device
+	for _, d := range f.devices {
+		if d.UserID == userID && !d.RevokedAt.Valid && d.IsApproved && d.IsPublic {
+			out = append(out, d)
+		}
+	}
+	return out, nil
+}
+
+// ─── Device Visibility ─────────────────────────────
+
+func (f *fakeQuerier) UpdateDeviceVisibility(_ context.Context, arg repository.UpdateDeviceVisibilityParams) error {
+	d, ok := f.devices[arg.Column1]
+	if !ok {
+		return nil
+	}
+	d.IsPublic = arg.IsPublic
+	f.devices[d.ID] = d
+	return nil
 }
 
 // Ensure fakeQuerier satisfies the Querier interface at compile time.
@@ -620,6 +761,348 @@ func TestGetDeviceKey(t *testing.T) {
 		otherCtx := authCtx(f.q.devices[otherDeviceID].UserID)
 		_, err := f.h.GetDeviceKey(otherCtx, &identityv1.GetDeviceKeyRequest{DeviceId: otherDeviceID})
 		assert.Equal(t, codes.NotFound, status.Code(err))
+	})
+}
+
+// ─── Friend System Tests ────────────────────────────
+
+// seedUser creates a user directly in the fakeQuerier and returns the user ID.
+func seedUser(t *testing.T, f *testFixture, username, email string) string {
+	t.Helper()
+	u, err := f.q.CreateUser(context.Background(), repository.CreateUserParams{
+		Username: username, Email: email, PasswordHash: "x",
+	})
+	require.NoError(t, err)
+	return u.ID
+}
+
+func TestSendFriendRequest(t *testing.T) {
+	f := newTestFixture()
+	alice := seedUser(t, f, "alice", "alice@example.com")
+	bob := seedUser(t, f, "bob", "bob@example.com")
+
+	t.Run("success", func(t *testing.T) {
+		resp, err := f.h.SendFriendRequest(authCtx(alice), &identityv1.SendFriendRequestReq{
+			AddresseeUserId: bob,
+		})
+		require.NoError(t, err)
+		require.NotNil(t, resp.Friendship)
+		assert.Equal(t, "pending", resp.Friendship.Status)
+	})
+
+	t.Run("duplicate", func(t *testing.T) {
+		_, err := f.h.SendFriendRequest(authCtx(alice), &identityv1.SendFriendRequestReq{
+			AddresseeUserId: bob,
+		})
+		assert.Equal(t, codes.AlreadyExists, status.Code(err))
+	})
+
+	t.Run("self request", func(t *testing.T) {
+		_, err := f.h.SendFriendRequest(authCtx(alice), &identityv1.SendFriendRequestReq{
+			AddresseeUserId: alice,
+		})
+		assert.Equal(t, codes.InvalidArgument, status.Code(err))
+	})
+
+	t.Run("missing addressee", func(t *testing.T) {
+		_, err := f.h.SendFriendRequest(authCtx(alice), &identityv1.SendFriendRequestReq{})
+		assert.Equal(t, codes.InvalidArgument, status.Code(err))
+	})
+
+	t.Run("addressee not found", func(t *testing.T) {
+		_, err := f.h.SendFriendRequest(authCtx(alice), &identityv1.SendFriendRequestReq{
+			AddresseeUserId: "nonexistent",
+		})
+		assert.Equal(t, codes.NotFound, status.Code(err))
+	})
+
+	t.Run("unauthenticated", func(t *testing.T) {
+		_, err := f.h.SendFriendRequest(context.Background(), &identityv1.SendFriendRequestReq{
+			AddresseeUserId: bob,
+		})
+		assert.Equal(t, codes.Unauthenticated, status.Code(err))
+	})
+}
+
+func TestRespondToFriendRequest(t *testing.T) {
+	f := newTestFixture()
+	alice := seedUser(t, f, "alice", "alice@example.com")
+	bob := seedUser(t, f, "bob", "bob@example.com")
+
+	// alice sends request to bob
+	resp, err := f.h.SendFriendRequest(authCtx(alice), &identityv1.SendFriendRequestReq{
+		AddresseeUserId: bob,
+	})
+	require.NoError(t, err)
+	friendshipID := resp.Friendship.Id
+
+	t.Run("accept", func(t *testing.T) {
+		r, err := f.h.RespondToFriendRequest(authCtx(bob), &identityv1.RespondToFriendRequestReq{
+			FriendshipId: friendshipID,
+			Accept:       true,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, "accepted", r.Friendship.Status)
+	})
+
+	t.Run("missing friendship_id", func(t *testing.T) {
+		_, err := f.h.RespondToFriendRequest(authCtx(bob), &identityv1.RespondToFriendRequestReq{})
+		assert.Equal(t, codes.InvalidArgument, status.Code(err))
+	})
+
+	t.Run("unauthenticated", func(t *testing.T) {
+		_, err := f.h.RespondToFriendRequest(context.Background(), &identityv1.RespondToFriendRequestReq{
+			FriendshipId: friendshipID,
+			Accept:       true,
+		})
+		assert.Equal(t, codes.Unauthenticated, status.Code(err))
+	})
+}
+
+func TestRespondToFriendRequest_Reject(t *testing.T) {
+	f := newTestFixture()
+	alice := seedUser(t, f, "alice", "alice@example.com")
+	bob := seedUser(t, f, "bob", "bob@example.com")
+
+	resp, err := f.h.SendFriendRequest(authCtx(alice), &identityv1.SendFriendRequestReq{
+		AddresseeUserId: bob,
+	})
+	require.NoError(t, err)
+
+	r, err := f.h.RespondToFriendRequest(authCtx(bob), &identityv1.RespondToFriendRequestReq{
+		FriendshipId: resp.Friendship.Id,
+		Accept:       false,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "rejected", r.Friendship.Status)
+}
+
+func TestListFriends(t *testing.T) {
+	f := newTestFixture()
+	alice := seedUser(t, f, "alice", "alice@example.com")
+	bob := seedUser(t, f, "bob", "bob@example.com")
+
+	// no friends yet
+	resp, err := f.h.ListFriends(authCtx(alice), &identityv1.ListFriendsRequest{})
+	require.NoError(t, err)
+	assert.Empty(t, resp.Friends)
+
+	// send + accept
+	fr, err := f.h.SendFriendRequest(authCtx(alice), &identityv1.SendFriendRequestReq{AddresseeUserId: bob})
+	require.NoError(t, err)
+	_, err = f.h.RespondToFriendRequest(authCtx(bob), &identityv1.RespondToFriendRequestReq{
+		FriendshipId: fr.Friendship.Id, Accept: true,
+	})
+	require.NoError(t, err)
+
+	t.Run("alice sees bob", func(t *testing.T) {
+		resp, err := f.h.ListFriends(authCtx(alice), &identityv1.ListFriendsRequest{})
+		require.NoError(t, err)
+		require.Len(t, resp.Friends, 1)
+		assert.Equal(t, "bob", resp.Friends[0].User.Username)
+	})
+
+	t.Run("bob sees alice", func(t *testing.T) {
+		resp, err := f.h.ListFriends(authCtx(bob), &identityv1.ListFriendsRequest{})
+		require.NoError(t, err)
+		require.Len(t, resp.Friends, 1)
+		assert.Equal(t, "alice", resp.Friends[0].User.Username)
+	})
+
+	t.Run("unauthenticated", func(t *testing.T) {
+		_, err := f.h.ListFriends(context.Background(), &identityv1.ListFriendsRequest{})
+		assert.Equal(t, codes.Unauthenticated, status.Code(err))
+	})
+}
+
+func TestListFriendRequests(t *testing.T) {
+	f := newTestFixture()
+	alice := seedUser(t, f, "alice", "alice@example.com")
+	bob := seedUser(t, f, "bob", "bob@example.com")
+
+	_, err := f.h.SendFriendRequest(authCtx(alice), &identityv1.SendFriendRequestReq{AddresseeUserId: bob})
+	require.NoError(t, err)
+
+	t.Run("bob sees pending request", func(t *testing.T) {
+		resp, err := f.h.ListFriendRequests(authCtx(bob), &identityv1.ListFriendRequestsRequest{})
+		require.NoError(t, err)
+		require.Len(t, resp.Requests, 1)
+		assert.Equal(t, "alice", resp.Requests[0].User.Username)
+		assert.Equal(t, "pending", resp.Requests[0].Status)
+	})
+
+	t.Run("alice sees no incoming requests", func(t *testing.T) {
+		resp, err := f.h.ListFriendRequests(authCtx(alice), &identityv1.ListFriendRequestsRequest{})
+		require.NoError(t, err)
+		assert.Empty(t, resp.Requests)
+	})
+
+	t.Run("unauthenticated", func(t *testing.T) {
+		_, err := f.h.ListFriendRequests(context.Background(), &identityv1.ListFriendRequestsRequest{})
+		assert.Equal(t, codes.Unauthenticated, status.Code(err))
+	})
+}
+
+func TestRemoveFriend(t *testing.T) {
+	f := newTestFixture()
+	alice := seedUser(t, f, "alice", "alice@example.com")
+	bob := seedUser(t, f, "bob", "bob@example.com")
+
+	fr, err := f.h.SendFriendRequest(authCtx(alice), &identityv1.SendFriendRequestReq{AddresseeUserId: bob})
+	require.NoError(t, err)
+	_, err = f.h.RespondToFriendRequest(authCtx(bob), &identityv1.RespondToFriendRequestReq{
+		FriendshipId: fr.Friendship.Id, Accept: true,
+	})
+	require.NoError(t, err)
+
+	t.Run("success", func(t *testing.T) {
+		resp, err := f.h.RemoveFriend(authCtx(alice), &identityv1.RemoveFriendRequest{
+			FriendshipId: fr.Friendship.Id,
+		})
+		require.NoError(t, err)
+		assert.True(t, resp.Success)
+
+		// verify removed
+		friends, err := f.h.ListFriends(authCtx(alice), &identityv1.ListFriendsRequest{})
+		require.NoError(t, err)
+		assert.Empty(t, friends.Friends)
+	})
+
+	t.Run("missing friendship_id", func(t *testing.T) {
+		_, err := f.h.RemoveFriend(authCtx(alice), &identityv1.RemoveFriendRequest{})
+		assert.Equal(t, codes.InvalidArgument, status.Code(err))
+	})
+
+	t.Run("unauthenticated", func(t *testing.T) {
+		_, err := f.h.RemoveFriend(context.Background(), &identityv1.RemoveFriendRequest{
+			FriendshipId: "some-id",
+		})
+		assert.Equal(t, codes.Unauthenticated, status.Code(err))
+	})
+}
+
+func TestSearchUsers(t *testing.T) {
+	f := newTestFixture()
+	alice := seedUser(t, f, "alice", "alice@example.com")
+	seedUser(t, f, "bob", "bob@example.com")
+	seedUser(t, f, "bobby", "bobby@example.com")
+
+	t.Run("finds matching users", func(t *testing.T) {
+		resp, err := f.h.SearchUsers(authCtx(alice), &identityv1.SearchUsersRequest{Query: "bob"})
+		require.NoError(t, err)
+		assert.Len(t, resp.Users, 2)
+	})
+
+	t.Run("excludes self", func(t *testing.T) {
+		resp, err := f.h.SearchUsers(authCtx(alice), &identityv1.SearchUsersRequest{Query: "alice"})
+		require.NoError(t, err)
+		assert.Empty(t, resp.Users)
+	})
+
+	t.Run("empty query", func(t *testing.T) {
+		_, err := f.h.SearchUsers(authCtx(alice), &identityv1.SearchUsersRequest{})
+		assert.Equal(t, codes.InvalidArgument, status.Code(err))
+	})
+
+	t.Run("unauthenticated", func(t *testing.T) {
+		_, err := f.h.SearchUsers(context.Background(), &identityv1.SearchUsersRequest{Query: "bob"})
+		assert.Equal(t, codes.Unauthenticated, status.Code(err))
+	})
+}
+
+func TestGetNotificationCount(t *testing.T) {
+	f := newTestFixture()
+	alice := seedUser(t, f, "alice", "alice@example.com")
+	bob := seedUser(t, f, "bob", "bob@example.com")
+
+	t.Run("zero when no pending", func(t *testing.T) {
+		resp, err := f.h.GetNotificationCount(authCtx(bob), &identityv1.GetNotificationCountRequest{})
+		require.NoError(t, err)
+		assert.Equal(t, int32(0), resp.FriendRequests)
+		assert.Equal(t, int32(0), resp.Total)
+	})
+
+	// alice sends request to bob
+	_, err := f.h.SendFriendRequest(authCtx(alice), &identityv1.SendFriendRequestReq{AddresseeUserId: bob})
+	require.NoError(t, err)
+
+	t.Run("counts pending requests", func(t *testing.T) {
+		resp, err := f.h.GetNotificationCount(authCtx(bob), &identityv1.GetNotificationCountRequest{})
+		require.NoError(t, err)
+		assert.Equal(t, int32(1), resp.FriendRequests)
+		assert.Equal(t, int32(1), resp.Total)
+	})
+
+	t.Run("unauthenticated", func(t *testing.T) {
+		_, err := f.h.GetNotificationCount(context.Background(), &identityv1.GetNotificationCountRequest{})
+		assert.Equal(t, codes.Unauthenticated, status.Code(err))
+	})
+}
+
+func TestListFriendDevices(t *testing.T) {
+	f := newTestFixture()
+	alice := seedUser(t, f, "alice", "alice@example.com")
+	bob := seedUser(t, f, "bob", "bob@example.com")
+
+	// add a public approved device for bob
+	f.q.devices["bob-dev"] = repository.Device{
+		ID:         "bob-dev",
+		UserID:     bob,
+		Name:       "bob-laptop",
+		DeviceType: "pc",
+		IsApproved: true,
+		IsPublic:   true,
+		ApprovedAt: pgtype.Timestamptz{Time: time.Now(), Valid: true},
+		LastActive: time.Now(),
+		CreatedAt:  time.Now(),
+	}
+	// add a private device for bob
+	f.q.devices["bob-private"] = repository.Device{
+		ID:         "bob-private",
+		UserID:     bob,
+		Name:       "bob-phone",
+		DeviceType: "phone",
+		IsApproved: true,
+		IsPublic:   false,
+		ApprovedAt: pgtype.Timestamptz{Time: time.Now(), Valid: true},
+		LastActive: time.Now(),
+		CreatedAt:  time.Now(),
+	}
+
+	t.Run("not friends", func(t *testing.T) {
+		_, err := f.h.ListFriendDevices(authCtx(alice), &identityv1.ListFriendDevicesRequest{
+			FriendUserId: bob,
+		})
+		assert.Equal(t, codes.PermissionDenied, status.Code(err))
+	})
+
+	// become friends
+	fr, err := f.h.SendFriendRequest(authCtx(alice), &identityv1.SendFriendRequestReq{AddresseeUserId: bob})
+	require.NoError(t, err)
+	_, err = f.h.RespondToFriendRequest(authCtx(bob), &identityv1.RespondToFriendRequestReq{
+		FriendshipId: fr.Friendship.Id, Accept: true,
+	})
+	require.NoError(t, err)
+
+	t.Run("only public devices returned", func(t *testing.T) {
+		resp, err := f.h.ListFriendDevices(authCtx(alice), &identityv1.ListFriendDevicesRequest{
+			FriendUserId: bob,
+		})
+		require.NoError(t, err)
+		require.Len(t, resp.Devices, 1)
+		assert.Equal(t, "bob-laptop", resp.Devices[0].Name)
+	})
+
+	t.Run("missing friend_user_id", func(t *testing.T) {
+		_, err := f.h.ListFriendDevices(authCtx(alice), &identityv1.ListFriendDevicesRequest{})
+		assert.Equal(t, codes.InvalidArgument, status.Code(err))
+	})
+
+	t.Run("unauthenticated", func(t *testing.T) {
+		_, err := f.h.ListFriendDevices(context.Background(), &identityv1.ListFriendDevicesRequest{
+			FriendUserId: bob,
+		})
+		assert.Equal(t, codes.Unauthenticated, status.Code(err))
 	})
 }
 
