@@ -45,3 +45,11 @@ SELECT * FROM group_transfers WHERE session_id = $1 ORDER BY created_at DESC;
 
 -- name: ListTransfersByGroupID :many
 SELECT * FROM transfers WHERE group_transfer_id = $1 ORDER BY created_at ASC;
+
+-- ─── Platform Stats ────────────────────────────────
+
+-- name: CountTransfers :one
+SELECT COUNT(*) FROM transfers;
+
+-- name: SumTransferredBytes :one
+SELECT COALESCE(SUM(total_size_bytes), 0)::bigint FROM transfers WHERE status = 3;

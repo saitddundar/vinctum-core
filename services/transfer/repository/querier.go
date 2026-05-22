@@ -13,6 +13,8 @@ import (
 type Querier interface {
 	CompleteTransfer(ctx context.Context, transferID string) error
 	ConfirmP2PTransfer(ctx context.Context, arg ConfirmP2PTransferParams) error
+	// ─── Platform Stats ────────────────────────────────
+	CountTransfers(ctx context.Context) (int64, error)
 	// ─── Group Transfers ────────────────────────────────────
 	CreateGroupTransfer(ctx context.Context, arg CreateGroupTransferParams) (GroupTransfer, error)
 	CreateTransfer(ctx context.Context, arg CreateTransferParams) (Transfer, error)
@@ -22,6 +24,7 @@ type Querier interface {
 	ListTransfersByGroupID(ctx context.Context, groupTransferID pgtype.Text) ([]Transfer, error)
 	ListTransfersByNode(ctx context.Context, senderNodeID string) ([]Transfer, error)
 	ListTransfersByStatus(ctx context.Context, arg ListTransfersByStatusParams) ([]Transfer, error)
+	SumTransferredBytes(ctx context.Context) (int64, error)
 	UpdateRouteHops(ctx context.Context, arg UpdateRouteHopsParams) error
 	UpdateTransferMode(ctx context.Context, arg UpdateTransferModeParams) error
 	UpdateTransferProgress(ctx context.Context, arg UpdateTransferProgressParams) error

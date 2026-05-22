@@ -15,7 +15,10 @@ type Querier interface {
 	AddDeviceToSession(ctx context.Context, arg AddDeviceToSessionParams) error
 	ApproveDevice(ctx context.Context, arg ApproveDeviceParams) error
 	ClosePeerSession(ctx context.Context, arg ClosePeerSessionParams) error
+	CountDevices(ctx context.Context) (int64, error)
 	CountPendingFriendRequests(ctx context.Context, dollar_1 string) (int64, error)
+	// ─── Platform Stats ────────────────────────────────
+	CountUsers(ctx context.Context) (int64, error)
 	// ─── Devices ────────────────────────────────────────
 	CreateDevice(ctx context.Context, arg CreateDeviceParams) (Device, error)
 	// ─── Friends ────────────────────────────────────────

@@ -161,3 +161,11 @@ ORDER BY last_active DESC;
 
 -- name: UpdateDeviceVisibility :exec
 UPDATE devices SET is_public = $2 WHERE id = $1::uuid AND revoked_at IS NULL;
+
+-- ─── Platform Stats ────────────────────────────────
+
+-- name: CountUsers :one
+SELECT COUNT(*) FROM users WHERE email_verified = TRUE;
+
+-- name: CountDevices :one
+SELECT COUNT(*) FROM devices WHERE revoked_at IS NULL AND is_approved = TRUE;

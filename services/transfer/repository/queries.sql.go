@@ -41,6 +41,19 @@ func (q *Queries) ConfirmP2PTransfer(ctx context.Context, arg ConfirmP2PTransfer
 	return err
 }
 
+const countTransfers = `-- name: CountTransfers :one
+
+SELECT COUNT(*) FROM transfers
+`
+
+// ─── Platform Stats ────────────────────────────────
+func (q *Queries) CountTransfers(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, countTransfers)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createGroupTransfer = `-- name: CreateGroupTransfer :one
 
 INSERT INTO group_transfers (id, session_id, sender_node_id, filename, total_size_bytes, content_hash, chunk_size_bytes, total_chunks, sender_ephemeral_pubkey)
@@ -379,6 +392,17 @@ func (q *Queries) ListTransfersByStatus(ctx context.Context, arg ListTransfersBy
 		return nil, err
 	}
 	return items, nil
+}
+
+const sumTransferredBytes = `-- name: SumTransferredBytes :one
+SELECT COALESCE(SUM(total_size_bytes), 0)::bigint FROM transfers WHERE status = 3
+`
+
+func (q *Queries) SumTransferredBytes(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, sumTransferredBytes)
+	var column_1 int64
+	err := row.Scan(&column_1)
+	return column_1, err
 }
 
 const updateRouteHops = `-- name: UpdateRouteHops :exec

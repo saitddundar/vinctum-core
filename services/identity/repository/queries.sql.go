@@ -71,12 +71,36 @@ func (q *Queries) ClosePeerSession(ctx context.Context, arg ClosePeerSessionPara
 	return err
 }
 
+const countDevices = `-- name: CountDevices :one
+SELECT COUNT(*) FROM devices WHERE revoked_at IS NULL AND is_approved = TRUE
+`
+
+func (q *Queries) CountDevices(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, countDevices)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const countPendingFriendRequests = `-- name: CountPendingFriendRequests :one
 SELECT COUNT(*) FROM friends WHERE addressee_id = $1::uuid AND status = 'pending'
 `
 
 func (q *Queries) CountPendingFriendRequests(ctx context.Context, dollar_1 string) (int64, error) {
 	row := q.db.QueryRow(ctx, countPendingFriendRequests, dollar_1)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countUsers = `-- name: CountUsers :one
+
+SELECT COUNT(*) FROM users WHERE email_verified = TRUE
+`
+
+// ─── Platform Stats ────────────────────────────────
+func (q *Queries) CountUsers(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, countUsers)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
