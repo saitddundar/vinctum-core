@@ -884,6 +884,38 @@ func (h *TransferHandler) ListGroupTransfers(ctx context.Context, req *transferv
 	return &transferv1.ListGroupTransfersResponse{GroupTransfers: result}, nil
 }
 
+func (h *TransferHandler) AdminListTransfers(ctx context.Context, req *transferv1.AdminListTransfersRequest) (*transferv1.AdminListTransfersResponse, error) {
+	limit := req.Limit
+	if limit <= 0 || limit > 200 {
+		limit = 50
+	}
+	rows, err := h.queries.AdminListTransfers(ctx, repository.AdminListTransfersParams{
+		Limit: limit, Offset: req.Offset,
+	})
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to list transfers")
+	}
+	total, _ := h.queries.CountTransfers(ctx)
+	transfers := make([]*transferv1.AdminTransfer, len(rows))
+	for i, t := range rows {
+		transfers[i] = &transferv1.AdminTransfer{
+			TransferId:     t.TransferID,
+			SenderNodeId:   t.SenderNodeID,
+			ReceiverNodeId: t.ReceiverNodeID,
+			Filename:       t.Filename,
+			TotalSizeBytes: t.TotalSizeBytes,
+			Status:         t.Status,
+			ChunksDone:     t.ChunksDone,
+			TotalChunks:    t.TotalChunks,
+			ContentHash:    t.ContentHash,
+			TransferMode:   t.TransferMode,
+			CreatedAt:      timestamppb.New(t.CreatedAt),
+			UpdatedAt:      timestamppb.New(t.UpdatedAt),
+		}
+	}
+	return &transferv1.AdminListTransfersResponse{Transfers: transfers, Total: total}, nil
+}
+
 func (h *TransferHandler) GetTransferStats(ctx context.Context, _ *transferv1.GetTransferStatsRequest) (*transferv1.GetTransferStatsResponse, error) {
 	count, err := h.queries.CountTransfers(ctx)
 	if err != nil {

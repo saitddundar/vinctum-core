@@ -1113,6 +1113,93 @@ func (h *IdentityHandler) GetPlatformStats(ctx context.Context, _ *identityv1.Ge
 	}, nil
 }
 
+func (h *IdentityHandler) AdminListUsers(ctx context.Context, req *identityv1.AdminListUsersRequest) (*identityv1.AdminListUsersResponse, error) {
+	limit := req.Limit
+	if limit <= 0 || limit > 200 {
+		limit = 50
+	}
+	rows, err := h.queries.AdminListUsers(ctx, repository.AdminListUsersParams{
+		Limit: limit, Offset: req.Offset,
+	})
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to list users")
+	}
+	total, _ := h.queries.CountUsers(ctx)
+	users := make([]*identityv1.AdminUser, len(rows))
+	for i, r := range rows {
+		users[i] = &identityv1.AdminUser{
+			UserId:        r.ID,
+			Username:      r.Username,
+			Email:         r.Email,
+			EmailVerified: r.EmailVerified,
+			CreatedAt:     timestamppb.New(r.CreatedAt),
+		}
+	}
+	return &identityv1.AdminListUsersResponse{Users: users, Total: total}, nil
+}
+
+func (h *IdentityHandler) AdminListDevices(ctx context.Context, req *identityv1.AdminListDevicesRequest) (*identityv1.AdminListDevicesResponse, error) {
+	limit := req.Limit
+	if limit <= 0 || limit > 200 {
+		limit = 50
+	}
+	rows, err := h.queries.AdminListDevices(ctx, repository.AdminListDevicesParams{
+		Limit: limit, Offset: req.Offset,
+	})
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to list devices")
+	}
+	total, _ := h.queries.CountDevices(ctx)
+	devices := make([]*identityv1.AdminDevice, len(rows))
+	for i, r := range rows {
+		d := &identityv1.AdminDevice{
+			DeviceId:      r.ID,
+			UserId:        r.UserID,
+			Name:          r.Name,
+			DeviceType:    stringToDeviceType(r.DeviceType),
+			IsApproved:    r.IsApproved,
+			IsRevoked:     r.RevokedAt.Valid,
+			IsPublic:      r.IsPublic,
+			OwnerUsername:  r.OwnerUsername,
+			OwnerEmail:    r.OwnerEmail,
+			LastActive:    timestamppb.New(r.LastActive),
+			CreatedAt:     timestamppb.New(r.CreatedAt),
+		}
+		if r.NodeID.Valid {
+			d.NodeId = r.NodeID.String
+		}
+		devices[i] = d
+	}
+	return &identityv1.AdminListDevicesResponse{Devices: devices, Total: total}, nil
+}
+
+func (h *IdentityHandler) AdminListAuditLogs(ctx context.Context, req *identityv1.AdminListAuditLogsRequest) (*identityv1.AdminListAuditLogsResponse, error) {
+	limit := req.Limit
+	if limit <= 0 || limit > 200 {
+		limit = 50
+	}
+	rows, err := h.queries.AdminListAuditLogs(ctx, repository.AdminListAuditLogsParams{
+		Limit: limit, Offset: req.Offset,
+	})
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to list audit logs")
+	}
+	total, _ := h.queries.AdminCountAuditLogs(ctx)
+	logs := make([]*identityv1.AuditLog, len(rows))
+	for i, r := range rows {
+		logs[i] = &identityv1.AuditLog{
+			Id:         r.ID,
+			UserId:     r.UserID,
+			Method:     r.Method,
+			Code:       r.Code,
+			PeerAddr:   r.PeerAddr,
+			DurationMs: r.DurationMs,
+			CreatedAt:  timestamppb.New(r.CreatedAt),
+		}
+	}
+	return &identityv1.AdminListAuditLogsResponse{Logs: logs, Total: total}, nil
+}
+
 func friendToProto(f repository.Friend, user *identityv1.UserInfo) *identityv1.Friend {
 	return &identityv1.Friend{
 		Id:        f.ID,
