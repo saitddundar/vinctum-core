@@ -25,6 +25,8 @@ var publicMethods = map[string]bool{
 	"/identity.v1.IdentityService/ValidateToken":        true,
 	"/discovery.v1.DiscoveryService/FindPeers":          true,
 	"/discovery.v1.DiscoveryService/GetNodeInfo":        true,
+	"/identity.v1.IdentityService/GetPlatformStats":     true,
+	"/transfer.v1.TransferService/GetTransferStats":     true,
 }
 
 func UnaryAuthInterceptor(jwtSecret string) grpc.UnaryServerInterceptor {

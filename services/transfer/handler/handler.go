@@ -884,6 +884,21 @@ func (h *TransferHandler) ListGroupTransfers(ctx context.Context, req *transferv
 	return &transferv1.ListGroupTransfersResponse{GroupTransfers: result}, nil
 }
 
+func (h *TransferHandler) GetTransferStats(ctx context.Context, _ *transferv1.GetTransferStatsRequest) (*transferv1.GetTransferStatsResponse, error) {
+	count, err := h.queries.CountTransfers(ctx)
+	if err != nil {
+		count = 0
+	}
+	bytes, err := h.queries.SumTransferredBytes(ctx)
+	if err != nil {
+		bytes = 0
+	}
+	return &transferv1.GetTransferStatsResponse{
+		TotalTransfers: count,
+		TotalBytes:     bytes,
+	}, nil
+}
+
 // pgUUID converts a google uuid to pgtype.UUID.
 func pgUUID(u uuid.UUID) pgtype.UUID {
 	return pgtype.UUID{Bytes: u, Valid: true}

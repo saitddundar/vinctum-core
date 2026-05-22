@@ -1098,6 +1098,21 @@ func (h *IdentityHandler) ListFriendDevices(ctx context.Context, req *identityv1
 	return &identityv1.ListFriendDevicesResponse{Devices: pbDevices}, nil
 }
 
+func (h *IdentityHandler) GetPlatformStats(ctx context.Context, _ *identityv1.GetPlatformStatsRequest) (*identityv1.GetPlatformStatsResponse, error) {
+	users, err := h.queries.CountUsers(ctx)
+	if err != nil {
+		users = 0
+	}
+	devices, err := h.queries.CountDevices(ctx)
+	if err != nil {
+		devices = 0
+	}
+	return &identityv1.GetPlatformStatsResponse{
+		TotalUsers:   users,
+		TotalDevices: devices,
+	}, nil
+}
+
 func friendToProto(f repository.Friend, user *identityv1.UserInfo) *identityv1.Friend {
 	return &identityv1.Friend{
 		Id:        f.ID,
