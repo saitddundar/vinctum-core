@@ -152,6 +152,13 @@ func (h *GatewayHandler) RegisterRoutes(mux *http.ServeMux) {
 	// platform stats (public, no auth)
 	mux.HandleFunc("GET /api/v1/stats", h.handlePlatformStats)
 
+	// admin (restricted to admin email)
+	mux.HandleFunc("GET /api/v1/admin/users", h.adminOnly(h.handleAdminListUsers))
+	mux.HandleFunc("GET /api/v1/admin/devices", h.adminOnly(h.handleAdminListDevices))
+	mux.HandleFunc("GET /api/v1/admin/transfers", h.adminOnly(h.handleAdminListTransfers))
+	mux.HandleFunc("GET /api/v1/admin/audit-logs", h.adminOnly(h.handleAdminListAuditLogs))
+	mux.HandleFunc("GET /api/v1/admin/services", h.adminOnly(h.handleServiceStatus))
+
 	// routing proxy
 	mux.HandleFunc("POST /api/v1/routes/find", h.handleFindRoute)
 	mux.HandleFunc("GET /api/v1/routes/table/{nodeId}", h.handleGetRouteTable)
@@ -1718,6 +1725,109 @@ func (h *GatewayHandler) handleListGroupTransfers(w http.ResponseWriter, r *http
 		return
 	}
 	writeJSON(w, http.StatusOK, resp)
+}
+
+const adminEmail = "saitdndr51@gmail.com"
+
+func (h *GatewayHandler) adminOnly(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if h.identityClient == nil {
+			writeError(w, http.StatusServiceUnavailable, "identity service unavailable")
+			return
+		}
+		auth := r.Header.Get("Authorization")
+		if auth == "" || len(auth) < 8 {
+			writeError(w, http.StatusUnauthorized, "unauthorized")
+			return
+		}
+		token := auth[7:] // strip "Bearer "
+		resp, err := h.identityClient.ValidateToken(r.Context(), &identityv1.ValidateTokenRequest{Token: token})
+		if err != nil || !resp.Valid {
+			writeError(w, http.StatusUnauthorized, "unauthorized")
+			return
+		}
+		if resp.Email != adminEmail {
+			writeError(w, http.StatusForbidden, "forbidden")
+			return
+		}
+		next(w, r)
+	}
+}
+
+func (h *GatewayHandler) handleAdminListUsers(w http.ResponseWriter, r *http.Request) {
+	limit, offset := parsePagination(r)
+	ctx := forwardAuth(r)
+	resp, err := h.identityClient.AdminListUsers(ctx, &identityv1.AdminListUsersRequest{
+		Limit: limit, Offset: offset,
+	})
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+func (h *GatewayHandler) handleAdminListDevices(w http.ResponseWriter, r *http.Request) {
+	limit, offset := parsePagination(r)
+	ctx := forwardAuth(r)
+	resp, err := h.identityClient.AdminListDevices(ctx, &identityv1.AdminListDevicesRequest{
+		Limit: limit, Offset: offset,
+	})
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+func (h *GatewayHandler) handleAdminListTransfers(w http.ResponseWriter, r *http.Request) {
+	if h.transferClient == nil {
+		writeError(w, http.StatusServiceUnavailable, "transfer service unavailable")
+		return
+	}
+	limit, offset := parsePagination(r)
+	ctx := forwardAuth(r)
+	resp, err := h.transferClient.AdminListTransfers(ctx, &transferv1.AdminListTransfersRequest{
+		Limit: limit, Offset: offset,
+	})
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+func (h *GatewayHandler) handleAdminListAuditLogs(w http.ResponseWriter, r *http.Request) {
+	limit, offset := parsePagination(r)
+	ctx := forwardAuth(r)
+	resp, err := h.identityClient.AdminListAuditLogs(ctx, &identityv1.AdminListAuditLogsRequest{
+		Limit: limit, Offset: offset,
+	})
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+func parsePagination(r *http.Request) (int32, int32) {
+	limit := int32(50)
+	offset := int32(0)
+	if v := r.URL.Query().Get("limit"); v != "" {
+		if n, err := fmt.Sscanf(v, "%d", &limit); n == 1 && err == nil && limit > 0 && limit <= 200 {
+			// ok
+		} else {
+			limit = 50
+		}
+	}
+	if v := r.URL.Query().Get("offset"); v != "" {
+		if n, err := fmt.Sscanf(v, "%d", &offset); n == 1 && err == nil && offset >= 0 {
+			// ok
+		} else {
+			offset = 0
+		}
+	}
+	return limit, offset
 }
 
 func (h *GatewayHandler) handlePlatformStats(w http.ResponseWriter, _ *http.Request) {
