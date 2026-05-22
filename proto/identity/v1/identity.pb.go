@@ -3850,6 +3850,618 @@ func (x *GetPlatformStatsResponse) GetTotalDevices() int64 {
 	return 0
 }
 
+type AdminUser struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
+	Email         string                 `protobuf:"bytes,3,opt,name=email,proto3" json:"email,omitempty"`
+	EmailVerified bool                   `protobuf:"varint,4,opt,name=email_verified,json=emailVerified,proto3" json:"email_verified,omitempty"`
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AdminUser) Reset() {
+	*x = AdminUser{}
+	mi := &file_identity_v1_identity_proto_msgTypes[74]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AdminUser) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AdminUser) ProtoMessage() {}
+
+func (x *AdminUser) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_identity_proto_msgTypes[74]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AdminUser.ProtoReflect.Descriptor instead.
+func (*AdminUser) Descriptor() ([]byte, []int) {
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{74}
+}
+
+func (x *AdminUser) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *AdminUser) GetUsername() string {
+	if x != nil {
+		return x.Username
+	}
+	return ""
+}
+
+func (x *AdminUser) GetEmail() string {
+	if x != nil {
+		return x.Email
+	}
+	return ""
+}
+
+func (x *AdminUser) GetEmailVerified() bool {
+	if x != nil {
+		return x.EmailVerified
+	}
+	return false
+}
+
+func (x *AdminUser) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+type AdminListUsersRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Limit         int32                  `protobuf:"varint,1,opt,name=limit,proto3" json:"limit,omitempty"`
+	Offset        int32                  `protobuf:"varint,2,opt,name=offset,proto3" json:"offset,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AdminListUsersRequest) Reset() {
+	*x = AdminListUsersRequest{}
+	mi := &file_identity_v1_identity_proto_msgTypes[75]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AdminListUsersRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AdminListUsersRequest) ProtoMessage() {}
+
+func (x *AdminListUsersRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_identity_proto_msgTypes[75]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AdminListUsersRequest.ProtoReflect.Descriptor instead.
+func (*AdminListUsersRequest) Descriptor() ([]byte, []int) {
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{75}
+}
+
+func (x *AdminListUsersRequest) GetLimit() int32 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+func (x *AdminListUsersRequest) GetOffset() int32 {
+	if x != nil {
+		return x.Offset
+	}
+	return 0
+}
+
+type AdminListUsersResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Users         []*AdminUser           `protobuf:"bytes,1,rep,name=users,proto3" json:"users,omitempty"`
+	Total         int64                  `protobuf:"varint,2,opt,name=total,proto3" json:"total,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AdminListUsersResponse) Reset() {
+	*x = AdminListUsersResponse{}
+	mi := &file_identity_v1_identity_proto_msgTypes[76]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AdminListUsersResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AdminListUsersResponse) ProtoMessage() {}
+
+func (x *AdminListUsersResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_identity_proto_msgTypes[76]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AdminListUsersResponse.ProtoReflect.Descriptor instead.
+func (*AdminListUsersResponse) Descriptor() ([]byte, []int) {
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{76}
+}
+
+func (x *AdminListUsersResponse) GetUsers() []*AdminUser {
+	if x != nil {
+		return x.Users
+	}
+	return nil
+}
+
+func (x *AdminListUsersResponse) GetTotal() int64 {
+	if x != nil {
+		return x.Total
+	}
+	return 0
+}
+
+type AdminDevice struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DeviceId      string                 `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	DeviceType    DeviceType             `protobuf:"varint,4,opt,name=device_type,json=deviceType,proto3,enum=identity.v1.DeviceType" json:"device_type,omitempty"`
+	NodeId        string                 `protobuf:"bytes,5,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
+	IsApproved    bool                   `protobuf:"varint,6,opt,name=is_approved,json=isApproved,proto3" json:"is_approved,omitempty"`
+	IsRevoked     bool                   `protobuf:"varint,7,opt,name=is_revoked,json=isRevoked,proto3" json:"is_revoked,omitempty"`
+	IsPublic      bool                   `protobuf:"varint,8,opt,name=is_public,json=isPublic,proto3" json:"is_public,omitempty"`
+	OwnerUsername string                 `protobuf:"bytes,9,opt,name=owner_username,json=ownerUsername,proto3" json:"owner_username,omitempty"`
+	OwnerEmail    string                 `protobuf:"bytes,10,opt,name=owner_email,json=ownerEmail,proto3" json:"owner_email,omitempty"`
+	LastActive    *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=last_active,json=lastActive,proto3" json:"last_active,omitempty"`
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,12,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AdminDevice) Reset() {
+	*x = AdminDevice{}
+	mi := &file_identity_v1_identity_proto_msgTypes[77]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AdminDevice) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AdminDevice) ProtoMessage() {}
+
+func (x *AdminDevice) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_identity_proto_msgTypes[77]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AdminDevice.ProtoReflect.Descriptor instead.
+func (*AdminDevice) Descriptor() ([]byte, []int) {
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{77}
+}
+
+func (x *AdminDevice) GetDeviceId() string {
+	if x != nil {
+		return x.DeviceId
+	}
+	return ""
+}
+
+func (x *AdminDevice) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *AdminDevice) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *AdminDevice) GetDeviceType() DeviceType {
+	if x != nil {
+		return x.DeviceType
+	}
+	return DeviceType_DEVICE_TYPE_UNSPECIFIED
+}
+
+func (x *AdminDevice) GetNodeId() string {
+	if x != nil {
+		return x.NodeId
+	}
+	return ""
+}
+
+func (x *AdminDevice) GetIsApproved() bool {
+	if x != nil {
+		return x.IsApproved
+	}
+	return false
+}
+
+func (x *AdminDevice) GetIsRevoked() bool {
+	if x != nil {
+		return x.IsRevoked
+	}
+	return false
+}
+
+func (x *AdminDevice) GetIsPublic() bool {
+	if x != nil {
+		return x.IsPublic
+	}
+	return false
+}
+
+func (x *AdminDevice) GetOwnerUsername() string {
+	if x != nil {
+		return x.OwnerUsername
+	}
+	return ""
+}
+
+func (x *AdminDevice) GetOwnerEmail() string {
+	if x != nil {
+		return x.OwnerEmail
+	}
+	return ""
+}
+
+func (x *AdminDevice) GetLastActive() *timestamppb.Timestamp {
+	if x != nil {
+		return x.LastActive
+	}
+	return nil
+}
+
+func (x *AdminDevice) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+type AdminListDevicesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Limit         int32                  `protobuf:"varint,1,opt,name=limit,proto3" json:"limit,omitempty"`
+	Offset        int32                  `protobuf:"varint,2,opt,name=offset,proto3" json:"offset,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AdminListDevicesRequest) Reset() {
+	*x = AdminListDevicesRequest{}
+	mi := &file_identity_v1_identity_proto_msgTypes[78]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AdminListDevicesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AdminListDevicesRequest) ProtoMessage() {}
+
+func (x *AdminListDevicesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_identity_proto_msgTypes[78]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AdminListDevicesRequest.ProtoReflect.Descriptor instead.
+func (*AdminListDevicesRequest) Descriptor() ([]byte, []int) {
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{78}
+}
+
+func (x *AdminListDevicesRequest) GetLimit() int32 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+func (x *AdminListDevicesRequest) GetOffset() int32 {
+	if x != nil {
+		return x.Offset
+	}
+	return 0
+}
+
+type AdminListDevicesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Devices       []*AdminDevice         `protobuf:"bytes,1,rep,name=devices,proto3" json:"devices,omitempty"`
+	Total         int64                  `protobuf:"varint,2,opt,name=total,proto3" json:"total,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AdminListDevicesResponse) Reset() {
+	*x = AdminListDevicesResponse{}
+	mi := &file_identity_v1_identity_proto_msgTypes[79]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AdminListDevicesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AdminListDevicesResponse) ProtoMessage() {}
+
+func (x *AdminListDevicesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_identity_proto_msgTypes[79]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AdminListDevicesResponse.ProtoReflect.Descriptor instead.
+func (*AdminListDevicesResponse) Descriptor() ([]byte, []int) {
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{79}
+}
+
+func (x *AdminListDevicesResponse) GetDevices() []*AdminDevice {
+	if x != nil {
+		return x.Devices
+	}
+	return nil
+}
+
+func (x *AdminListDevicesResponse) GetTotal() int64 {
+	if x != nil {
+		return x.Total
+	}
+	return 0
+}
+
+type AuditLog struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Method        string                 `protobuf:"bytes,3,opt,name=method,proto3" json:"method,omitempty"`
+	Code          string                 `protobuf:"bytes,4,opt,name=code,proto3" json:"code,omitempty"`
+	PeerAddr      string                 `protobuf:"bytes,5,opt,name=peer_addr,json=peerAddr,proto3" json:"peer_addr,omitempty"`
+	DurationMs    int64                  `protobuf:"varint,6,opt,name=duration_ms,json=durationMs,proto3" json:"duration_ms,omitempty"`
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AuditLog) Reset() {
+	*x = AuditLog{}
+	mi := &file_identity_v1_identity_proto_msgTypes[80]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AuditLog) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AuditLog) ProtoMessage() {}
+
+func (x *AuditLog) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_identity_proto_msgTypes[80]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AuditLog.ProtoReflect.Descriptor instead.
+func (*AuditLog) Descriptor() ([]byte, []int) {
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{80}
+}
+
+func (x *AuditLog) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *AuditLog) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *AuditLog) GetMethod() string {
+	if x != nil {
+		return x.Method
+	}
+	return ""
+}
+
+func (x *AuditLog) GetCode() string {
+	if x != nil {
+		return x.Code
+	}
+	return ""
+}
+
+func (x *AuditLog) GetPeerAddr() string {
+	if x != nil {
+		return x.PeerAddr
+	}
+	return ""
+}
+
+func (x *AuditLog) GetDurationMs() int64 {
+	if x != nil {
+		return x.DurationMs
+	}
+	return 0
+}
+
+func (x *AuditLog) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+type AdminListAuditLogsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Limit         int32                  `protobuf:"varint,1,opt,name=limit,proto3" json:"limit,omitempty"`
+	Offset        int32                  `protobuf:"varint,2,opt,name=offset,proto3" json:"offset,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AdminListAuditLogsRequest) Reset() {
+	*x = AdminListAuditLogsRequest{}
+	mi := &file_identity_v1_identity_proto_msgTypes[81]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AdminListAuditLogsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AdminListAuditLogsRequest) ProtoMessage() {}
+
+func (x *AdminListAuditLogsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_identity_proto_msgTypes[81]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AdminListAuditLogsRequest.ProtoReflect.Descriptor instead.
+func (*AdminListAuditLogsRequest) Descriptor() ([]byte, []int) {
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{81}
+}
+
+func (x *AdminListAuditLogsRequest) GetLimit() int32 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+func (x *AdminListAuditLogsRequest) GetOffset() int32 {
+	if x != nil {
+		return x.Offset
+	}
+	return 0
+}
+
+type AdminListAuditLogsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Logs          []*AuditLog            `protobuf:"bytes,1,rep,name=logs,proto3" json:"logs,omitempty"`
+	Total         int64                  `protobuf:"varint,2,opt,name=total,proto3" json:"total,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AdminListAuditLogsResponse) Reset() {
+	*x = AdminListAuditLogsResponse{}
+	mi := &file_identity_v1_identity_proto_msgTypes[82]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AdminListAuditLogsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AdminListAuditLogsResponse) ProtoMessage() {}
+
+func (x *AdminListAuditLogsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_identity_proto_msgTypes[82]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AdminListAuditLogsResponse.ProtoReflect.Descriptor instead.
+func (*AdminListAuditLogsResponse) Descriptor() ([]byte, []int) {
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{82}
+}
+
+func (x *AdminListAuditLogsResponse) GetLogs() []*AuditLog {
+	if x != nil {
+		return x.Logs
+	}
+	return nil
+}
+
+func (x *AdminListAuditLogsResponse) GetTotal() int64 {
+	if x != nil {
+		return x.Total
+	}
+	return 0
+}
+
 var File_identity_v1_identity_proto protoreflect.FileDescriptor
 
 const file_identity_v1_identity_proto_rawDesc = "" +
@@ -4096,13 +4708,68 @@ const file_identity_v1_identity_proto_rawDesc = "" +
 	"\x18GetPlatformStatsResponse\x12\x1f\n" +
 	"\vtotal_users\x18\x01 \x01(\x03R\n" +
 	"totalUsers\x12#\n" +
-	"\rtotal_devices\x18\x02 \x01(\x03R\ftotalDevices*l\n" +
+	"\rtotal_devices\x18\x02 \x01(\x03R\ftotalDevices\"\xb8\x01\n" +
+	"\tAdminUser\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1a\n" +
+	"\busername\x18\x02 \x01(\tR\busername\x12\x14\n" +
+	"\x05email\x18\x03 \x01(\tR\x05email\x12%\n" +
+	"\x0eemail_verified\x18\x04 \x01(\bR\remailVerified\x129\n" +
+	"\n" +
+	"created_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"E\n" +
+	"\x15AdminListUsersRequest\x12\x14\n" +
+	"\x05limit\x18\x01 \x01(\x05R\x05limit\x12\x16\n" +
+	"\x06offset\x18\x02 \x01(\x05R\x06offset\"\\\n" +
+	"\x16AdminListUsersResponse\x12,\n" +
+	"\x05users\x18\x01 \x03(\v2\x16.identity.v1.AdminUserR\x05users\x12\x14\n" +
+	"\x05total\x18\x02 \x01(\x03R\x05total\"\xc7\x03\n" +
+	"\vAdminDevice\x12\x1b\n" +
+	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x12\n" +
+	"\x04name\x18\x03 \x01(\tR\x04name\x128\n" +
+	"\vdevice_type\x18\x04 \x01(\x0e2\x17.identity.v1.DeviceTypeR\n" +
+	"deviceType\x12\x17\n" +
+	"\anode_id\x18\x05 \x01(\tR\x06nodeId\x12\x1f\n" +
+	"\vis_approved\x18\x06 \x01(\bR\n" +
+	"isApproved\x12\x1d\n" +
+	"\n" +
+	"is_revoked\x18\a \x01(\bR\tisRevoked\x12\x1b\n" +
+	"\tis_public\x18\b \x01(\bR\bisPublic\x12%\n" +
+	"\x0eowner_username\x18\t \x01(\tR\rownerUsername\x12\x1f\n" +
+	"\vowner_email\x18\n" +
+	" \x01(\tR\n" +
+	"ownerEmail\x12;\n" +
+	"\vlast_active\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"lastActive\x129\n" +
+	"\n" +
+	"created_at\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"G\n" +
+	"\x17AdminListDevicesRequest\x12\x14\n" +
+	"\x05limit\x18\x01 \x01(\x05R\x05limit\x12\x16\n" +
+	"\x06offset\x18\x02 \x01(\x05R\x06offset\"d\n" +
+	"\x18AdminListDevicesResponse\x122\n" +
+	"\adevices\x18\x01 \x03(\v2\x18.identity.v1.AdminDeviceR\adevices\x12\x14\n" +
+	"\x05total\x18\x02 \x01(\x03R\x05total\"\xd8\x01\n" +
+	"\bAuditLog\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x16\n" +
+	"\x06method\x18\x03 \x01(\tR\x06method\x12\x12\n" +
+	"\x04code\x18\x04 \x01(\tR\x04code\x12\x1b\n" +
+	"\tpeer_addr\x18\x05 \x01(\tR\bpeerAddr\x12\x1f\n" +
+	"\vduration_ms\x18\x06 \x01(\x03R\n" +
+	"durationMs\x129\n" +
+	"\n" +
+	"created_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"I\n" +
+	"\x19AdminListAuditLogsRequest\x12\x14\n" +
+	"\x05limit\x18\x01 \x01(\x05R\x05limit\x12\x16\n" +
+	"\x06offset\x18\x02 \x01(\x05R\x06offset\"]\n" +
+	"\x1aAdminListAuditLogsResponse\x12)\n" +
+	"\x04logs\x18\x01 \x03(\v2\x15.identity.v1.AuditLogR\x04logs\x12\x14\n" +
+	"\x05total\x18\x02 \x01(\x03R\x05total*l\n" +
 	"\n" +
 	"DeviceType\x12\x1b\n" +
 	"\x17DEVICE_TYPE_UNSPECIFIED\x10\x00\x12\x12\n" +
 	"\x0eDEVICE_TYPE_PC\x10\x01\x12\x15\n" +
 	"\x11DEVICE_TYPE_PHONE\x10\x02\x12\x16\n" +
-	"\x12DEVICE_TYPE_TABLET\x10\x032\xdf\x18\n" +
+	"\x12DEVICE_TYPE_TABLET\x10\x032\x82\x1b\n" +
 	"\x0fIdentityService\x12G\n" +
 	"\bRegister\x12\x1c.identity.v1.RegisterRequest\x1a\x1d.identity.v1.RegisterResponse\x12>\n" +
 	"\x05Login\x12\x19.identity.v1.LoginRequest\x1a\x1a.identity.v1.LoginResponse\x12V\n" +
@@ -4137,7 +4804,10 @@ const file_identity_v1_identity_proto_rawDesc = "" +
 	"\vSearchUsers\x12\x1f.identity.v1.SearchUsersRequest\x1a .identity.v1.SearchUsersResponse\x12k\n" +
 	"\x14GetNotificationCount\x12(.identity.v1.GetNotificationCountRequest\x1a).identity.v1.GetNotificationCountResponse\x12b\n" +
 	"\x11ListFriendDevices\x12%.identity.v1.ListFriendDevicesRequest\x1a&.identity.v1.ListFriendDevicesResponse\x12_\n" +
-	"\x10GetPlatformStats\x12$.identity.v1.GetPlatformStatsRequest\x1a%.identity.v1.GetPlatformStatsResponseBBZ@github.com/saitddundar/vinctum-core/proto/identity/v1;identityv1b\x06proto3"
+	"\x10GetPlatformStats\x12$.identity.v1.GetPlatformStatsRequest\x1a%.identity.v1.GetPlatformStatsResponse\x12Y\n" +
+	"\x0eAdminListUsers\x12\".identity.v1.AdminListUsersRequest\x1a#.identity.v1.AdminListUsersResponse\x12_\n" +
+	"\x10AdminListDevices\x12$.identity.v1.AdminListDevicesRequest\x1a%.identity.v1.AdminListDevicesResponse\x12e\n" +
+	"\x12AdminListAuditLogs\x12&.identity.v1.AdminListAuditLogsRequest\x1a'.identity.v1.AdminListAuditLogsResponseBBZ@github.com/saitddundar/vinctum-core/proto/identity/v1;identityv1b\x06proto3"
 
 var (
 	file_identity_v1_identity_proto_rawDescOnce sync.Once
@@ -4152,7 +4822,7 @@ func file_identity_v1_identity_proto_rawDescGZIP() []byte {
 }
 
 var file_identity_v1_identity_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_identity_v1_identity_proto_msgTypes = make([]protoimpl.MessageInfo, 74)
+var file_identity_v1_identity_proto_msgTypes = make([]protoimpl.MessageInfo, 83)
 var file_identity_v1_identity_proto_goTypes = []any{
 	(DeviceType)(0),                        // 0: identity.v1.DeviceType
 	(*RegisterRequest)(nil),                // 1: identity.v1.RegisterRequest
@@ -4229,16 +4899,25 @@ var file_identity_v1_identity_proto_goTypes = []any{
 	(*ListFriendDevicesResponse)(nil),      // 72: identity.v1.ListFriendDevicesResponse
 	(*GetPlatformStatsRequest)(nil),        // 73: identity.v1.GetPlatformStatsRequest
 	(*GetPlatformStatsResponse)(nil),       // 74: identity.v1.GetPlatformStatsResponse
-	(*timestamppb.Timestamp)(nil),          // 75: google.protobuf.Timestamp
+	(*AdminUser)(nil),                      // 75: identity.v1.AdminUser
+	(*AdminListUsersRequest)(nil),          // 76: identity.v1.AdminListUsersRequest
+	(*AdminListUsersResponse)(nil),         // 77: identity.v1.AdminListUsersResponse
+	(*AdminDevice)(nil),                    // 78: identity.v1.AdminDevice
+	(*AdminListDevicesRequest)(nil),        // 79: identity.v1.AdminListDevicesRequest
+	(*AdminListDevicesResponse)(nil),       // 80: identity.v1.AdminListDevicesResponse
+	(*AuditLog)(nil),                       // 81: identity.v1.AuditLog
+	(*AdminListAuditLogsRequest)(nil),      // 82: identity.v1.AdminListAuditLogsRequest
+	(*AdminListAuditLogsResponse)(nil),     // 83: identity.v1.AdminListAuditLogsResponse
+	(*timestamppb.Timestamp)(nil),          // 84: google.protobuf.Timestamp
 }
 var file_identity_v1_identity_proto_depIdxs = []int32{
-	75, // 0: identity.v1.RegisterResponse.created_at:type_name -> google.protobuf.Timestamp
+	84, // 0: identity.v1.RegisterResponse.created_at:type_name -> google.protobuf.Timestamp
 	11, // 1: identity.v1.LoginResponse.user:type_name -> identity.v1.User
-	75, // 2: identity.v1.User.created_at:type_name -> google.protobuf.Timestamp
+	84, // 2: identity.v1.User.created_at:type_name -> google.protobuf.Timestamp
 	0,  // 3: identity.v1.Device.device_type:type_name -> identity.v1.DeviceType
-	75, // 4: identity.v1.Device.approved_at:type_name -> google.protobuf.Timestamp
-	75, // 5: identity.v1.Device.last_active:type_name -> google.protobuf.Timestamp
-	75, // 6: identity.v1.Device.created_at:type_name -> google.protobuf.Timestamp
+	84, // 4: identity.v1.Device.approved_at:type_name -> google.protobuf.Timestamp
+	84, // 5: identity.v1.Device.last_active:type_name -> google.protobuf.Timestamp
+	84, // 6: identity.v1.Device.created_at:type_name -> google.protobuf.Timestamp
 	0,  // 7: identity.v1.RegisterDeviceRequest.device_type:type_name -> identity.v1.DeviceType
 	16, // 8: identity.v1.RegisterDeviceResponse.device:type_name -> identity.v1.Device
 	16, // 9: identity.v1.ListDevicesResponse.devices:type_name -> identity.v1.Device
@@ -4246,97 +4925,111 @@ var file_identity_v1_identity_proto_depIdxs = []int32{
 	0,  // 11: identity.v1.RedeemPairingCodeRequest.device_type:type_name -> identity.v1.DeviceType
 	16, // 12: identity.v1.ApprovePairingResponse.device:type_name -> identity.v1.Device
 	16, // 13: identity.v1.PeerSession.devices:type_name -> identity.v1.Device
-	75, // 14: identity.v1.PeerSession.created_at:type_name -> google.protobuf.Timestamp
-	75, // 15: identity.v1.PeerSession.closed_at:type_name -> google.protobuf.Timestamp
+	84, // 14: identity.v1.PeerSession.created_at:type_name -> google.protobuf.Timestamp
+	84, // 15: identity.v1.PeerSession.closed_at:type_name -> google.protobuf.Timestamp
 	35, // 16: identity.v1.CreatePeerSessionResponse.session:type_name -> identity.v1.PeerSession
 	35, // 17: identity.v1.ListPeerSessionsResponse.sessions:type_name -> identity.v1.PeerSession
 	16, // 18: identity.v1.ListSessionDevicesResponse.devices:type_name -> identity.v1.Device
-	75, // 19: identity.v1.DeviceKey.created_at:type_name -> google.protobuf.Timestamp
-	75, // 20: identity.v1.DeviceKey.rotated_at:type_name -> google.protobuf.Timestamp
+	84, // 19: identity.v1.DeviceKey.created_at:type_name -> google.protobuf.Timestamp
+	84, // 20: identity.v1.DeviceKey.rotated_at:type_name -> google.protobuf.Timestamp
 	48, // 21: identity.v1.UploadDeviceKeyResponse.key:type_name -> identity.v1.DeviceKey
 	48, // 22: identity.v1.GetDeviceKeyResponse.key:type_name -> identity.v1.DeviceKey
 	48, // 23: identity.v1.GetSessionDeviceKeysResponse.keys:type_name -> identity.v1.DeviceKey
 	55, // 24: identity.v1.Friend.user:type_name -> identity.v1.UserInfo
-	75, // 25: identity.v1.Friend.created_at:type_name -> google.protobuf.Timestamp
+	84, // 25: identity.v1.Friend.created_at:type_name -> google.protobuf.Timestamp
 	56, // 26: identity.v1.SendFriendRequestResp.friendship:type_name -> identity.v1.Friend
 	56, // 27: identity.v1.RespondToFriendRequestResp.friendship:type_name -> identity.v1.Friend
 	56, // 28: identity.v1.ListFriendsResponse.friends:type_name -> identity.v1.Friend
 	56, // 29: identity.v1.ListFriendRequestsResponse.requests:type_name -> identity.v1.Friend
 	55, // 30: identity.v1.SearchUsersResponse.users:type_name -> identity.v1.UserInfo
 	16, // 31: identity.v1.ListFriendDevicesResponse.devices:type_name -> identity.v1.Device
-	1,  // 32: identity.v1.IdentityService.Register:input_type -> identity.v1.RegisterRequest
-	3,  // 33: identity.v1.IdentityService.Login:input_type -> identity.v1.LoginRequest
-	5,  // 34: identity.v1.IdentityService.ValidateToken:input_type -> identity.v1.ValidateTokenRequest
-	7,  // 35: identity.v1.IdentityService.RefreshToken:input_type -> identity.v1.RefreshTokenRequest
-	9,  // 36: identity.v1.IdentityService.Logout:input_type -> identity.v1.LogoutRequest
-	12, // 37: identity.v1.IdentityService.VerifyEmail:input_type -> identity.v1.VerifyEmailRequest
-	14, // 38: identity.v1.IdentityService.ResendVerification:input_type -> identity.v1.ResendVerificationRequest
-	17, // 39: identity.v1.IdentityService.RegisterDevice:input_type -> identity.v1.RegisterDeviceRequest
-	19, // 40: identity.v1.IdentityService.ListDevices:input_type -> identity.v1.ListDevicesRequest
-	21, // 41: identity.v1.IdentityService.GetDevice:input_type -> identity.v1.GetDeviceRequest
-	23, // 42: identity.v1.IdentityService.RevokeDevice:input_type -> identity.v1.RevokeDeviceRequest
-	25, // 43: identity.v1.IdentityService.UpdateDeviceActivity:input_type -> identity.v1.UpdateDeviceActivityRequest
-	27, // 44: identity.v1.IdentityService.UpdateDeviceVisibility:input_type -> identity.v1.UpdateDeviceVisibilityRequest
-	29, // 45: identity.v1.IdentityService.GeneratePairingCode:input_type -> identity.v1.GeneratePairingCodeRequest
-	31, // 46: identity.v1.IdentityService.RedeemPairingCode:input_type -> identity.v1.RedeemPairingCodeRequest
-	33, // 47: identity.v1.IdentityService.ApprovePairing:input_type -> identity.v1.ApprovePairingRequest
-	36, // 48: identity.v1.IdentityService.CreatePeerSession:input_type -> identity.v1.CreatePeerSessionRequest
-	38, // 49: identity.v1.IdentityService.ListPeerSessions:input_type -> identity.v1.ListPeerSessionsRequest
-	40, // 50: identity.v1.IdentityService.ClosePeerSession:input_type -> identity.v1.ClosePeerSessionRequest
-	42, // 51: identity.v1.IdentityService.JoinPeerSession:input_type -> identity.v1.JoinPeerSessionRequest
-	44, // 52: identity.v1.IdentityService.LeavePeerSession:input_type -> identity.v1.LeavePeerSessionRequest
-	46, // 53: identity.v1.IdentityService.ListSessionDevices:input_type -> identity.v1.ListSessionDevicesRequest
-	49, // 54: identity.v1.IdentityService.UploadDeviceKey:input_type -> identity.v1.UploadDeviceKeyRequest
-	51, // 55: identity.v1.IdentityService.GetDeviceKey:input_type -> identity.v1.GetDeviceKeyRequest
-	53, // 56: identity.v1.IdentityService.GetSessionDeviceKeys:input_type -> identity.v1.GetSessionDeviceKeysRequest
-	57, // 57: identity.v1.IdentityService.SendFriendRequest:input_type -> identity.v1.SendFriendRequestReq
-	59, // 58: identity.v1.IdentityService.RespondToFriendRequest:input_type -> identity.v1.RespondToFriendRequestReq
-	61, // 59: identity.v1.IdentityService.ListFriends:input_type -> identity.v1.ListFriendsRequest
-	63, // 60: identity.v1.IdentityService.ListFriendRequests:input_type -> identity.v1.ListFriendRequestsRequest
-	65, // 61: identity.v1.IdentityService.RemoveFriend:input_type -> identity.v1.RemoveFriendRequest
-	67, // 62: identity.v1.IdentityService.SearchUsers:input_type -> identity.v1.SearchUsersRequest
-	69, // 63: identity.v1.IdentityService.GetNotificationCount:input_type -> identity.v1.GetNotificationCountRequest
-	71, // 64: identity.v1.IdentityService.ListFriendDevices:input_type -> identity.v1.ListFriendDevicesRequest
-	73, // 65: identity.v1.IdentityService.GetPlatformStats:input_type -> identity.v1.GetPlatformStatsRequest
-	2,  // 66: identity.v1.IdentityService.Register:output_type -> identity.v1.RegisterResponse
-	4,  // 67: identity.v1.IdentityService.Login:output_type -> identity.v1.LoginResponse
-	6,  // 68: identity.v1.IdentityService.ValidateToken:output_type -> identity.v1.ValidateTokenResponse
-	8,  // 69: identity.v1.IdentityService.RefreshToken:output_type -> identity.v1.RefreshTokenResponse
-	10, // 70: identity.v1.IdentityService.Logout:output_type -> identity.v1.LogoutResponse
-	13, // 71: identity.v1.IdentityService.VerifyEmail:output_type -> identity.v1.VerifyEmailResponse
-	15, // 72: identity.v1.IdentityService.ResendVerification:output_type -> identity.v1.ResendVerificationResponse
-	18, // 73: identity.v1.IdentityService.RegisterDevice:output_type -> identity.v1.RegisterDeviceResponse
-	20, // 74: identity.v1.IdentityService.ListDevices:output_type -> identity.v1.ListDevicesResponse
-	22, // 75: identity.v1.IdentityService.GetDevice:output_type -> identity.v1.GetDeviceResponse
-	24, // 76: identity.v1.IdentityService.RevokeDevice:output_type -> identity.v1.RevokeDeviceResponse
-	26, // 77: identity.v1.IdentityService.UpdateDeviceActivity:output_type -> identity.v1.UpdateDeviceActivityResponse
-	28, // 78: identity.v1.IdentityService.UpdateDeviceVisibility:output_type -> identity.v1.UpdateDeviceVisibilityResponse
-	30, // 79: identity.v1.IdentityService.GeneratePairingCode:output_type -> identity.v1.GeneratePairingCodeResponse
-	32, // 80: identity.v1.IdentityService.RedeemPairingCode:output_type -> identity.v1.RedeemPairingCodeResponse
-	34, // 81: identity.v1.IdentityService.ApprovePairing:output_type -> identity.v1.ApprovePairingResponse
-	37, // 82: identity.v1.IdentityService.CreatePeerSession:output_type -> identity.v1.CreatePeerSessionResponse
-	39, // 83: identity.v1.IdentityService.ListPeerSessions:output_type -> identity.v1.ListPeerSessionsResponse
-	41, // 84: identity.v1.IdentityService.ClosePeerSession:output_type -> identity.v1.ClosePeerSessionResponse
-	43, // 85: identity.v1.IdentityService.JoinPeerSession:output_type -> identity.v1.JoinPeerSessionResponse
-	45, // 86: identity.v1.IdentityService.LeavePeerSession:output_type -> identity.v1.LeavePeerSessionResponse
-	47, // 87: identity.v1.IdentityService.ListSessionDevices:output_type -> identity.v1.ListSessionDevicesResponse
-	50, // 88: identity.v1.IdentityService.UploadDeviceKey:output_type -> identity.v1.UploadDeviceKeyResponse
-	52, // 89: identity.v1.IdentityService.GetDeviceKey:output_type -> identity.v1.GetDeviceKeyResponse
-	54, // 90: identity.v1.IdentityService.GetSessionDeviceKeys:output_type -> identity.v1.GetSessionDeviceKeysResponse
-	58, // 91: identity.v1.IdentityService.SendFriendRequest:output_type -> identity.v1.SendFriendRequestResp
-	60, // 92: identity.v1.IdentityService.RespondToFriendRequest:output_type -> identity.v1.RespondToFriendRequestResp
-	62, // 93: identity.v1.IdentityService.ListFriends:output_type -> identity.v1.ListFriendsResponse
-	64, // 94: identity.v1.IdentityService.ListFriendRequests:output_type -> identity.v1.ListFriendRequestsResponse
-	66, // 95: identity.v1.IdentityService.RemoveFriend:output_type -> identity.v1.RemoveFriendResponse
-	68, // 96: identity.v1.IdentityService.SearchUsers:output_type -> identity.v1.SearchUsersResponse
-	70, // 97: identity.v1.IdentityService.GetNotificationCount:output_type -> identity.v1.GetNotificationCountResponse
-	72, // 98: identity.v1.IdentityService.ListFriendDevices:output_type -> identity.v1.ListFriendDevicesResponse
-	74, // 99: identity.v1.IdentityService.GetPlatformStats:output_type -> identity.v1.GetPlatformStatsResponse
-	66, // [66:100] is the sub-list for method output_type
-	32, // [32:66] is the sub-list for method input_type
-	32, // [32:32] is the sub-list for extension type_name
-	32, // [32:32] is the sub-list for extension extendee
-	0,  // [0:32] is the sub-list for field type_name
+	84, // 32: identity.v1.AdminUser.created_at:type_name -> google.protobuf.Timestamp
+	75, // 33: identity.v1.AdminListUsersResponse.users:type_name -> identity.v1.AdminUser
+	0,  // 34: identity.v1.AdminDevice.device_type:type_name -> identity.v1.DeviceType
+	84, // 35: identity.v1.AdminDevice.last_active:type_name -> google.protobuf.Timestamp
+	84, // 36: identity.v1.AdminDevice.created_at:type_name -> google.protobuf.Timestamp
+	78, // 37: identity.v1.AdminListDevicesResponse.devices:type_name -> identity.v1.AdminDevice
+	84, // 38: identity.v1.AuditLog.created_at:type_name -> google.protobuf.Timestamp
+	81, // 39: identity.v1.AdminListAuditLogsResponse.logs:type_name -> identity.v1.AuditLog
+	1,  // 40: identity.v1.IdentityService.Register:input_type -> identity.v1.RegisterRequest
+	3,  // 41: identity.v1.IdentityService.Login:input_type -> identity.v1.LoginRequest
+	5,  // 42: identity.v1.IdentityService.ValidateToken:input_type -> identity.v1.ValidateTokenRequest
+	7,  // 43: identity.v1.IdentityService.RefreshToken:input_type -> identity.v1.RefreshTokenRequest
+	9,  // 44: identity.v1.IdentityService.Logout:input_type -> identity.v1.LogoutRequest
+	12, // 45: identity.v1.IdentityService.VerifyEmail:input_type -> identity.v1.VerifyEmailRequest
+	14, // 46: identity.v1.IdentityService.ResendVerification:input_type -> identity.v1.ResendVerificationRequest
+	17, // 47: identity.v1.IdentityService.RegisterDevice:input_type -> identity.v1.RegisterDeviceRequest
+	19, // 48: identity.v1.IdentityService.ListDevices:input_type -> identity.v1.ListDevicesRequest
+	21, // 49: identity.v1.IdentityService.GetDevice:input_type -> identity.v1.GetDeviceRequest
+	23, // 50: identity.v1.IdentityService.RevokeDevice:input_type -> identity.v1.RevokeDeviceRequest
+	25, // 51: identity.v1.IdentityService.UpdateDeviceActivity:input_type -> identity.v1.UpdateDeviceActivityRequest
+	27, // 52: identity.v1.IdentityService.UpdateDeviceVisibility:input_type -> identity.v1.UpdateDeviceVisibilityRequest
+	29, // 53: identity.v1.IdentityService.GeneratePairingCode:input_type -> identity.v1.GeneratePairingCodeRequest
+	31, // 54: identity.v1.IdentityService.RedeemPairingCode:input_type -> identity.v1.RedeemPairingCodeRequest
+	33, // 55: identity.v1.IdentityService.ApprovePairing:input_type -> identity.v1.ApprovePairingRequest
+	36, // 56: identity.v1.IdentityService.CreatePeerSession:input_type -> identity.v1.CreatePeerSessionRequest
+	38, // 57: identity.v1.IdentityService.ListPeerSessions:input_type -> identity.v1.ListPeerSessionsRequest
+	40, // 58: identity.v1.IdentityService.ClosePeerSession:input_type -> identity.v1.ClosePeerSessionRequest
+	42, // 59: identity.v1.IdentityService.JoinPeerSession:input_type -> identity.v1.JoinPeerSessionRequest
+	44, // 60: identity.v1.IdentityService.LeavePeerSession:input_type -> identity.v1.LeavePeerSessionRequest
+	46, // 61: identity.v1.IdentityService.ListSessionDevices:input_type -> identity.v1.ListSessionDevicesRequest
+	49, // 62: identity.v1.IdentityService.UploadDeviceKey:input_type -> identity.v1.UploadDeviceKeyRequest
+	51, // 63: identity.v1.IdentityService.GetDeviceKey:input_type -> identity.v1.GetDeviceKeyRequest
+	53, // 64: identity.v1.IdentityService.GetSessionDeviceKeys:input_type -> identity.v1.GetSessionDeviceKeysRequest
+	57, // 65: identity.v1.IdentityService.SendFriendRequest:input_type -> identity.v1.SendFriendRequestReq
+	59, // 66: identity.v1.IdentityService.RespondToFriendRequest:input_type -> identity.v1.RespondToFriendRequestReq
+	61, // 67: identity.v1.IdentityService.ListFriends:input_type -> identity.v1.ListFriendsRequest
+	63, // 68: identity.v1.IdentityService.ListFriendRequests:input_type -> identity.v1.ListFriendRequestsRequest
+	65, // 69: identity.v1.IdentityService.RemoveFriend:input_type -> identity.v1.RemoveFriendRequest
+	67, // 70: identity.v1.IdentityService.SearchUsers:input_type -> identity.v1.SearchUsersRequest
+	69, // 71: identity.v1.IdentityService.GetNotificationCount:input_type -> identity.v1.GetNotificationCountRequest
+	71, // 72: identity.v1.IdentityService.ListFriendDevices:input_type -> identity.v1.ListFriendDevicesRequest
+	73, // 73: identity.v1.IdentityService.GetPlatformStats:input_type -> identity.v1.GetPlatformStatsRequest
+	76, // 74: identity.v1.IdentityService.AdminListUsers:input_type -> identity.v1.AdminListUsersRequest
+	79, // 75: identity.v1.IdentityService.AdminListDevices:input_type -> identity.v1.AdminListDevicesRequest
+	82, // 76: identity.v1.IdentityService.AdminListAuditLogs:input_type -> identity.v1.AdminListAuditLogsRequest
+	2,  // 77: identity.v1.IdentityService.Register:output_type -> identity.v1.RegisterResponse
+	4,  // 78: identity.v1.IdentityService.Login:output_type -> identity.v1.LoginResponse
+	6,  // 79: identity.v1.IdentityService.ValidateToken:output_type -> identity.v1.ValidateTokenResponse
+	8,  // 80: identity.v1.IdentityService.RefreshToken:output_type -> identity.v1.RefreshTokenResponse
+	10, // 81: identity.v1.IdentityService.Logout:output_type -> identity.v1.LogoutResponse
+	13, // 82: identity.v1.IdentityService.VerifyEmail:output_type -> identity.v1.VerifyEmailResponse
+	15, // 83: identity.v1.IdentityService.ResendVerification:output_type -> identity.v1.ResendVerificationResponse
+	18, // 84: identity.v1.IdentityService.RegisterDevice:output_type -> identity.v1.RegisterDeviceResponse
+	20, // 85: identity.v1.IdentityService.ListDevices:output_type -> identity.v1.ListDevicesResponse
+	22, // 86: identity.v1.IdentityService.GetDevice:output_type -> identity.v1.GetDeviceResponse
+	24, // 87: identity.v1.IdentityService.RevokeDevice:output_type -> identity.v1.RevokeDeviceResponse
+	26, // 88: identity.v1.IdentityService.UpdateDeviceActivity:output_type -> identity.v1.UpdateDeviceActivityResponse
+	28, // 89: identity.v1.IdentityService.UpdateDeviceVisibility:output_type -> identity.v1.UpdateDeviceVisibilityResponse
+	30, // 90: identity.v1.IdentityService.GeneratePairingCode:output_type -> identity.v1.GeneratePairingCodeResponse
+	32, // 91: identity.v1.IdentityService.RedeemPairingCode:output_type -> identity.v1.RedeemPairingCodeResponse
+	34, // 92: identity.v1.IdentityService.ApprovePairing:output_type -> identity.v1.ApprovePairingResponse
+	37, // 93: identity.v1.IdentityService.CreatePeerSession:output_type -> identity.v1.CreatePeerSessionResponse
+	39, // 94: identity.v1.IdentityService.ListPeerSessions:output_type -> identity.v1.ListPeerSessionsResponse
+	41, // 95: identity.v1.IdentityService.ClosePeerSession:output_type -> identity.v1.ClosePeerSessionResponse
+	43, // 96: identity.v1.IdentityService.JoinPeerSession:output_type -> identity.v1.JoinPeerSessionResponse
+	45, // 97: identity.v1.IdentityService.LeavePeerSession:output_type -> identity.v1.LeavePeerSessionResponse
+	47, // 98: identity.v1.IdentityService.ListSessionDevices:output_type -> identity.v1.ListSessionDevicesResponse
+	50, // 99: identity.v1.IdentityService.UploadDeviceKey:output_type -> identity.v1.UploadDeviceKeyResponse
+	52, // 100: identity.v1.IdentityService.GetDeviceKey:output_type -> identity.v1.GetDeviceKeyResponse
+	54, // 101: identity.v1.IdentityService.GetSessionDeviceKeys:output_type -> identity.v1.GetSessionDeviceKeysResponse
+	58, // 102: identity.v1.IdentityService.SendFriendRequest:output_type -> identity.v1.SendFriendRequestResp
+	60, // 103: identity.v1.IdentityService.RespondToFriendRequest:output_type -> identity.v1.RespondToFriendRequestResp
+	62, // 104: identity.v1.IdentityService.ListFriends:output_type -> identity.v1.ListFriendsResponse
+	64, // 105: identity.v1.IdentityService.ListFriendRequests:output_type -> identity.v1.ListFriendRequestsResponse
+	66, // 106: identity.v1.IdentityService.RemoveFriend:output_type -> identity.v1.RemoveFriendResponse
+	68, // 107: identity.v1.IdentityService.SearchUsers:output_type -> identity.v1.SearchUsersResponse
+	70, // 108: identity.v1.IdentityService.GetNotificationCount:output_type -> identity.v1.GetNotificationCountResponse
+	72, // 109: identity.v1.IdentityService.ListFriendDevices:output_type -> identity.v1.ListFriendDevicesResponse
+	74, // 110: identity.v1.IdentityService.GetPlatformStats:output_type -> identity.v1.GetPlatformStatsResponse
+	77, // 111: identity.v1.IdentityService.AdminListUsers:output_type -> identity.v1.AdminListUsersResponse
+	80, // 112: identity.v1.IdentityService.AdminListDevices:output_type -> identity.v1.AdminListDevicesResponse
+	83, // 113: identity.v1.IdentityService.AdminListAuditLogs:output_type -> identity.v1.AdminListAuditLogsResponse
+	77, // [77:114] is the sub-list for method output_type
+	40, // [40:77] is the sub-list for method input_type
+	40, // [40:40] is the sub-list for extension type_name
+	40, // [40:40] is the sub-list for extension extendee
+	0,  // [0:40] is the sub-list for field type_name
 }
 
 func init() { file_identity_v1_identity_proto_init() }
@@ -4350,7 +5043,7 @@ func file_identity_v1_identity_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_identity_v1_identity_proto_rawDesc), len(file_identity_v1_identity_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   74,
+			NumMessages:   83,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

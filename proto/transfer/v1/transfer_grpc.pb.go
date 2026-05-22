@@ -32,6 +32,7 @@ const (
 	TransferService_InitiateGroupTransfer_FullMethodName = "/transfer.v1.TransferService/InitiateGroupTransfer"
 	TransferService_ListGroupTransfers_FullMethodName    = "/transfer.v1.TransferService/ListGroupTransfers"
 	TransferService_GetTransferStats_FullMethodName      = "/transfer.v1.TransferService/GetTransferStats"
+	TransferService_AdminListTransfers_FullMethodName    = "/transfer.v1.TransferService/AdminListTransfers"
 )
 
 // TransferServiceClient is the client API for TransferService service.
@@ -66,6 +67,8 @@ type TransferServiceClient interface {
 	ListGroupTransfers(ctx context.Context, in *ListGroupTransfersRequest, opts ...grpc.CallOption) (*ListGroupTransfersResponse, error)
 	// Platform Stats (public, no auth required)
 	GetTransferStats(ctx context.Context, in *GetTransferStatsRequest, opts ...grpc.CallOption) (*GetTransferStatsResponse, error)
+	// Admin
+	AdminListTransfers(ctx context.Context, in *AdminListTransfersRequest, opts ...grpc.CallOption) (*AdminListTransfersResponse, error)
 }
 
 type transferServiceClient struct {
@@ -227,6 +230,16 @@ func (c *transferServiceClient) GetTransferStats(ctx context.Context, in *GetTra
 	return out, nil
 }
 
+func (c *transferServiceClient) AdminListTransfers(ctx context.Context, in *AdminListTransfersRequest, opts ...grpc.CallOption) (*AdminListTransfersResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AdminListTransfersResponse)
+	err := c.cc.Invoke(ctx, TransferService_AdminListTransfers_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TransferServiceServer is the server API for TransferService service.
 // All implementations should embed UnimplementedTransferServiceServer
 // for forward compatibility.
@@ -259,6 +272,8 @@ type TransferServiceServer interface {
 	ListGroupTransfers(context.Context, *ListGroupTransfersRequest) (*ListGroupTransfersResponse, error)
 	// Platform Stats (public, no auth required)
 	GetTransferStats(context.Context, *GetTransferStatsRequest) (*GetTransferStatsResponse, error)
+	// Admin
+	AdminListTransfers(context.Context, *AdminListTransfersRequest) (*AdminListTransfersResponse, error)
 }
 
 // UnimplementedTransferServiceServer should be embedded to have
@@ -306,6 +321,9 @@ func (UnimplementedTransferServiceServer) ListGroupTransfers(context.Context, *L
 }
 func (UnimplementedTransferServiceServer) GetTransferStats(context.Context, *GetTransferStatsRequest) (*GetTransferStatsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetTransferStats not implemented")
+}
+func (UnimplementedTransferServiceServer) AdminListTransfers(context.Context, *AdminListTransfersRequest) (*AdminListTransfersResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method AdminListTransfers not implemented")
 }
 func (UnimplementedTransferServiceServer) testEmbeddedByValue() {}
 
@@ -536,6 +554,24 @@ func _TransferService_GetTransferStats_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TransferService_AdminListTransfers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AdminListTransfersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TransferServiceServer).AdminListTransfers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TransferService_AdminListTransfers_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TransferServiceServer).AdminListTransfers(ctx, req.(*AdminListTransfersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TransferService_ServiceDesc is the grpc.ServiceDesc for TransferService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -582,6 +618,10 @@ var TransferService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetTransferStats",
 			Handler:    _TransferService_GetTransferStats_Handler,
+		},
+		{
+			MethodName: "AdminListTransfers",
+			Handler:    _TransferService_AdminListTransfers_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

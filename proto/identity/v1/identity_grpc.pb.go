@@ -53,6 +53,9 @@ const (
 	IdentityService_GetNotificationCount_FullMethodName   = "/identity.v1.IdentityService/GetNotificationCount"
 	IdentityService_ListFriendDevices_FullMethodName      = "/identity.v1.IdentityService/ListFriendDevices"
 	IdentityService_GetPlatformStats_FullMethodName       = "/identity.v1.IdentityService/GetPlatformStats"
+	IdentityService_AdminListUsers_FullMethodName         = "/identity.v1.IdentityService/AdminListUsers"
+	IdentityService_AdminListDevices_FullMethodName       = "/identity.v1.IdentityService/AdminListDevices"
+	IdentityService_AdminListAuditLogs_FullMethodName     = "/identity.v1.IdentityService/AdminListAuditLogs"
 )
 
 // IdentityServiceClient is the client API for IdentityService service.
@@ -99,6 +102,10 @@ type IdentityServiceClient interface {
 	ListFriendDevices(ctx context.Context, in *ListFriendDevicesRequest, opts ...grpc.CallOption) (*ListFriendDevicesResponse, error)
 	// Platform Stats (public, no auth required)
 	GetPlatformStats(ctx context.Context, in *GetPlatformStatsRequest, opts ...grpc.CallOption) (*GetPlatformStatsResponse, error)
+	// Admin
+	AdminListUsers(ctx context.Context, in *AdminListUsersRequest, opts ...grpc.CallOption) (*AdminListUsersResponse, error)
+	AdminListDevices(ctx context.Context, in *AdminListDevicesRequest, opts ...grpc.CallOption) (*AdminListDevicesResponse, error)
+	AdminListAuditLogs(ctx context.Context, in *AdminListAuditLogsRequest, opts ...grpc.CallOption) (*AdminListAuditLogsResponse, error)
 }
 
 type identityServiceClient struct {
@@ -449,6 +456,36 @@ func (c *identityServiceClient) GetPlatformStats(ctx context.Context, in *GetPla
 	return out, nil
 }
 
+func (c *identityServiceClient) AdminListUsers(ctx context.Context, in *AdminListUsersRequest, opts ...grpc.CallOption) (*AdminListUsersResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AdminListUsersResponse)
+	err := c.cc.Invoke(ctx, IdentityService_AdminListUsers_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) AdminListDevices(ctx context.Context, in *AdminListDevicesRequest, opts ...grpc.CallOption) (*AdminListDevicesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AdminListDevicesResponse)
+	err := c.cc.Invoke(ctx, IdentityService_AdminListDevices_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) AdminListAuditLogs(ctx context.Context, in *AdminListAuditLogsRequest, opts ...grpc.CallOption) (*AdminListAuditLogsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AdminListAuditLogsResponse)
+	err := c.cc.Invoke(ctx, IdentityService_AdminListAuditLogs_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // IdentityServiceServer is the server API for IdentityService service.
 // All implementations should embed UnimplementedIdentityServiceServer
 // for forward compatibility.
@@ -493,6 +530,10 @@ type IdentityServiceServer interface {
 	ListFriendDevices(context.Context, *ListFriendDevicesRequest) (*ListFriendDevicesResponse, error)
 	// Platform Stats (public, no auth required)
 	GetPlatformStats(context.Context, *GetPlatformStatsRequest) (*GetPlatformStatsResponse, error)
+	// Admin
+	AdminListUsers(context.Context, *AdminListUsersRequest) (*AdminListUsersResponse, error)
+	AdminListDevices(context.Context, *AdminListDevicesRequest) (*AdminListDevicesResponse, error)
+	AdminListAuditLogs(context.Context, *AdminListAuditLogsRequest) (*AdminListAuditLogsResponse, error)
 }
 
 // UnimplementedIdentityServiceServer should be embedded to have
@@ -603,6 +644,15 @@ func (UnimplementedIdentityServiceServer) ListFriendDevices(context.Context, *Li
 }
 func (UnimplementedIdentityServiceServer) GetPlatformStats(context.Context, *GetPlatformStatsRequest) (*GetPlatformStatsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetPlatformStats not implemented")
+}
+func (UnimplementedIdentityServiceServer) AdminListUsers(context.Context, *AdminListUsersRequest) (*AdminListUsersResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method AdminListUsers not implemented")
+}
+func (UnimplementedIdentityServiceServer) AdminListDevices(context.Context, *AdminListDevicesRequest) (*AdminListDevicesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method AdminListDevices not implemented")
+}
+func (UnimplementedIdentityServiceServer) AdminListAuditLogs(context.Context, *AdminListAuditLogsRequest) (*AdminListAuditLogsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method AdminListAuditLogs not implemented")
 }
 func (UnimplementedIdentityServiceServer) testEmbeddedByValue() {}
 
@@ -1236,6 +1286,60 @@ func _IdentityService_GetPlatformStats_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _IdentityService_AdminListUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AdminListUsersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).AdminListUsers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_AdminListUsers_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).AdminListUsers(ctx, req.(*AdminListUsersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_AdminListDevices_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AdminListDevicesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).AdminListDevices(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_AdminListDevices_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).AdminListDevices(ctx, req.(*AdminListDevicesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_AdminListAuditLogs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AdminListAuditLogsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).AdminListAuditLogs(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_AdminListAuditLogs_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).AdminListAuditLogs(ctx, req.(*AdminListAuditLogsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // IdentityService_ServiceDesc is the grpc.ServiceDesc for IdentityService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1378,6 +1482,18 @@ var IdentityService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetPlatformStats",
 			Handler:    _IdentityService_GetPlatformStats_Handler,
+		},
+		{
+			MethodName: "AdminListUsers",
+			Handler:    _IdentityService_AdminListUsers_Handler,
+		},
+		{
+			MethodName: "AdminListDevices",
+			Handler:    _IdentityService_AdminListDevices_Handler,
+		},
+		{
+			MethodName: "AdminListAuditLogs",
+			Handler:    _IdentityService_AdminListAuditLogs_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
