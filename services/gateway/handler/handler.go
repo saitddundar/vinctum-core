@@ -149,6 +149,9 @@ func (h *GatewayHandler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/users/search", h.handleSearchUsers)
 	mux.HandleFunc("GET /api/v1/notifications/count", h.handleGetNotificationCount)
 
+	// platform stats (public, no auth)
+	mux.HandleFunc("GET /api/v1/stats", h.handlePlatformStats)
+
 	// routing proxy
 	mux.HandleFunc("POST /api/v1/routes/find", h.handleFindRoute)
 	mux.HandleFunc("GET /api/v1/routes/table/{nodeId}", h.handleGetRouteTable)
@@ -1715,4 +1718,33 @@ func (h *GatewayHandler) handleListGroupTransfers(w http.ResponseWriter, r *http
 		return
 	}
 	writeJSON(w, http.StatusOK, resp)
+}
+
+func (h *GatewayHandler) handlePlatformStats(w http.ResponseWriter, _ *http.Request) {
+	result := map[string]int64{
+		"total_users":     0,
+		"total_devices":   0,
+		"total_transfers": 0,
+		"total_bytes":     0,
+	}
+
+	ctx := context.Background()
+
+	if h.identityClient != nil {
+		resp, err := h.identityClient.GetPlatformStats(ctx, &identityv1.GetPlatformStatsRequest{})
+		if err == nil {
+			result["total_users"] = resp.TotalUsers
+			result["total_devices"] = resp.TotalDevices
+		}
+	}
+
+	if h.transferClient != nil {
+		resp, err := h.transferClient.GetTransferStats(ctx, &transferv1.GetTransferStatsRequest{})
+		if err == nil {
+			result["total_transfers"] = resp.TotalTransfers
+			result["total_bytes"] = resp.TotalBytes
+		}
+	}
+
+	writeJSON(w, http.StatusOK, result)
 }
