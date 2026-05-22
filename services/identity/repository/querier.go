@@ -13,6 +13,11 @@ import (
 type Querier interface {
 	AcceptFriendRequest(ctx context.Context, arg AcceptFriendRequestParams) error
 	AddDeviceToSession(ctx context.Context, arg AddDeviceToSessionParams) error
+	AdminCountAuditLogs(ctx context.Context) (int64, error)
+	AdminListAuditLogs(ctx context.Context, arg AdminListAuditLogsParams) ([]AuditLog, error)
+	AdminListDevices(ctx context.Context, arg AdminListDevicesParams) ([]AdminListDevicesRow, error)
+	// ─── Admin Queries ─────────────────────────────────
+	AdminListUsers(ctx context.Context, arg AdminListUsersParams) ([]AdminListUsersRow, error)
 	ApproveDevice(ctx context.Context, arg ApproveDeviceParams) error
 	ClosePeerSession(ctx context.Context, arg ClosePeerSessionParams) error
 	CountDevices(ctx context.Context) (int64, error)

@@ -11,6 +11,7 @@ import (
 )
 
 type Querier interface {
+	AdminListTransfers(ctx context.Context, arg AdminListTransfersParams) ([]Transfer, error)
 	CompleteTransfer(ctx context.Context, transferID string) error
 	ConfirmP2PTransfer(ctx context.Context, arg ConfirmP2PTransferParams) error
 	// ─── Platform Stats ────────────────────────────────

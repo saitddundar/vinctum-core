@@ -10,6 +10,16 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type AuditLog struct {
+	ID         int64     `json:"id"`
+	UserID     string    `json:"user_id"`
+	Method     string    `json:"method"`
+	Code       string    `json:"code"`
+	PeerAddr   string    `json:"peer_addr"`
+	DurationMs int64     `json:"duration_ms"`
+	CreatedAt  time.Time `json:"created_at"`
+}
+
 type Device struct {
 	ID          string             `json:"id"`
 	UserID      string             `json:"user_id"`

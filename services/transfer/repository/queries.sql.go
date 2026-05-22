@@ -11,6 +11,55 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const adminListTransfers = `-- name: AdminListTransfers :many
+SELECT transfer_id, sender_node_id, receiver_node_id, filename, total_size_bytes, content_hash, chunk_size_bytes, total_chunks, chunks_done, status, created_at, updated_at, encryption_key, route_hops, replication_factor, sender_ephemeral_pubkey, transfer_mode, group_transfer_id, wrapped_file_key FROM transfers ORDER BY created_at DESC LIMIT $1 OFFSET $2
+`
+
+type AdminListTransfersParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+func (q *Queries) AdminListTransfers(ctx context.Context, arg AdminListTransfersParams) ([]Transfer, error) {
+	rows, err := q.db.Query(ctx, adminListTransfers, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Transfer
+	for rows.Next() {
+		var i Transfer
+		if err := rows.Scan(
+			&i.TransferID,
+			&i.SenderNodeID,
+			&i.ReceiverNodeID,
+			&i.Filename,
+			&i.TotalSizeBytes,
+			&i.ContentHash,
+			&i.ChunkSizeBytes,
+			&i.TotalChunks,
+			&i.ChunksDone,
+			&i.Status,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.EncryptionKey,
+			&i.RouteHops,
+			&i.ReplicationFactor,
+			&i.SenderEphemeralPubkey,
+			&i.TransferMode,
+			&i.GroupTransferID,
+			&i.WrappedFileKey,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const completeTransfer = `-- name: CompleteTransfer :exec
 UPDATE transfers SET status = 3, chunks_done = total_chunks, updated_at = NOW() WHERE transfer_id = $1
 `

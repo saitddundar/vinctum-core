@@ -53,3 +53,6 @@ SELECT COUNT(*) FROM transfers;
 
 -- name: SumTransferredBytes :one
 SELECT COALESCE(SUM(total_size_bytes), 0)::bigint FROM transfers WHERE status = 3;
+
+-- name: AdminListTransfers :many
+SELECT * FROM transfers ORDER BY created_at DESC LIMIT $1 OFFSET $2;

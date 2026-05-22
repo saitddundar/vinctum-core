@@ -42,6 +42,166 @@ func (q *Queries) AddDeviceToSession(ctx context.Context, arg AddDeviceToSession
 	return err
 }
 
+const adminCountAuditLogs = `-- name: AdminCountAuditLogs :one
+SELECT COUNT(*) FROM audit_logs
+`
+
+func (q *Queries) AdminCountAuditLogs(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, adminCountAuditLogs)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const adminListAuditLogs = `-- name: AdminListAuditLogs :many
+SELECT id, user_id, method, code, peer_addr, duration_ms, created_at FROM audit_logs ORDER BY created_at DESC LIMIT $1 OFFSET $2
+`
+
+type AdminListAuditLogsParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+func (q *Queries) AdminListAuditLogs(ctx context.Context, arg AdminListAuditLogsParams) ([]AuditLog, error) {
+	rows, err := q.db.Query(ctx, adminListAuditLogs, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []AuditLog
+	for rows.Next() {
+		var i AuditLog
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.Method,
+			&i.Code,
+			&i.PeerAddr,
+			&i.DurationMs,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const adminListDevices = `-- name: AdminListDevices :many
+SELECT d.id, d.user_id, d.name, d.device_type, d.node_id, d.fingerprint, d.is_approved, d.approved_at, d.approved_by, d.last_active, d.created_at, d.revoked_at, d.is_public, u.username AS owner_username, u.email AS owner_email
+FROM devices d
+JOIN users u ON u.id = d.user_id
+ORDER BY d.created_at DESC LIMIT $1 OFFSET $2
+`
+
+type AdminListDevicesParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+type AdminListDevicesRow struct {
+	ID            string             `json:"id"`
+	UserID        string             `json:"user_id"`
+	Name          string             `json:"name"`
+	DeviceType    string             `json:"device_type"`
+	NodeID        pgtype.Text        `json:"node_id"`
+	Fingerprint   string             `json:"fingerprint"`
+	IsApproved    bool               `json:"is_approved"`
+	ApprovedAt    pgtype.Timestamptz `json:"approved_at"`
+	ApprovedBy    pgtype.UUID        `json:"approved_by"`
+	LastActive    time.Time          `json:"last_active"`
+	CreatedAt     time.Time          `json:"created_at"`
+	RevokedAt     pgtype.Timestamptz `json:"revoked_at"`
+	IsPublic      bool               `json:"is_public"`
+	OwnerUsername string             `json:"owner_username"`
+	OwnerEmail    string             `json:"owner_email"`
+}
+
+func (q *Queries) AdminListDevices(ctx context.Context, arg AdminListDevicesParams) ([]AdminListDevicesRow, error) {
+	rows, err := q.db.Query(ctx, adminListDevices, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []AdminListDevicesRow
+	for rows.Next() {
+		var i AdminListDevicesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.Name,
+			&i.DeviceType,
+			&i.NodeID,
+			&i.Fingerprint,
+			&i.IsApproved,
+			&i.ApprovedAt,
+			&i.ApprovedBy,
+			&i.LastActive,
+			&i.CreatedAt,
+			&i.RevokedAt,
+			&i.IsPublic,
+			&i.OwnerUsername,
+			&i.OwnerEmail,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const adminListUsers = `-- name: AdminListUsers :many
+
+SELECT id, username, email, email_verified, created_at
+FROM users ORDER BY created_at DESC LIMIT $1 OFFSET $2
+`
+
+type AdminListUsersParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+type AdminListUsersRow struct {
+	ID            string    `json:"id"`
+	Username      string    `json:"username"`
+	Email         string    `json:"email"`
+	EmailVerified bool      `json:"email_verified"`
+	CreatedAt     time.Time `json:"created_at"`
+}
+
+// ─── Admin Queries ─────────────────────────────────
+func (q *Queries) AdminListUsers(ctx context.Context, arg AdminListUsersParams) ([]AdminListUsersRow, error) {
+	rows, err := q.db.Query(ctx, adminListUsers, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []AdminListUsersRow
+	for rows.Next() {
+		var i AdminListUsersRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Username,
+			&i.Email,
+			&i.EmailVerified,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const approveDevice = `-- name: ApproveDevice :exec
 UPDATE devices SET is_approved = TRUE, approved_at = NOW(), approved_by = $2::uuid
 WHERE id = $1::uuid

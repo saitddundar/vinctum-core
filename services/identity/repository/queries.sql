@@ -169,3 +169,21 @@ SELECT COUNT(*) FROM users WHERE email_verified = TRUE;
 
 -- name: CountDevices :one
 SELECT COUNT(*) FROM devices WHERE revoked_at IS NULL AND is_approved = TRUE;
+
+-- ─── Admin Queries ─────────────────────────────────
+
+-- name: AdminListUsers :many
+SELECT id, username, email, email_verified, created_at
+FROM users ORDER BY created_at DESC LIMIT $1 OFFSET $2;
+
+-- name: AdminListDevices :many
+SELECT d.*, u.username AS owner_username, u.email AS owner_email
+FROM devices d
+JOIN users u ON u.id = d.user_id
+ORDER BY d.created_at DESC LIMIT $1 OFFSET $2;
+
+-- name: AdminListAuditLogs :many
+SELECT * FROM audit_logs ORDER BY created_at DESC LIMIT $1 OFFSET $2;
+
+-- name: AdminCountAuditLogs :one
+SELECT COUNT(*) FROM audit_logs;
