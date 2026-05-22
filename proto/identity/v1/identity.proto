@@ -50,6 +50,9 @@ service IdentityService {
   rpc SearchUsers(SearchUsersRequest) returns (SearchUsersResponse);
   rpc GetNotificationCount(GetNotificationCountRequest) returns (GetNotificationCountResponse);
   rpc ListFriendDevices(ListFriendDevicesRequest) returns (ListFriendDevicesResponse);
+
+  // Platform Stats (public, no auth required)
+  rpc GetPlatformStats(GetPlatformStatsRequest) returns (GetPlatformStatsResponse);
 }
 
 message RegisterRequest {
@@ -389,4 +392,12 @@ message ListFriendDevicesRequest {
 }
 message ListFriendDevicesResponse {
   repeated Device devices = 1;
+}
+
+// ─── Platform Stats ───────────────────────────────
+
+message GetPlatformStatsRequest {}
+message GetPlatformStatsResponse {
+  int64 total_users   = 1;
+  int64 total_devices = 2;
 }

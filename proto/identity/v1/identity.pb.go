@@ -3762,6 +3762,94 @@ func (x *ListFriendDevicesResponse) GetDevices() []*Device {
 	return nil
 }
 
+type GetPlatformStatsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetPlatformStatsRequest) Reset() {
+	*x = GetPlatformStatsRequest{}
+	mi := &file_identity_v1_identity_proto_msgTypes[72]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetPlatformStatsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetPlatformStatsRequest) ProtoMessage() {}
+
+func (x *GetPlatformStatsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_identity_proto_msgTypes[72]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetPlatformStatsRequest.ProtoReflect.Descriptor instead.
+func (*GetPlatformStatsRequest) Descriptor() ([]byte, []int) {
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{72}
+}
+
+type GetPlatformStatsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TotalUsers    int64                  `protobuf:"varint,1,opt,name=total_users,json=totalUsers,proto3" json:"total_users,omitempty"`
+	TotalDevices  int64                  `protobuf:"varint,2,opt,name=total_devices,json=totalDevices,proto3" json:"total_devices,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetPlatformStatsResponse) Reset() {
+	*x = GetPlatformStatsResponse{}
+	mi := &file_identity_v1_identity_proto_msgTypes[73]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetPlatformStatsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetPlatformStatsResponse) ProtoMessage() {}
+
+func (x *GetPlatformStatsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_identity_v1_identity_proto_msgTypes[73]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetPlatformStatsResponse.ProtoReflect.Descriptor instead.
+func (*GetPlatformStatsResponse) Descriptor() ([]byte, []int) {
+	return file_identity_v1_identity_proto_rawDescGZIP(), []int{73}
+}
+
+func (x *GetPlatformStatsResponse) GetTotalUsers() int64 {
+	if x != nil {
+		return x.TotalUsers
+	}
+	return 0
+}
+
+func (x *GetPlatformStatsResponse) GetTotalDevices() int64 {
+	if x != nil {
+		return x.TotalDevices
+	}
+	return 0
+}
+
 var File_identity_v1_identity_proto protoreflect.FileDescriptor
 
 const file_identity_v1_identity_proto_rawDesc = "" +
@@ -4003,13 +4091,18 @@ const file_identity_v1_identity_proto_rawDesc = "" +
 	"\x18ListFriendDevicesRequest\x12$\n" +
 	"\x0efriend_user_id\x18\x01 \x01(\tR\ffriendUserId\"J\n" +
 	"\x19ListFriendDevicesResponse\x12-\n" +
-	"\adevices\x18\x01 \x03(\v2\x13.identity.v1.DeviceR\adevices*l\n" +
+	"\adevices\x18\x01 \x03(\v2\x13.identity.v1.DeviceR\adevices\"\x19\n" +
+	"\x17GetPlatformStatsRequest\"`\n" +
+	"\x18GetPlatformStatsResponse\x12\x1f\n" +
+	"\vtotal_users\x18\x01 \x01(\x03R\n" +
+	"totalUsers\x12#\n" +
+	"\rtotal_devices\x18\x02 \x01(\x03R\ftotalDevices*l\n" +
 	"\n" +
 	"DeviceType\x12\x1b\n" +
 	"\x17DEVICE_TYPE_UNSPECIFIED\x10\x00\x12\x12\n" +
 	"\x0eDEVICE_TYPE_PC\x10\x01\x12\x15\n" +
 	"\x11DEVICE_TYPE_PHONE\x10\x02\x12\x16\n" +
-	"\x12DEVICE_TYPE_TABLET\x10\x032\xfe\x17\n" +
+	"\x12DEVICE_TYPE_TABLET\x10\x032\xdf\x18\n" +
 	"\x0fIdentityService\x12G\n" +
 	"\bRegister\x12\x1c.identity.v1.RegisterRequest\x1a\x1d.identity.v1.RegisterResponse\x12>\n" +
 	"\x05Login\x12\x19.identity.v1.LoginRequest\x1a\x1a.identity.v1.LoginResponse\x12V\n" +
@@ -4043,7 +4136,8 @@ const file_identity_v1_identity_proto_rawDesc = "" +
 	"\fRemoveFriend\x12 .identity.v1.RemoveFriendRequest\x1a!.identity.v1.RemoveFriendResponse\x12P\n" +
 	"\vSearchUsers\x12\x1f.identity.v1.SearchUsersRequest\x1a .identity.v1.SearchUsersResponse\x12k\n" +
 	"\x14GetNotificationCount\x12(.identity.v1.GetNotificationCountRequest\x1a).identity.v1.GetNotificationCountResponse\x12b\n" +
-	"\x11ListFriendDevices\x12%.identity.v1.ListFriendDevicesRequest\x1a&.identity.v1.ListFriendDevicesResponseBBZ@github.com/saitddundar/vinctum-core/proto/identity/v1;identityv1b\x06proto3"
+	"\x11ListFriendDevices\x12%.identity.v1.ListFriendDevicesRequest\x1a&.identity.v1.ListFriendDevicesResponse\x12_\n" +
+	"\x10GetPlatformStats\x12$.identity.v1.GetPlatformStatsRequest\x1a%.identity.v1.GetPlatformStatsResponseBBZ@github.com/saitddundar/vinctum-core/proto/identity/v1;identityv1b\x06proto3"
 
 var (
 	file_identity_v1_identity_proto_rawDescOnce sync.Once
@@ -4058,7 +4152,7 @@ func file_identity_v1_identity_proto_rawDescGZIP() []byte {
 }
 
 var file_identity_v1_identity_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_identity_v1_identity_proto_msgTypes = make([]protoimpl.MessageInfo, 72)
+var file_identity_v1_identity_proto_msgTypes = make([]protoimpl.MessageInfo, 74)
 var file_identity_v1_identity_proto_goTypes = []any{
 	(DeviceType)(0),                        // 0: identity.v1.DeviceType
 	(*RegisterRequest)(nil),                // 1: identity.v1.RegisterRequest
@@ -4133,16 +4227,18 @@ var file_identity_v1_identity_proto_goTypes = []any{
 	(*GetNotificationCountResponse)(nil),   // 70: identity.v1.GetNotificationCountResponse
 	(*ListFriendDevicesRequest)(nil),       // 71: identity.v1.ListFriendDevicesRequest
 	(*ListFriendDevicesResponse)(nil),      // 72: identity.v1.ListFriendDevicesResponse
-	(*timestamppb.Timestamp)(nil),          // 73: google.protobuf.Timestamp
+	(*GetPlatformStatsRequest)(nil),        // 73: identity.v1.GetPlatformStatsRequest
+	(*GetPlatformStatsResponse)(nil),       // 74: identity.v1.GetPlatformStatsResponse
+	(*timestamppb.Timestamp)(nil),          // 75: google.protobuf.Timestamp
 }
 var file_identity_v1_identity_proto_depIdxs = []int32{
-	73, // 0: identity.v1.RegisterResponse.created_at:type_name -> google.protobuf.Timestamp
+	75, // 0: identity.v1.RegisterResponse.created_at:type_name -> google.protobuf.Timestamp
 	11, // 1: identity.v1.LoginResponse.user:type_name -> identity.v1.User
-	73, // 2: identity.v1.User.created_at:type_name -> google.protobuf.Timestamp
+	75, // 2: identity.v1.User.created_at:type_name -> google.protobuf.Timestamp
 	0,  // 3: identity.v1.Device.device_type:type_name -> identity.v1.DeviceType
-	73, // 4: identity.v1.Device.approved_at:type_name -> google.protobuf.Timestamp
-	73, // 5: identity.v1.Device.last_active:type_name -> google.protobuf.Timestamp
-	73, // 6: identity.v1.Device.created_at:type_name -> google.protobuf.Timestamp
+	75, // 4: identity.v1.Device.approved_at:type_name -> google.protobuf.Timestamp
+	75, // 5: identity.v1.Device.last_active:type_name -> google.protobuf.Timestamp
+	75, // 6: identity.v1.Device.created_at:type_name -> google.protobuf.Timestamp
 	0,  // 7: identity.v1.RegisterDeviceRequest.device_type:type_name -> identity.v1.DeviceType
 	16, // 8: identity.v1.RegisterDeviceResponse.device:type_name -> identity.v1.Device
 	16, // 9: identity.v1.ListDevicesResponse.devices:type_name -> identity.v1.Device
@@ -4150,18 +4246,18 @@ var file_identity_v1_identity_proto_depIdxs = []int32{
 	0,  // 11: identity.v1.RedeemPairingCodeRequest.device_type:type_name -> identity.v1.DeviceType
 	16, // 12: identity.v1.ApprovePairingResponse.device:type_name -> identity.v1.Device
 	16, // 13: identity.v1.PeerSession.devices:type_name -> identity.v1.Device
-	73, // 14: identity.v1.PeerSession.created_at:type_name -> google.protobuf.Timestamp
-	73, // 15: identity.v1.PeerSession.closed_at:type_name -> google.protobuf.Timestamp
+	75, // 14: identity.v1.PeerSession.created_at:type_name -> google.protobuf.Timestamp
+	75, // 15: identity.v1.PeerSession.closed_at:type_name -> google.protobuf.Timestamp
 	35, // 16: identity.v1.CreatePeerSessionResponse.session:type_name -> identity.v1.PeerSession
 	35, // 17: identity.v1.ListPeerSessionsResponse.sessions:type_name -> identity.v1.PeerSession
 	16, // 18: identity.v1.ListSessionDevicesResponse.devices:type_name -> identity.v1.Device
-	73, // 19: identity.v1.DeviceKey.created_at:type_name -> google.protobuf.Timestamp
-	73, // 20: identity.v1.DeviceKey.rotated_at:type_name -> google.protobuf.Timestamp
+	75, // 19: identity.v1.DeviceKey.created_at:type_name -> google.protobuf.Timestamp
+	75, // 20: identity.v1.DeviceKey.rotated_at:type_name -> google.protobuf.Timestamp
 	48, // 21: identity.v1.UploadDeviceKeyResponse.key:type_name -> identity.v1.DeviceKey
 	48, // 22: identity.v1.GetDeviceKeyResponse.key:type_name -> identity.v1.DeviceKey
 	48, // 23: identity.v1.GetSessionDeviceKeysResponse.keys:type_name -> identity.v1.DeviceKey
 	55, // 24: identity.v1.Friend.user:type_name -> identity.v1.UserInfo
-	73, // 25: identity.v1.Friend.created_at:type_name -> google.protobuf.Timestamp
+	75, // 25: identity.v1.Friend.created_at:type_name -> google.protobuf.Timestamp
 	56, // 26: identity.v1.SendFriendRequestResp.friendship:type_name -> identity.v1.Friend
 	56, // 27: identity.v1.RespondToFriendRequestResp.friendship:type_name -> identity.v1.Friend
 	56, // 28: identity.v1.ListFriendsResponse.friends:type_name -> identity.v1.Friend
@@ -4201,41 +4297,43 @@ var file_identity_v1_identity_proto_depIdxs = []int32{
 	67, // 62: identity.v1.IdentityService.SearchUsers:input_type -> identity.v1.SearchUsersRequest
 	69, // 63: identity.v1.IdentityService.GetNotificationCount:input_type -> identity.v1.GetNotificationCountRequest
 	71, // 64: identity.v1.IdentityService.ListFriendDevices:input_type -> identity.v1.ListFriendDevicesRequest
-	2,  // 65: identity.v1.IdentityService.Register:output_type -> identity.v1.RegisterResponse
-	4,  // 66: identity.v1.IdentityService.Login:output_type -> identity.v1.LoginResponse
-	6,  // 67: identity.v1.IdentityService.ValidateToken:output_type -> identity.v1.ValidateTokenResponse
-	8,  // 68: identity.v1.IdentityService.RefreshToken:output_type -> identity.v1.RefreshTokenResponse
-	10, // 69: identity.v1.IdentityService.Logout:output_type -> identity.v1.LogoutResponse
-	13, // 70: identity.v1.IdentityService.VerifyEmail:output_type -> identity.v1.VerifyEmailResponse
-	15, // 71: identity.v1.IdentityService.ResendVerification:output_type -> identity.v1.ResendVerificationResponse
-	18, // 72: identity.v1.IdentityService.RegisterDevice:output_type -> identity.v1.RegisterDeviceResponse
-	20, // 73: identity.v1.IdentityService.ListDevices:output_type -> identity.v1.ListDevicesResponse
-	22, // 74: identity.v1.IdentityService.GetDevice:output_type -> identity.v1.GetDeviceResponse
-	24, // 75: identity.v1.IdentityService.RevokeDevice:output_type -> identity.v1.RevokeDeviceResponse
-	26, // 76: identity.v1.IdentityService.UpdateDeviceActivity:output_type -> identity.v1.UpdateDeviceActivityResponse
-	28, // 77: identity.v1.IdentityService.UpdateDeviceVisibility:output_type -> identity.v1.UpdateDeviceVisibilityResponse
-	30, // 78: identity.v1.IdentityService.GeneratePairingCode:output_type -> identity.v1.GeneratePairingCodeResponse
-	32, // 79: identity.v1.IdentityService.RedeemPairingCode:output_type -> identity.v1.RedeemPairingCodeResponse
-	34, // 80: identity.v1.IdentityService.ApprovePairing:output_type -> identity.v1.ApprovePairingResponse
-	37, // 81: identity.v1.IdentityService.CreatePeerSession:output_type -> identity.v1.CreatePeerSessionResponse
-	39, // 82: identity.v1.IdentityService.ListPeerSessions:output_type -> identity.v1.ListPeerSessionsResponse
-	41, // 83: identity.v1.IdentityService.ClosePeerSession:output_type -> identity.v1.ClosePeerSessionResponse
-	43, // 84: identity.v1.IdentityService.JoinPeerSession:output_type -> identity.v1.JoinPeerSessionResponse
-	45, // 85: identity.v1.IdentityService.LeavePeerSession:output_type -> identity.v1.LeavePeerSessionResponse
-	47, // 86: identity.v1.IdentityService.ListSessionDevices:output_type -> identity.v1.ListSessionDevicesResponse
-	50, // 87: identity.v1.IdentityService.UploadDeviceKey:output_type -> identity.v1.UploadDeviceKeyResponse
-	52, // 88: identity.v1.IdentityService.GetDeviceKey:output_type -> identity.v1.GetDeviceKeyResponse
-	54, // 89: identity.v1.IdentityService.GetSessionDeviceKeys:output_type -> identity.v1.GetSessionDeviceKeysResponse
-	58, // 90: identity.v1.IdentityService.SendFriendRequest:output_type -> identity.v1.SendFriendRequestResp
-	60, // 91: identity.v1.IdentityService.RespondToFriendRequest:output_type -> identity.v1.RespondToFriendRequestResp
-	62, // 92: identity.v1.IdentityService.ListFriends:output_type -> identity.v1.ListFriendsResponse
-	64, // 93: identity.v1.IdentityService.ListFriendRequests:output_type -> identity.v1.ListFriendRequestsResponse
-	66, // 94: identity.v1.IdentityService.RemoveFriend:output_type -> identity.v1.RemoveFriendResponse
-	68, // 95: identity.v1.IdentityService.SearchUsers:output_type -> identity.v1.SearchUsersResponse
-	70, // 96: identity.v1.IdentityService.GetNotificationCount:output_type -> identity.v1.GetNotificationCountResponse
-	72, // 97: identity.v1.IdentityService.ListFriendDevices:output_type -> identity.v1.ListFriendDevicesResponse
-	65, // [65:98] is the sub-list for method output_type
-	32, // [32:65] is the sub-list for method input_type
+	73, // 65: identity.v1.IdentityService.GetPlatformStats:input_type -> identity.v1.GetPlatformStatsRequest
+	2,  // 66: identity.v1.IdentityService.Register:output_type -> identity.v1.RegisterResponse
+	4,  // 67: identity.v1.IdentityService.Login:output_type -> identity.v1.LoginResponse
+	6,  // 68: identity.v1.IdentityService.ValidateToken:output_type -> identity.v1.ValidateTokenResponse
+	8,  // 69: identity.v1.IdentityService.RefreshToken:output_type -> identity.v1.RefreshTokenResponse
+	10, // 70: identity.v1.IdentityService.Logout:output_type -> identity.v1.LogoutResponse
+	13, // 71: identity.v1.IdentityService.VerifyEmail:output_type -> identity.v1.VerifyEmailResponse
+	15, // 72: identity.v1.IdentityService.ResendVerification:output_type -> identity.v1.ResendVerificationResponse
+	18, // 73: identity.v1.IdentityService.RegisterDevice:output_type -> identity.v1.RegisterDeviceResponse
+	20, // 74: identity.v1.IdentityService.ListDevices:output_type -> identity.v1.ListDevicesResponse
+	22, // 75: identity.v1.IdentityService.GetDevice:output_type -> identity.v1.GetDeviceResponse
+	24, // 76: identity.v1.IdentityService.RevokeDevice:output_type -> identity.v1.RevokeDeviceResponse
+	26, // 77: identity.v1.IdentityService.UpdateDeviceActivity:output_type -> identity.v1.UpdateDeviceActivityResponse
+	28, // 78: identity.v1.IdentityService.UpdateDeviceVisibility:output_type -> identity.v1.UpdateDeviceVisibilityResponse
+	30, // 79: identity.v1.IdentityService.GeneratePairingCode:output_type -> identity.v1.GeneratePairingCodeResponse
+	32, // 80: identity.v1.IdentityService.RedeemPairingCode:output_type -> identity.v1.RedeemPairingCodeResponse
+	34, // 81: identity.v1.IdentityService.ApprovePairing:output_type -> identity.v1.ApprovePairingResponse
+	37, // 82: identity.v1.IdentityService.CreatePeerSession:output_type -> identity.v1.CreatePeerSessionResponse
+	39, // 83: identity.v1.IdentityService.ListPeerSessions:output_type -> identity.v1.ListPeerSessionsResponse
+	41, // 84: identity.v1.IdentityService.ClosePeerSession:output_type -> identity.v1.ClosePeerSessionResponse
+	43, // 85: identity.v1.IdentityService.JoinPeerSession:output_type -> identity.v1.JoinPeerSessionResponse
+	45, // 86: identity.v1.IdentityService.LeavePeerSession:output_type -> identity.v1.LeavePeerSessionResponse
+	47, // 87: identity.v1.IdentityService.ListSessionDevices:output_type -> identity.v1.ListSessionDevicesResponse
+	50, // 88: identity.v1.IdentityService.UploadDeviceKey:output_type -> identity.v1.UploadDeviceKeyResponse
+	52, // 89: identity.v1.IdentityService.GetDeviceKey:output_type -> identity.v1.GetDeviceKeyResponse
+	54, // 90: identity.v1.IdentityService.GetSessionDeviceKeys:output_type -> identity.v1.GetSessionDeviceKeysResponse
+	58, // 91: identity.v1.IdentityService.SendFriendRequest:output_type -> identity.v1.SendFriendRequestResp
+	60, // 92: identity.v1.IdentityService.RespondToFriendRequest:output_type -> identity.v1.RespondToFriendRequestResp
+	62, // 93: identity.v1.IdentityService.ListFriends:output_type -> identity.v1.ListFriendsResponse
+	64, // 94: identity.v1.IdentityService.ListFriendRequests:output_type -> identity.v1.ListFriendRequestsResponse
+	66, // 95: identity.v1.IdentityService.RemoveFriend:output_type -> identity.v1.RemoveFriendResponse
+	68, // 96: identity.v1.IdentityService.SearchUsers:output_type -> identity.v1.SearchUsersResponse
+	70, // 97: identity.v1.IdentityService.GetNotificationCount:output_type -> identity.v1.GetNotificationCountResponse
+	72, // 98: identity.v1.IdentityService.ListFriendDevices:output_type -> identity.v1.ListFriendDevicesResponse
+	74, // 99: identity.v1.IdentityService.GetPlatformStats:output_type -> identity.v1.GetPlatformStatsResponse
+	66, // [66:100] is the sub-list for method output_type
+	32, // [32:66] is the sub-list for method input_type
 	32, // [32:32] is the sub-list for extension type_name
 	32, // [32:32] is the sub-list for extension extendee
 	0,  // [0:32] is the sub-list for field type_name
@@ -4252,7 +4350,7 @@ func file_identity_v1_identity_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_identity_v1_identity_proto_rawDesc), len(file_identity_v1_identity_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   72,
+			NumMessages:   74,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

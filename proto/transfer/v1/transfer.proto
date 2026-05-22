@@ -45,6 +45,9 @@ service TransferService {
 
   // Lists transfers belonging to a group transfer.
   rpc ListGroupTransfers(ListGroupTransfersRequest) returns (ListGroupTransfersResponse);
+
+  // Platform Stats (public, no auth required)
+  rpc GetTransferStats(GetTransferStatsRequest) returns (GetTransferStatsResponse);
 }
 
 // ─── InitiateTransfer ────────────────────────────────────
@@ -292,4 +295,12 @@ message ListGroupTransfersRequest {
 
 message ListGroupTransfersResponse {
   repeated GroupTransferInfo group_transfers = 1;
+}
+
+// ─── Platform Stats ───────────────────────────────
+
+message GetTransferStatsRequest {}
+message GetTransferStatsResponse {
+  int64 total_transfers    = 1;
+  int64 total_bytes        = 2;
 }
