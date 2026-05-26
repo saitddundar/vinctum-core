@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
@@ -145,6 +146,34 @@ func (f *fakeQuerier) ConfirmP2PTransfer(_ context.Context, arg repository.Confi
 	t.UpdatedAt = time.Now()
 	f.transfers[arg.TransferID] = t
 	return nil
+}
+
+func (f *fakeQuerier) AdminListTransfers(_ context.Context, _ repository.AdminListTransfersParams) ([]repository.Transfer, error) {
+	return nil, nil
+}
+
+func (f *fakeQuerier) CountTransfers(_ context.Context) (int64, error) {
+	return int64(len(f.transfers)), nil
+}
+
+func (f *fakeQuerier) SumTransferredBytes(_ context.Context) (int64, error) {
+	return 0, nil
+}
+
+func (f *fakeQuerier) CreateGroupTransfer(_ context.Context, _ repository.CreateGroupTransferParams) (repository.GroupTransfer, error) {
+	return repository.GroupTransfer{}, nil
+}
+
+func (f *fakeQuerier) GetGroupTransfer(_ context.Context, _ string) (repository.GroupTransfer, error) {
+	return repository.GroupTransfer{}, pgx.ErrNoRows
+}
+
+func (f *fakeQuerier) ListGroupTransfersBySession(_ context.Context, _ pgtype.UUID) ([]repository.GroupTransfer, error) {
+	return nil, nil
+}
+
+func (f *fakeQuerier) ListTransfersByGroupID(_ context.Context, _ pgtype.Text) ([]repository.Transfer, error) {
+	return nil, nil
 }
 
 // Compile-time interface check.
@@ -366,6 +395,102 @@ func TestCancelTransfer(t *testing.T) {
 
 	t.Run("missing id", func(t *testing.T) {
 		_, err := h.CancelTransfer(ctx, &transferv1.CancelTransferRequest{})
+		assert.Equal(t, codes.InvalidArgument, status.Code(err))
+	})
+}
+
+func TestPauseTransfer(t *testing.T) {
+	ctx := context.Background()
+	q := newFakeQuerier()
+	h := handler.NewTransferHandler(q, nil, nil, nil, "test-node")
+
+	resp := initTransfer(t, h)
+
+	// Set to IN_PROGRESS first.
+	q.transfers[resp.TransferId] = func() repository.Transfer {
+		tr := q.transfers[resp.TransferId]
+		tr.Status = int32(transferv1.TransferStatus_TRANSFER_STATUS_IN_PROGRESS)
+		return tr
+	}()
+
+	t.Run("success", func(t *testing.T) {
+		pr, err := h.PauseTransfer(ctx, &transferv1.PauseTransferRequest{
+			TransferId: resp.TransferId,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, transferv1.TransferStatus_TRANSFER_STATUS_PAUSED, pr.Status)
+
+		sr, _ := h.GetTransferStatus(ctx, &transferv1.GetTransferStatusRequest{
+			TransferId: resp.TransferId,
+		})
+		assert.Equal(t, transferv1.TransferStatus_TRANSFER_STATUS_PAUSED, sr.Status)
+	})
+
+	t.Run("not in progress", func(t *testing.T) {
+		// Already paused from previous test.
+		_, err := h.PauseTransfer(ctx, &transferv1.PauseTransferRequest{
+			TransferId: resp.TransferId,
+		})
+		assert.Equal(t, codes.FailedPrecondition, status.Code(err))
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		_, err := h.PauseTransfer(ctx, &transferv1.PauseTransferRequest{
+			TransferId: "nonexistent",
+		})
+		assert.Equal(t, codes.NotFound, status.Code(err))
+	})
+
+	t.Run("missing id", func(t *testing.T) {
+		_, err := h.PauseTransfer(ctx, &transferv1.PauseTransferRequest{})
+		assert.Equal(t, codes.InvalidArgument, status.Code(err))
+	})
+}
+
+func TestResumeTransfer(t *testing.T) {
+	ctx := context.Background()
+	q := newFakeQuerier()
+	h := handler.NewTransferHandler(q, nil, nil, nil, "test-node")
+
+	resp := initTransfer(t, h)
+
+	// Set to PAUSED.
+	q.transfers[resp.TransferId] = func() repository.Transfer {
+		tr := q.transfers[resp.TransferId]
+		tr.Status = int32(transferv1.TransferStatus_TRANSFER_STATUS_PAUSED)
+		return tr
+	}()
+
+	t.Run("success", func(t *testing.T) {
+		rr, err := h.ResumeTransfer(ctx, &transferv1.ResumeTransferRequest{
+			TransferId: resp.TransferId,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, transferv1.TransferStatus_TRANSFER_STATUS_IN_PROGRESS, rr.Status)
+
+		sr, _ := h.GetTransferStatus(ctx, &transferv1.GetTransferStatusRequest{
+			TransferId: resp.TransferId,
+		})
+		assert.Equal(t, transferv1.TransferStatus_TRANSFER_STATUS_IN_PROGRESS, sr.Status)
+	})
+
+	t.Run("not paused", func(t *testing.T) {
+		// Already resumed from previous test.
+		_, err := h.ResumeTransfer(ctx, &transferv1.ResumeTransferRequest{
+			TransferId: resp.TransferId,
+		})
+		assert.Equal(t, codes.FailedPrecondition, status.Code(err))
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		_, err := h.ResumeTransfer(ctx, &transferv1.ResumeTransferRequest{
+			TransferId: "nonexistent",
+		})
+		assert.Equal(t, codes.NotFound, status.Code(err))
+	})
+
+	t.Run("missing id", func(t *testing.T) {
+		_, err := h.ResumeTransfer(ctx, &transferv1.ResumeTransferRequest{})
 		assert.Equal(t, codes.InvalidArgument, status.Code(err))
 	})
 }

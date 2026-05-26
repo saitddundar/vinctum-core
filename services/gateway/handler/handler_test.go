@@ -183,6 +183,26 @@ func TestCancelTransferUnavailable(t *testing.T) {
 	assert.Equal(t, http.StatusServiceUnavailable, w.Code)
 }
 
+func TestPauseTransferUnavailable(t *testing.T) {
+	_, mux := newTestGateway(t)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/transfers/tx-123/pause", nil)
+	w := httptest.NewRecorder()
+	mux.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusServiceUnavailable, w.Code)
+}
+
+func TestResumeTransferUnavailable(t *testing.T) {
+	_, mux := newTestGateway(t)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/transfers/tx-123/resume", nil)
+	w := httptest.NewRecorder()
+	mux.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusServiceUnavailable, w.Code)
+}
+
 // ─── Encryption ───────────────────────────────────────────
 
 func TestGenerateKeyEndpoint(t *testing.T) {
