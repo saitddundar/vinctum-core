@@ -218,6 +218,9 @@ func (h *TransferHandler) SendChunk(stream transferv1.TransferService_SendChunkS
 				if t.Status == int32(transferv1.TransferStatus_TRANSFER_STATUS_AWAITING_APPROVAL) {
 					return status.Error(codes.FailedPrecondition, "transfer is awaiting receiver approval")
 				}
+				if t.Status == int32(transferv1.TransferStatus_TRANSFER_STATUS_PAUSED) {
+					return status.Error(codes.FailedPrecondition, "transfer is paused")
+				}
 				storageID = t.TransferID
 				totalChunks = t.TotalChunks
 				replicationFactor = t.ReplicationFactor
@@ -521,6 +524,70 @@ func (h *TransferHandler) CancelTransfer(ctx context.Context, req *transferv1.Ca
 	}, nil
 }
 
+func (h *TransferHandler) PauseTransfer(ctx context.Context, req *transferv1.PauseTransferRequest) (*transferv1.PauseTransferResponse, error) {
+	if req.TransferId == "" {
+		return nil, status.Error(codes.InvalidArgument, "transfer_id is required")
+	}
+
+	t, err := h.queries.GetTransfer(ctx, req.TransferId)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, status.Error(codes.NotFound, "transfer not found")
+		}
+		return nil, status.Error(codes.Internal, "failed to fetch transfer")
+	}
+
+	if t.Status != int32(transferv1.TransferStatus_TRANSFER_STATUS_IN_PROGRESS) {
+		return nil, status.Error(codes.FailedPrecondition, "only in-progress transfers can be paused")
+	}
+
+	if err := h.queries.UpdateTransferStatus(ctx, repository.UpdateTransferStatusParams{
+		TransferID: req.TransferId,
+		Status:     int32(transferv1.TransferStatus_TRANSFER_STATUS_PAUSED),
+	}); err != nil {
+		return nil, status.Error(codes.Internal, "failed to pause transfer")
+	}
+
+	log.Info().Str("transfer_id", req.TransferId).Msg("transfer paused")
+
+	return &transferv1.PauseTransferResponse{
+		TransferId: req.TransferId,
+		Status:     transferv1.TransferStatus_TRANSFER_STATUS_PAUSED,
+	}, nil
+}
+
+func (h *TransferHandler) ResumeTransfer(ctx context.Context, req *transferv1.ResumeTransferRequest) (*transferv1.ResumeTransferResponse, error) {
+	if req.TransferId == "" {
+		return nil, status.Error(codes.InvalidArgument, "transfer_id is required")
+	}
+
+	t, err := h.queries.GetTransfer(ctx, req.TransferId)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, status.Error(codes.NotFound, "transfer not found")
+		}
+		return nil, status.Error(codes.Internal, "failed to fetch transfer")
+	}
+
+	if t.Status != int32(transferv1.TransferStatus_TRANSFER_STATUS_PAUSED) {
+		return nil, status.Error(codes.FailedPrecondition, "only paused transfers can be resumed")
+	}
+
+	if err := h.queries.UpdateTransferStatus(ctx, repository.UpdateTransferStatusParams{
+		TransferID: req.TransferId,
+		Status:     int32(transferv1.TransferStatus_TRANSFER_STATUS_IN_PROGRESS),
+	}); err != nil {
+		return nil, status.Error(codes.Internal, "failed to resume transfer")
+	}
+
+	log.Info().Str("transfer_id", req.TransferId).Msg("transfer resumed")
+
+	return &transferv1.ResumeTransferResponse{
+		TransferId: req.TransferId,
+		Status:     transferv1.TransferStatus_TRANSFER_STATUS_IN_PROGRESS,
+	}, nil
+}
+
 // WatchTransfers streams transfer events for a given node so the receiver can
 // react to incoming transfers without polling. The implementation polls the
 // database on a short interval and emits diffs (NEW / UPDATED / COMPLETED /
@@ -603,6 +670,12 @@ func (h *TransferHandler) WatchTransfers(req *transferv1.WatchTransfersRequest, 
 				case transferv1.TransferStatus_TRANSFER_STATUS_CANCELLED,
 					transferv1.TransferStatus_TRANSFER_STATUS_FAILED:
 					eventType = transferv1.TransferEvent_EVENT_TYPE_CANCELLED
+				case transferv1.TransferStatus_TRANSFER_STATUS_PAUSED:
+					eventType = transferv1.TransferEvent_EVENT_TYPE_PAUSED
+				case transferv1.TransferStatus_TRANSFER_STATUS_IN_PROGRESS:
+					if transferv1.TransferStatus(prev.status) == transferv1.TransferStatus_TRANSFER_STATUS_PAUSED {
+						eventType = transferv1.TransferEvent_EVENT_TYPE_RESUMED
+					}
 				}
 
 				if err := emit(t, eventType); err != nil {
