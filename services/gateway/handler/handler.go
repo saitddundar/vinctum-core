@@ -177,6 +177,8 @@ func (h *GatewayHandler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/transfers/{transferId}", h.handleGetTransferStatus)
 	mux.HandleFunc("GET /api/v1/node-transfers/{nodeId}", h.handleListTransfers)
 	mux.HandleFunc("POST /api/v1/transfers/{transferId}/cancel", h.handleCancelTransfer)
+	mux.HandleFunc("POST /api/v1/transfers/{transferId}/pause", h.handlePauseTransfer)
+	mux.HandleFunc("POST /api/v1/transfers/{transferId}/resume", h.handleResumeTransfer)
 
 	// transfer approval
 	mux.HandleFunc("POST /api/v1/transfers/{transferId}/respond", h.handleRespondToTransfer)
@@ -919,6 +921,46 @@ func (h *GatewayHandler) handleCancelTransfer(w http.ResponseWriter, r *http.Req
 	resp, err := h.transferClient.CancelTransfer(ctx, &transferv1.CancelTransferRequest{
 		TransferId: transferID,
 		Reason:     body.Reason,
+	})
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+// ─── Pause / Resume Transfer ───────────────────────────────
+
+func (h *GatewayHandler) handlePauseTransfer(w http.ResponseWriter, r *http.Request) {
+	if h.transferClient == nil {
+		writeError(w, http.StatusServiceUnavailable, "transfer service unavailable")
+		return
+	}
+
+	transferID := r.PathValue("transferId")
+	ctx := forwardAuth(r)
+
+	resp, err := h.transferClient.PauseTransfer(ctx, &transferv1.PauseTransferRequest{
+		TransferId: transferID,
+	})
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+func (h *GatewayHandler) handleResumeTransfer(w http.ResponseWriter, r *http.Request) {
+	if h.transferClient == nil {
+		writeError(w, http.StatusServiceUnavailable, "transfer service unavailable")
+		return
+	}
+
+	transferID := r.PathValue("transferId")
+	ctx := forwardAuth(r)
+
+	resp, err := h.transferClient.ResumeTransfer(ctx, &transferv1.ResumeTransferRequest{
+		TransferId: transferID,
 	})
 	if err != nil {
 		writeGRPCError(w, err)
