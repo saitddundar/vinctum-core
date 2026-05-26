@@ -84,6 +84,7 @@ CI (`.github/workflows/ci.yml`) runs lint -> test (with Postgres + Redis) -> bui
 - **Email**: `pkg/mailer/` sends verification emails (SMTP or stub mode for dev).
 - **Device pairing**: `internal/auth/pairing.go` generates short-lived pairing codes (crypto/rand) stored in Redis.
 - **Device visibility**: `is_public` column (migration 016). Public devices are visible to friends; private devices are only visible to the owner. `UpdateDeviceVisibility` RPC + `PUT /api/v1/devices/{id}/visibility` gateway route.
+- **Transfer pause/resume**: `TRANSFER_STATUS_PAUSED` (enum value 7). `PauseTransfer` RPC transitions IN_PROGRESS→PAUSED; `ResumeTransfer` transitions PAUSED→IN_PROGRESS. `SendChunk` rejects chunks while paused. `WatchTransfers` emits `EVENT_TYPE_PAUSED`/`EVENT_TYPE_RESUMED` events. Gateway routes: `POST /api/v1/transfers/{id}/pause` and `POST /api/v1/transfers/{id}/resume`.
 - **Friends system**: `friends` table (migration 014) with requester/addressee/status. RPCs: SendFriendRequest, RespondToFriendRequest, ListFriends, ListFriendRequests, RemoveFriend, SearchUsers, ListFriendDevices (returns only public + approved devices). GetNotificationCount returns pending friend request count.
 - **mTLS**: `pkg/grpcutil/tls.go` loads TLS credentials from config; enabled when `grpc.tls_enabled: true`.
 - **Proto imports**: `buf.build/googleapis/googleapis` is a dependency.
