@@ -33,6 +33,7 @@ const (
 	TransferStatus_TRANSFER_STATUS_FAILED            TransferStatus = 4
 	TransferStatus_TRANSFER_STATUS_CANCELLED         TransferStatus = 5
 	TransferStatus_TRANSFER_STATUS_AWAITING_APPROVAL TransferStatus = 6
+	TransferStatus_TRANSFER_STATUS_PAUSED            TransferStatus = 7
 )
 
 // Enum value maps for TransferStatus.
@@ -45,6 +46,7 @@ var (
 		4: "TRANSFER_STATUS_FAILED",
 		5: "TRANSFER_STATUS_CANCELLED",
 		6: "TRANSFER_STATUS_AWAITING_APPROVAL",
+		7: "TRANSFER_STATUS_PAUSED",
 	}
 	TransferStatus_value = map[string]int32{
 		"TRANSFER_STATUS_UNSPECIFIED":       0,
@@ -54,6 +56,7 @@ var (
 		"TRANSFER_STATUS_FAILED":            4,
 		"TRANSFER_STATUS_CANCELLED":         5,
 		"TRANSFER_STATUS_AWAITING_APPROVAL": 6,
+		"TRANSFER_STATUS_PAUSED":            7,
 	}
 )
 
@@ -144,6 +147,8 @@ const (
 	TransferEvent_EVENT_TYPE_UPDATED     TransferEvent_EventType = 2 // Status or progress changed
 	TransferEvent_EVENT_TYPE_COMPLETED   TransferEvent_EventType = 3 // Reached terminal completed state
 	TransferEvent_EVENT_TYPE_CANCELLED   TransferEvent_EventType = 4 // Reached terminal cancelled/failed state
+	TransferEvent_EVENT_TYPE_PAUSED      TransferEvent_EventType = 5 // Transfer was paused
+	TransferEvent_EVENT_TYPE_RESUMED     TransferEvent_EventType = 6 // Transfer was resumed
 )
 
 // Enum value maps for TransferEvent_EventType.
@@ -154,6 +159,8 @@ var (
 		2: "EVENT_TYPE_UPDATED",
 		3: "EVENT_TYPE_COMPLETED",
 		4: "EVENT_TYPE_CANCELLED",
+		5: "EVENT_TYPE_PAUSED",
+		6: "EVENT_TYPE_RESUMED",
 	}
 	TransferEvent_EventType_value = map[string]int32{
 		"EVENT_TYPE_UNSPECIFIED": 0,
@@ -161,6 +168,8 @@ var (
 		"EVENT_TYPE_UPDATED":     2,
 		"EVENT_TYPE_COMPLETED":   3,
 		"EVENT_TYPE_CANCELLED":   4,
+		"EVENT_TYPE_PAUSED":      5,
+		"EVENT_TYPE_RESUMED":     6,
 	}
 )
 
@@ -188,7 +197,7 @@ func (x TransferEvent_EventType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use TransferEvent_EventType.Descriptor instead.
 func (TransferEvent_EventType) EnumDescriptor() ([]byte, []int) {
-	return file_transfer_v1_transfer_proto_rawDescGZIP(), []int{14, 0}
+	return file_transfer_v1_transfer_proto_rawDescGZIP(), []int{18, 0}
 }
 
 type InitiateTransferRequest struct {
@@ -1197,6 +1206,198 @@ func (x *CancelTransferResponse) GetMessage() string {
 	return ""
 }
 
+type PauseTransferRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TransferId    string                 `protobuf:"bytes,1,opt,name=transfer_id,json=transferId,proto3" json:"transfer_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PauseTransferRequest) Reset() {
+	*x = PauseTransferRequest{}
+	mi := &file_transfer_v1_transfer_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PauseTransferRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PauseTransferRequest) ProtoMessage() {}
+
+func (x *PauseTransferRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_transfer_v1_transfer_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PauseTransferRequest.ProtoReflect.Descriptor instead.
+func (*PauseTransferRequest) Descriptor() ([]byte, []int) {
+	return file_transfer_v1_transfer_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *PauseTransferRequest) GetTransferId() string {
+	if x != nil {
+		return x.TransferId
+	}
+	return ""
+}
+
+type PauseTransferResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TransferId    string                 `protobuf:"bytes,1,opt,name=transfer_id,json=transferId,proto3" json:"transfer_id,omitempty"`
+	Status        TransferStatus         `protobuf:"varint,2,opt,name=status,proto3,enum=transfer.v1.TransferStatus" json:"status,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PauseTransferResponse) Reset() {
+	*x = PauseTransferResponse{}
+	mi := &file_transfer_v1_transfer_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PauseTransferResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PauseTransferResponse) ProtoMessage() {}
+
+func (x *PauseTransferResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_transfer_v1_transfer_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PauseTransferResponse.ProtoReflect.Descriptor instead.
+func (*PauseTransferResponse) Descriptor() ([]byte, []int) {
+	return file_transfer_v1_transfer_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *PauseTransferResponse) GetTransferId() string {
+	if x != nil {
+		return x.TransferId
+	}
+	return ""
+}
+
+func (x *PauseTransferResponse) GetStatus() TransferStatus {
+	if x != nil {
+		return x.Status
+	}
+	return TransferStatus_TRANSFER_STATUS_UNSPECIFIED
+}
+
+type ResumeTransferRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TransferId    string                 `protobuf:"bytes,1,opt,name=transfer_id,json=transferId,proto3" json:"transfer_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ResumeTransferRequest) Reset() {
+	*x = ResumeTransferRequest{}
+	mi := &file_transfer_v1_transfer_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResumeTransferRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResumeTransferRequest) ProtoMessage() {}
+
+func (x *ResumeTransferRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_transfer_v1_transfer_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ResumeTransferRequest.ProtoReflect.Descriptor instead.
+func (*ResumeTransferRequest) Descriptor() ([]byte, []int) {
+	return file_transfer_v1_transfer_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *ResumeTransferRequest) GetTransferId() string {
+	if x != nil {
+		return x.TransferId
+	}
+	return ""
+}
+
+type ResumeTransferResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TransferId    string                 `protobuf:"bytes,1,opt,name=transfer_id,json=transferId,proto3" json:"transfer_id,omitempty"`
+	Status        TransferStatus         `protobuf:"varint,2,opt,name=status,proto3,enum=transfer.v1.TransferStatus" json:"status,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ResumeTransferResponse) Reset() {
+	*x = ResumeTransferResponse{}
+	mi := &file_transfer_v1_transfer_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResumeTransferResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResumeTransferResponse) ProtoMessage() {}
+
+func (x *ResumeTransferResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_transfer_v1_transfer_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ResumeTransferResponse.ProtoReflect.Descriptor instead.
+func (*ResumeTransferResponse) Descriptor() ([]byte, []int) {
+	return file_transfer_v1_transfer_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *ResumeTransferResponse) GetTransferId() string {
+	if x != nil {
+		return x.TransferId
+	}
+	return ""
+}
+
+func (x *ResumeTransferResponse) GetStatus() TransferStatus {
+	if x != nil {
+		return x.Status
+	}
+	return TransferStatus_TRANSFER_STATUS_UNSPECIFIED
+}
+
 type WatchTransfersRequest struct {
 	state  protoimpl.MessageState `protogen:"open.v1"`
 	NodeId string                 `protobuf:"bytes,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"` // Watch transfers where this node is sender or receiver
@@ -1209,7 +1410,7 @@ type WatchTransfersRequest struct {
 
 func (x *WatchTransfersRequest) Reset() {
 	*x = WatchTransfersRequest{}
-	mi := &file_transfer_v1_transfer_proto_msgTypes[13]
+	mi := &file_transfer_v1_transfer_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1221,7 +1422,7 @@ func (x *WatchTransfersRequest) String() string {
 func (*WatchTransfersRequest) ProtoMessage() {}
 
 func (x *WatchTransfersRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_transfer_v1_transfer_proto_msgTypes[13]
+	mi := &file_transfer_v1_transfer_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1234,7 +1435,7 @@ func (x *WatchTransfersRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WatchTransfersRequest.ProtoReflect.Descriptor instead.
 func (*WatchTransfersRequest) Descriptor() ([]byte, []int) {
-	return file_transfer_v1_transfer_proto_rawDescGZIP(), []int{13}
+	return file_transfer_v1_transfer_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *WatchTransfersRequest) GetNodeId() string {
@@ -1262,7 +1463,7 @@ type TransferEvent struct {
 
 func (x *TransferEvent) Reset() {
 	*x = TransferEvent{}
-	mi := &file_transfer_v1_transfer_proto_msgTypes[14]
+	mi := &file_transfer_v1_transfer_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1274,7 +1475,7 @@ func (x *TransferEvent) String() string {
 func (*TransferEvent) ProtoMessage() {}
 
 func (x *TransferEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_transfer_v1_transfer_proto_msgTypes[14]
+	mi := &file_transfer_v1_transfer_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1287,7 +1488,7 @@ func (x *TransferEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TransferEvent.ProtoReflect.Descriptor instead.
 func (*TransferEvent) Descriptor() ([]byte, []int) {
-	return file_transfer_v1_transfer_proto_rawDescGZIP(), []int{14}
+	return file_transfer_v1_transfer_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *TransferEvent) GetType() TransferEvent_EventType {
@@ -1320,7 +1521,7 @@ type GetP2PConnectionInfoRequest struct {
 
 func (x *GetP2PConnectionInfoRequest) Reset() {
 	*x = GetP2PConnectionInfoRequest{}
-	mi := &file_transfer_v1_transfer_proto_msgTypes[15]
+	mi := &file_transfer_v1_transfer_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1332,7 +1533,7 @@ func (x *GetP2PConnectionInfoRequest) String() string {
 func (*GetP2PConnectionInfoRequest) ProtoMessage() {}
 
 func (x *GetP2PConnectionInfoRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_transfer_v1_transfer_proto_msgTypes[15]
+	mi := &file_transfer_v1_transfer_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1345,7 +1546,7 @@ func (x *GetP2PConnectionInfoRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetP2PConnectionInfoRequest.ProtoReflect.Descriptor instead.
 func (*GetP2PConnectionInfoRequest) Descriptor() ([]byte, []int) {
-	return file_transfer_v1_transfer_proto_rawDescGZIP(), []int{15}
+	return file_transfer_v1_transfer_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *GetP2PConnectionInfoRequest) GetTransferId() string {
@@ -1367,7 +1568,7 @@ type GetP2PConnectionInfoResponse struct {
 
 func (x *GetP2PConnectionInfoResponse) Reset() {
 	*x = GetP2PConnectionInfoResponse{}
-	mi := &file_transfer_v1_transfer_proto_msgTypes[16]
+	mi := &file_transfer_v1_transfer_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1379,7 +1580,7 @@ func (x *GetP2PConnectionInfoResponse) String() string {
 func (*GetP2PConnectionInfoResponse) ProtoMessage() {}
 
 func (x *GetP2PConnectionInfoResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_transfer_v1_transfer_proto_msgTypes[16]
+	mi := &file_transfer_v1_transfer_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1392,7 +1593,7 @@ func (x *GetP2PConnectionInfoResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetP2PConnectionInfoResponse.ProtoReflect.Descriptor instead.
 func (*GetP2PConnectionInfoResponse) Descriptor() ([]byte, []int) {
-	return file_transfer_v1_transfer_proto_rawDescGZIP(), []int{16}
+	return file_transfer_v1_transfer_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *GetP2PConnectionInfoResponse) GetReceiverPeerId() string {
@@ -1436,7 +1637,7 @@ type ConfirmP2PTransferRequest struct {
 
 func (x *ConfirmP2PTransferRequest) Reset() {
 	*x = ConfirmP2PTransferRequest{}
-	mi := &file_transfer_v1_transfer_proto_msgTypes[17]
+	mi := &file_transfer_v1_transfer_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1448,7 +1649,7 @@ func (x *ConfirmP2PTransferRequest) String() string {
 func (*ConfirmP2PTransferRequest) ProtoMessage() {}
 
 func (x *ConfirmP2PTransferRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_transfer_v1_transfer_proto_msgTypes[17]
+	mi := &file_transfer_v1_transfer_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1461,7 +1662,7 @@ func (x *ConfirmP2PTransferRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConfirmP2PTransferRequest.ProtoReflect.Descriptor instead.
 func (*ConfirmP2PTransferRequest) Descriptor() ([]byte, []int) {
-	return file_transfer_v1_transfer_proto_rawDescGZIP(), []int{17}
+	return file_transfer_v1_transfer_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *ConfirmP2PTransferRequest) GetTransferId() string {
@@ -1509,7 +1710,7 @@ type ConfirmP2PTransferResponse struct {
 
 func (x *ConfirmP2PTransferResponse) Reset() {
 	*x = ConfirmP2PTransferResponse{}
-	mi := &file_transfer_v1_transfer_proto_msgTypes[18]
+	mi := &file_transfer_v1_transfer_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1521,7 +1722,7 @@ func (x *ConfirmP2PTransferResponse) String() string {
 func (*ConfirmP2PTransferResponse) ProtoMessage() {}
 
 func (x *ConfirmP2PTransferResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_transfer_v1_transfer_proto_msgTypes[18]
+	mi := &file_transfer_v1_transfer_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1534,7 +1735,7 @@ func (x *ConfirmP2PTransferResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConfirmP2PTransferResponse.ProtoReflect.Descriptor instead.
 func (*ConfirmP2PTransferResponse) Descriptor() ([]byte, []int) {
-	return file_transfer_v1_transfer_proto_rawDescGZIP(), []int{18}
+	return file_transfer_v1_transfer_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *ConfirmP2PTransferResponse) GetSuccess() bool {
@@ -1562,7 +1763,7 @@ type RespondToTransferRequest struct {
 
 func (x *RespondToTransferRequest) Reset() {
 	*x = RespondToTransferRequest{}
-	mi := &file_transfer_v1_transfer_proto_msgTypes[19]
+	mi := &file_transfer_v1_transfer_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1574,7 +1775,7 @@ func (x *RespondToTransferRequest) String() string {
 func (*RespondToTransferRequest) ProtoMessage() {}
 
 func (x *RespondToTransferRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_transfer_v1_transfer_proto_msgTypes[19]
+	mi := &file_transfer_v1_transfer_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1587,7 +1788,7 @@ func (x *RespondToTransferRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RespondToTransferRequest.ProtoReflect.Descriptor instead.
 func (*RespondToTransferRequest) Descriptor() ([]byte, []int) {
-	return file_transfer_v1_transfer_proto_rawDescGZIP(), []int{19}
+	return file_transfer_v1_transfer_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *RespondToTransferRequest) GetTransferId() string {
@@ -1621,7 +1822,7 @@ type RespondToTransferResponse struct {
 
 func (x *RespondToTransferResponse) Reset() {
 	*x = RespondToTransferResponse{}
-	mi := &file_transfer_v1_transfer_proto_msgTypes[20]
+	mi := &file_transfer_v1_transfer_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1633,7 +1834,7 @@ func (x *RespondToTransferResponse) String() string {
 func (*RespondToTransferResponse) ProtoMessage() {}
 
 func (x *RespondToTransferResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_transfer_v1_transfer_proto_msgTypes[20]
+	mi := &file_transfer_v1_transfer_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1646,7 +1847,7 @@ func (x *RespondToTransferResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RespondToTransferResponse.ProtoReflect.Descriptor instead.
 func (*RespondToTransferResponse) Descriptor() ([]byte, []int) {
-	return file_transfer_v1_transfer_proto_rawDescGZIP(), []int{20}
+	return file_transfer_v1_transfer_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *RespondToTransferResponse) GetTransferId() string {
@@ -1675,7 +1876,7 @@ type RecipientKey struct {
 
 func (x *RecipientKey) Reset() {
 	*x = RecipientKey{}
-	mi := &file_transfer_v1_transfer_proto_msgTypes[21]
+	mi := &file_transfer_v1_transfer_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1687,7 +1888,7 @@ func (x *RecipientKey) String() string {
 func (*RecipientKey) ProtoMessage() {}
 
 func (x *RecipientKey) ProtoReflect() protoreflect.Message {
-	mi := &file_transfer_v1_transfer_proto_msgTypes[21]
+	mi := &file_transfer_v1_transfer_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1700,7 +1901,7 @@ func (x *RecipientKey) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RecipientKey.ProtoReflect.Descriptor instead.
 func (*RecipientKey) Descriptor() ([]byte, []int) {
-	return file_transfer_v1_transfer_proto_rawDescGZIP(), []int{21}
+	return file_transfer_v1_transfer_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *RecipientKey) GetReceiverNodeId() string {
@@ -1733,7 +1934,7 @@ type InitiateGroupTransferRequest struct {
 
 func (x *InitiateGroupTransferRequest) Reset() {
 	*x = InitiateGroupTransferRequest{}
-	mi := &file_transfer_v1_transfer_proto_msgTypes[22]
+	mi := &file_transfer_v1_transfer_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1745,7 +1946,7 @@ func (x *InitiateGroupTransferRequest) String() string {
 func (*InitiateGroupTransferRequest) ProtoMessage() {}
 
 func (x *InitiateGroupTransferRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_transfer_v1_transfer_proto_msgTypes[22]
+	mi := &file_transfer_v1_transfer_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1758,7 +1959,7 @@ func (x *InitiateGroupTransferRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InitiateGroupTransferRequest.ProtoReflect.Descriptor instead.
 func (*InitiateGroupTransferRequest) Descriptor() ([]byte, []int) {
-	return file_transfer_v1_transfer_proto_rawDescGZIP(), []int{22}
+	return file_transfer_v1_transfer_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *InitiateGroupTransferRequest) GetSessionId() string {
@@ -1829,7 +2030,7 @@ type InitiateGroupTransferResponse struct {
 
 func (x *InitiateGroupTransferResponse) Reset() {
 	*x = InitiateGroupTransferResponse{}
-	mi := &file_transfer_v1_transfer_proto_msgTypes[23]
+	mi := &file_transfer_v1_transfer_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1841,7 +2042,7 @@ func (x *InitiateGroupTransferResponse) String() string {
 func (*InitiateGroupTransferResponse) ProtoMessage() {}
 
 func (x *InitiateGroupTransferResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_transfer_v1_transfer_proto_msgTypes[23]
+	mi := &file_transfer_v1_transfer_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1854,7 +2055,7 @@ func (x *InitiateGroupTransferResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InitiateGroupTransferResponse.ProtoReflect.Descriptor instead.
 func (*InitiateGroupTransferResponse) Descriptor() ([]byte, []int) {
-	return file_transfer_v1_transfer_proto_rawDescGZIP(), []int{23}
+	return file_transfer_v1_transfer_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *InitiateGroupTransferResponse) GetGroupTransferId() string {
@@ -1901,7 +2102,7 @@ type GroupTransferInfo struct {
 
 func (x *GroupTransferInfo) Reset() {
 	*x = GroupTransferInfo{}
-	mi := &file_transfer_v1_transfer_proto_msgTypes[24]
+	mi := &file_transfer_v1_transfer_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1913,7 +2114,7 @@ func (x *GroupTransferInfo) String() string {
 func (*GroupTransferInfo) ProtoMessage() {}
 
 func (x *GroupTransferInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_transfer_v1_transfer_proto_msgTypes[24]
+	mi := &file_transfer_v1_transfer_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1926,7 +2127,7 @@ func (x *GroupTransferInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GroupTransferInfo.ProtoReflect.Descriptor instead.
 func (*GroupTransferInfo) Descriptor() ([]byte, []int) {
-	return file_transfer_v1_transfer_proto_rawDescGZIP(), []int{24}
+	return file_transfer_v1_transfer_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *GroupTransferInfo) GetGroupTransferId() string {
@@ -1994,7 +2195,7 @@ type ListGroupTransfersRequest struct {
 
 func (x *ListGroupTransfersRequest) Reset() {
 	*x = ListGroupTransfersRequest{}
-	mi := &file_transfer_v1_transfer_proto_msgTypes[25]
+	mi := &file_transfer_v1_transfer_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2006,7 +2207,7 @@ func (x *ListGroupTransfersRequest) String() string {
 func (*ListGroupTransfersRequest) ProtoMessage() {}
 
 func (x *ListGroupTransfersRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_transfer_v1_transfer_proto_msgTypes[25]
+	mi := &file_transfer_v1_transfer_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2019,7 +2220,7 @@ func (x *ListGroupTransfersRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListGroupTransfersRequest.ProtoReflect.Descriptor instead.
 func (*ListGroupTransfersRequest) Descriptor() ([]byte, []int) {
-	return file_transfer_v1_transfer_proto_rawDescGZIP(), []int{25}
+	return file_transfer_v1_transfer_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *ListGroupTransfersRequest) GetSessionId() string {
@@ -2038,7 +2239,7 @@ type ListGroupTransfersResponse struct {
 
 func (x *ListGroupTransfersResponse) Reset() {
 	*x = ListGroupTransfersResponse{}
-	mi := &file_transfer_v1_transfer_proto_msgTypes[26]
+	mi := &file_transfer_v1_transfer_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2050,7 +2251,7 @@ func (x *ListGroupTransfersResponse) String() string {
 func (*ListGroupTransfersResponse) ProtoMessage() {}
 
 func (x *ListGroupTransfersResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_transfer_v1_transfer_proto_msgTypes[26]
+	mi := &file_transfer_v1_transfer_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2063,7 +2264,7 @@ func (x *ListGroupTransfersResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListGroupTransfersResponse.ProtoReflect.Descriptor instead.
 func (*ListGroupTransfersResponse) Descriptor() ([]byte, []int) {
-	return file_transfer_v1_transfer_proto_rawDescGZIP(), []int{26}
+	return file_transfer_v1_transfer_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *ListGroupTransfersResponse) GetGroupTransfers() []*GroupTransferInfo {
@@ -2081,7 +2282,7 @@ type GetTransferStatsRequest struct {
 
 func (x *GetTransferStatsRequest) Reset() {
 	*x = GetTransferStatsRequest{}
-	mi := &file_transfer_v1_transfer_proto_msgTypes[27]
+	mi := &file_transfer_v1_transfer_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2093,7 +2294,7 @@ func (x *GetTransferStatsRequest) String() string {
 func (*GetTransferStatsRequest) ProtoMessage() {}
 
 func (x *GetTransferStatsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_transfer_v1_transfer_proto_msgTypes[27]
+	mi := &file_transfer_v1_transfer_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2106,7 +2307,7 @@ func (x *GetTransferStatsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetTransferStatsRequest.ProtoReflect.Descriptor instead.
 func (*GetTransferStatsRequest) Descriptor() ([]byte, []int) {
-	return file_transfer_v1_transfer_proto_rawDescGZIP(), []int{27}
+	return file_transfer_v1_transfer_proto_rawDescGZIP(), []int{31}
 }
 
 type GetTransferStatsResponse struct {
@@ -2119,7 +2320,7 @@ type GetTransferStatsResponse struct {
 
 func (x *GetTransferStatsResponse) Reset() {
 	*x = GetTransferStatsResponse{}
-	mi := &file_transfer_v1_transfer_proto_msgTypes[28]
+	mi := &file_transfer_v1_transfer_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2131,7 +2332,7 @@ func (x *GetTransferStatsResponse) String() string {
 func (*GetTransferStatsResponse) ProtoMessage() {}
 
 func (x *GetTransferStatsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_transfer_v1_transfer_proto_msgTypes[28]
+	mi := &file_transfer_v1_transfer_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2144,7 +2345,7 @@ func (x *GetTransferStatsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetTransferStatsResponse.ProtoReflect.Descriptor instead.
 func (*GetTransferStatsResponse) Descriptor() ([]byte, []int) {
-	return file_transfer_v1_transfer_proto_rawDescGZIP(), []int{28}
+	return file_transfer_v1_transfer_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *GetTransferStatsResponse) GetTotalTransfers() int64 {
@@ -2181,7 +2382,7 @@ type AdminTransfer struct {
 
 func (x *AdminTransfer) Reset() {
 	*x = AdminTransfer{}
-	mi := &file_transfer_v1_transfer_proto_msgTypes[29]
+	mi := &file_transfer_v1_transfer_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2193,7 +2394,7 @@ func (x *AdminTransfer) String() string {
 func (*AdminTransfer) ProtoMessage() {}
 
 func (x *AdminTransfer) ProtoReflect() protoreflect.Message {
-	mi := &file_transfer_v1_transfer_proto_msgTypes[29]
+	mi := &file_transfer_v1_transfer_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2206,7 +2407,7 @@ func (x *AdminTransfer) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AdminTransfer.ProtoReflect.Descriptor instead.
 func (*AdminTransfer) Descriptor() ([]byte, []int) {
-	return file_transfer_v1_transfer_proto_rawDescGZIP(), []int{29}
+	return file_transfer_v1_transfer_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *AdminTransfer) GetTransferId() string {
@@ -2303,7 +2504,7 @@ type AdminListTransfersRequest struct {
 
 func (x *AdminListTransfersRequest) Reset() {
 	*x = AdminListTransfersRequest{}
-	mi := &file_transfer_v1_transfer_proto_msgTypes[30]
+	mi := &file_transfer_v1_transfer_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2315,7 +2516,7 @@ func (x *AdminListTransfersRequest) String() string {
 func (*AdminListTransfersRequest) ProtoMessage() {}
 
 func (x *AdminListTransfersRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_transfer_v1_transfer_proto_msgTypes[30]
+	mi := &file_transfer_v1_transfer_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2328,7 +2529,7 @@ func (x *AdminListTransfersRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AdminListTransfersRequest.ProtoReflect.Descriptor instead.
 func (*AdminListTransfersRequest) Descriptor() ([]byte, []int) {
-	return file_transfer_v1_transfer_proto_rawDescGZIP(), []int{30}
+	return file_transfer_v1_transfer_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *AdminListTransfersRequest) GetLimit() int32 {
@@ -2355,7 +2556,7 @@ type AdminListTransfersResponse struct {
 
 func (x *AdminListTransfersResponse) Reset() {
 	*x = AdminListTransfersResponse{}
-	mi := &file_transfer_v1_transfer_proto_msgTypes[31]
+	mi := &file_transfer_v1_transfer_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2367,7 +2568,7 @@ func (x *AdminListTransfersResponse) String() string {
 func (*AdminListTransfersResponse) ProtoMessage() {}
 
 func (x *AdminListTransfersResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_transfer_v1_transfer_proto_msgTypes[31]
+	mi := &file_transfer_v1_transfer_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2380,7 +2581,7 @@ func (x *AdminListTransfersResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AdminListTransfersResponse.ProtoReflect.Descriptor instead.
 func (*AdminListTransfersResponse) Descriptor() ([]byte, []int) {
-	return file_transfer_v1_transfer_proto_rawDescGZIP(), []int{31}
+	return file_transfer_v1_transfer_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *AdminListTransfersResponse) GetTransfers() []*AdminTransfer {
@@ -2504,20 +2705,36 @@ const file_transfer_v1_transfer_proto_rawDesc = "" +
 	"\x06reason\x18\x02 \x01(\tR\x06reason\"L\n" +
 	"\x16CancelTransferResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\"U\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"7\n" +
+	"\x14PauseTransferRequest\x12\x1f\n" +
+	"\vtransfer_id\x18\x01 \x01(\tR\n" +
+	"transferId\"m\n" +
+	"\x15PauseTransferResponse\x12\x1f\n" +
+	"\vtransfer_id\x18\x01 \x01(\tR\n" +
+	"transferId\x123\n" +
+	"\x06status\x18\x02 \x01(\x0e2\x1b.transfer.v1.TransferStatusR\x06status\"8\n" +
+	"\x15ResumeTransferRequest\x12\x1f\n" +
+	"\vtransfer_id\x18\x01 \x01(\tR\n" +
+	"transferId\"n\n" +
+	"\x16ResumeTransferResponse\x12\x1f\n" +
+	"\vtransfer_id\x18\x01 \x01(\tR\n" +
+	"transferId\x123\n" +
+	"\x06status\x18\x02 \x01(\x0e2\x1b.transfer.v1.TransferStatusR\x06status\"U\n" +
 	"\x15WatchTransfersRequest\x12\x17\n" +
 	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12#\n" +
-	"\rreceiver_only\x18\x02 \x01(\bR\freceiverOnly\"\xc4\x02\n" +
+	"\rreceiver_only\x18\x02 \x01(\bR\freceiverOnly\"\xf3\x02\n" +
 	"\rTransferEvent\x128\n" +
 	"\x04type\x18\x01 \x01(\x0e2$.transfer.v1.TransferEvent.EventTypeR\x04type\x125\n" +
 	"\btransfer\x18\x02 \x01(\v2\x19.transfer.v1.TransferInfoR\btransfer\x128\n" +
-	"\ttimestamp\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\"\x87\x01\n" +
+	"\ttimestamp\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\"\xb6\x01\n" +
 	"\tEventType\x12\x1a\n" +
 	"\x16EVENT_TYPE_UNSPECIFIED\x10\x00\x12\x12\n" +
 	"\x0eEVENT_TYPE_NEW\x10\x01\x12\x16\n" +
 	"\x12EVENT_TYPE_UPDATED\x10\x02\x12\x18\n" +
 	"\x14EVENT_TYPE_COMPLETED\x10\x03\x12\x18\n" +
-	"\x14EVENT_TYPE_CANCELLED\x10\x04\">\n" +
+	"\x14EVENT_TYPE_CANCELLED\x10\x04\x12\x15\n" +
+	"\x11EVENT_TYPE_PAUSED\x10\x05\x12\x16\n" +
+	"\x12EVENT_TYPE_RESUMED\x10\x06\">\n" +
 	"\x1bGetP2PConnectionInfoRequest\x12\x1f\n" +
 	"\vtransfer_id\x18\x01 \x01(\tR\n" +
 	"transferId\"\xbb\x01\n" +
@@ -2609,7 +2826,7 @@ const file_transfer_v1_transfer_proto_rawDesc = "" +
 	"\x06offset\x18\x02 \x01(\x05R\x06offset\"l\n" +
 	"\x1aAdminListTransfersResponse\x128\n" +
 	"\ttransfers\x18\x01 \x03(\v2\x1a.transfer.v1.AdminTransferR\ttransfers\x12\x14\n" +
-	"\x05total\x18\x02 \x01(\x03R\x05total*\xf0\x01\n" +
+	"\x05total\x18\x02 \x01(\x03R\x05total*\x8c\x02\n" +
 	"\x0eTransferStatus\x12\x1f\n" +
 	"\x1bTRANSFER_STATUS_UNSPECIFIED\x10\x00\x12\x1b\n" +
 	"\x17TRANSFER_STATUS_PENDING\x10\x01\x12\x1f\n" +
@@ -2617,20 +2834,22 @@ const file_transfer_v1_transfer_proto_rawDesc = "" +
 	"\x19TRANSFER_STATUS_COMPLETED\x10\x03\x12\x1a\n" +
 	"\x16TRANSFER_STATUS_FAILED\x10\x04\x12\x1d\n" +
 	"\x19TRANSFER_STATUS_CANCELLED\x10\x05\x12%\n" +
-	"!TRANSFER_STATUS_AWAITING_APPROVAL\x10\x06*\x83\x01\n" +
+	"!TRANSFER_STATUS_AWAITING_APPROVAL\x10\x06\x12\x1a\n" +
+	"\x16TRANSFER_STATUS_PAUSED\x10\a*\x83\x01\n" +
 	"\fTransferMode\x12\x1d\n" +
 	"\x19TRANSFER_MODE_UNSPECIFIED\x10\x00\x12\x17\n" +
 	"\x13TRANSFER_MODE_RELAY\x10\x01\x12\x1c\n" +
 	"\x18TRANSFER_MODE_P2P_DIRECT\x10\x02\x12\x1d\n" +
-	"\x19TRANSFER_MODE_P2P_RELAYED\x10\x032\xd0\n" +
-	"\n" +
+	"\x19TRANSFER_MODE_P2P_RELAYED\x10\x032\x83\f\n" +
 	"\x0fTransferService\x12_\n" +
 	"\x10InitiateTransfer\x12$.transfer.v1.InitiateTransferRequest\x1a%.transfer.v1.InitiateTransferResponse\x12L\n" +
 	"\tSendChunk\x12\x1d.transfer.v1.SendChunkRequest\x1a\x1e.transfer.v1.SendChunkResponse(\x01\x12L\n" +
 	"\rReceiveChunks\x12!.transfer.v1.ReceiveChunksRequest\x1a\x16.transfer.v1.DataChunk0\x01\x12b\n" +
 	"\x11GetTransferStatus\x12%.transfer.v1.GetTransferStatusRequest\x1a&.transfer.v1.GetTransferStatusResponse\x12V\n" +
 	"\rListTransfers\x12!.transfer.v1.ListTransfersRequest\x1a\".transfer.v1.ListTransfersResponse\x12Y\n" +
-	"\x0eCancelTransfer\x12\".transfer.v1.CancelTransferRequest\x1a#.transfer.v1.CancelTransferResponse\x12R\n" +
+	"\x0eCancelTransfer\x12\".transfer.v1.CancelTransferRequest\x1a#.transfer.v1.CancelTransferResponse\x12V\n" +
+	"\rPauseTransfer\x12!.transfer.v1.PauseTransferRequest\x1a\".transfer.v1.PauseTransferResponse\x12Y\n" +
+	"\x0eResumeTransfer\x12\".transfer.v1.ResumeTransferRequest\x1a#.transfer.v1.ResumeTransferResponse\x12R\n" +
 	"\x0eWatchTransfers\x12\".transfer.v1.WatchTransfersRequest\x1a\x1a.transfer.v1.TransferEvent0\x01\x12k\n" +
 	"\x14GetP2PConnectionInfo\x12(.transfer.v1.GetP2PConnectionInfoRequest\x1a).transfer.v1.GetP2PConnectionInfoResponse\x12e\n" +
 	"\x12ConfirmP2PTransfer\x12&.transfer.v1.ConfirmP2PTransferRequest\x1a'.transfer.v1.ConfirmP2PTransferResponse\x12b\n" +
@@ -2653,7 +2872,7 @@ func file_transfer_v1_transfer_proto_rawDescGZIP() []byte {
 }
 
 var file_transfer_v1_transfer_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_transfer_v1_transfer_proto_msgTypes = make([]protoimpl.MessageInfo, 32)
+var file_transfer_v1_transfer_proto_msgTypes = make([]protoimpl.MessageInfo, 36)
 var file_transfer_v1_transfer_proto_goTypes = []any{
 	(TransferStatus)(0),                   // 0: transfer.v1.TransferStatus
 	(TransferMode)(0),                     // 1: transfer.v1.TransferMode
@@ -2671,89 +2890,99 @@ var file_transfer_v1_transfer_proto_goTypes = []any{
 	(*TransferInfo)(nil),                  // 13: transfer.v1.TransferInfo
 	(*CancelTransferRequest)(nil),         // 14: transfer.v1.CancelTransferRequest
 	(*CancelTransferResponse)(nil),        // 15: transfer.v1.CancelTransferResponse
-	(*WatchTransfersRequest)(nil),         // 16: transfer.v1.WatchTransfersRequest
-	(*TransferEvent)(nil),                 // 17: transfer.v1.TransferEvent
-	(*GetP2PConnectionInfoRequest)(nil),   // 18: transfer.v1.GetP2PConnectionInfoRequest
-	(*GetP2PConnectionInfoResponse)(nil),  // 19: transfer.v1.GetP2PConnectionInfoResponse
-	(*ConfirmP2PTransferRequest)(nil),     // 20: transfer.v1.ConfirmP2PTransferRequest
-	(*ConfirmP2PTransferResponse)(nil),    // 21: transfer.v1.ConfirmP2PTransferResponse
-	(*RespondToTransferRequest)(nil),      // 22: transfer.v1.RespondToTransferRequest
-	(*RespondToTransferResponse)(nil),     // 23: transfer.v1.RespondToTransferResponse
-	(*RecipientKey)(nil),                  // 24: transfer.v1.RecipientKey
-	(*InitiateGroupTransferRequest)(nil),  // 25: transfer.v1.InitiateGroupTransferRequest
-	(*InitiateGroupTransferResponse)(nil), // 26: transfer.v1.InitiateGroupTransferResponse
-	(*GroupTransferInfo)(nil),             // 27: transfer.v1.GroupTransferInfo
-	(*ListGroupTransfersRequest)(nil),     // 28: transfer.v1.ListGroupTransfersRequest
-	(*ListGroupTransfersResponse)(nil),    // 29: transfer.v1.ListGroupTransfersResponse
-	(*GetTransferStatsRequest)(nil),       // 30: transfer.v1.GetTransferStatsRequest
-	(*GetTransferStatsResponse)(nil),      // 31: transfer.v1.GetTransferStatsResponse
-	(*AdminTransfer)(nil),                 // 32: transfer.v1.AdminTransfer
-	(*AdminListTransfersRequest)(nil),     // 33: transfer.v1.AdminListTransfersRequest
-	(*AdminListTransfersResponse)(nil),    // 34: transfer.v1.AdminListTransfersResponse
-	(*timestamppb.Timestamp)(nil),         // 35: google.protobuf.Timestamp
-	(*v1.RouteHop)(nil),                   // 36: routing.v1.RouteHop
+	(*PauseTransferRequest)(nil),          // 16: transfer.v1.PauseTransferRequest
+	(*PauseTransferResponse)(nil),         // 17: transfer.v1.PauseTransferResponse
+	(*ResumeTransferRequest)(nil),         // 18: transfer.v1.ResumeTransferRequest
+	(*ResumeTransferResponse)(nil),        // 19: transfer.v1.ResumeTransferResponse
+	(*WatchTransfersRequest)(nil),         // 20: transfer.v1.WatchTransfersRequest
+	(*TransferEvent)(nil),                 // 21: transfer.v1.TransferEvent
+	(*GetP2PConnectionInfoRequest)(nil),   // 22: transfer.v1.GetP2PConnectionInfoRequest
+	(*GetP2PConnectionInfoResponse)(nil),  // 23: transfer.v1.GetP2PConnectionInfoResponse
+	(*ConfirmP2PTransferRequest)(nil),     // 24: transfer.v1.ConfirmP2PTransferRequest
+	(*ConfirmP2PTransferResponse)(nil),    // 25: transfer.v1.ConfirmP2PTransferResponse
+	(*RespondToTransferRequest)(nil),      // 26: transfer.v1.RespondToTransferRequest
+	(*RespondToTransferResponse)(nil),     // 27: transfer.v1.RespondToTransferResponse
+	(*RecipientKey)(nil),                  // 28: transfer.v1.RecipientKey
+	(*InitiateGroupTransferRequest)(nil),  // 29: transfer.v1.InitiateGroupTransferRequest
+	(*InitiateGroupTransferResponse)(nil), // 30: transfer.v1.InitiateGroupTransferResponse
+	(*GroupTransferInfo)(nil),             // 31: transfer.v1.GroupTransferInfo
+	(*ListGroupTransfersRequest)(nil),     // 32: transfer.v1.ListGroupTransfersRequest
+	(*ListGroupTransfersResponse)(nil),    // 33: transfer.v1.ListGroupTransfersResponse
+	(*GetTransferStatsRequest)(nil),       // 34: transfer.v1.GetTransferStatsRequest
+	(*GetTransferStatsResponse)(nil),      // 35: transfer.v1.GetTransferStatsResponse
+	(*AdminTransfer)(nil),                 // 36: transfer.v1.AdminTransfer
+	(*AdminListTransfersRequest)(nil),     // 37: transfer.v1.AdminListTransfersRequest
+	(*AdminListTransfersResponse)(nil),    // 38: transfer.v1.AdminListTransfersResponse
+	(*timestamppb.Timestamp)(nil),         // 39: google.protobuf.Timestamp
+	(*v1.RouteHop)(nil),                   // 40: routing.v1.RouteHop
 }
 var file_transfer_v1_transfer_proto_depIdxs = []int32{
 	0,  // 0: transfer.v1.InitiateTransferResponse.status:type_name -> transfer.v1.TransferStatus
-	35, // 1: transfer.v1.InitiateTransferResponse.created_at:type_name -> google.protobuf.Timestamp
-	36, // 2: transfer.v1.InitiateTransferResponse.route_hops:type_name -> routing.v1.RouteHop
+	39, // 1: transfer.v1.InitiateTransferResponse.created_at:type_name -> google.protobuf.Timestamp
+	40, // 2: transfer.v1.InitiateTransferResponse.route_hops:type_name -> routing.v1.RouteHop
 	1,  // 3: transfer.v1.InitiateTransferResponse.transfer_mode:type_name -> transfer.v1.TransferMode
 	0,  // 4: transfer.v1.SendChunkResponse.status:type_name -> transfer.v1.TransferStatus
 	0,  // 5: transfer.v1.GetTransferStatusResponse.status:type_name -> transfer.v1.TransferStatus
-	35, // 6: transfer.v1.GetTransferStatusResponse.started_at:type_name -> google.protobuf.Timestamp
-	35, // 7: transfer.v1.GetTransferStatusResponse.updated_at:type_name -> google.protobuf.Timestamp
+	39, // 6: transfer.v1.GetTransferStatusResponse.started_at:type_name -> google.protobuf.Timestamp
+	39, // 7: transfer.v1.GetTransferStatusResponse.updated_at:type_name -> google.protobuf.Timestamp
 	0,  // 8: transfer.v1.ListTransfersRequest.filter_status:type_name -> transfer.v1.TransferStatus
 	13, // 9: transfer.v1.ListTransfersResponse.transfers:type_name -> transfer.v1.TransferInfo
 	0,  // 10: transfer.v1.TransferInfo.status:type_name -> transfer.v1.TransferStatus
-	35, // 11: transfer.v1.TransferInfo.created_at:type_name -> google.protobuf.Timestamp
+	39, // 11: transfer.v1.TransferInfo.created_at:type_name -> google.protobuf.Timestamp
 	1,  // 12: transfer.v1.TransferInfo.transfer_mode:type_name -> transfer.v1.TransferMode
-	2,  // 13: transfer.v1.TransferEvent.type:type_name -> transfer.v1.TransferEvent.EventType
-	13, // 14: transfer.v1.TransferEvent.transfer:type_name -> transfer.v1.TransferInfo
-	35, // 15: transfer.v1.TransferEvent.timestamp:type_name -> google.protobuf.Timestamp
-	0,  // 16: transfer.v1.ConfirmP2PTransferResponse.status:type_name -> transfer.v1.TransferStatus
-	0,  // 17: transfer.v1.RespondToTransferResponse.status:type_name -> transfer.v1.TransferStatus
-	24, // 18: transfer.v1.InitiateGroupTransferRequest.recipient_keys:type_name -> transfer.v1.RecipientKey
-	13, // 19: transfer.v1.InitiateGroupTransferResponse.transfers:type_name -> transfer.v1.TransferInfo
-	35, // 20: transfer.v1.InitiateGroupTransferResponse.created_at:type_name -> google.protobuf.Timestamp
-	13, // 21: transfer.v1.GroupTransferInfo.transfers:type_name -> transfer.v1.TransferInfo
-	35, // 22: transfer.v1.GroupTransferInfo.created_at:type_name -> google.protobuf.Timestamp
-	27, // 23: transfer.v1.ListGroupTransfersResponse.group_transfers:type_name -> transfer.v1.GroupTransferInfo
-	35, // 24: transfer.v1.AdminTransfer.created_at:type_name -> google.protobuf.Timestamp
-	35, // 25: transfer.v1.AdminTransfer.updated_at:type_name -> google.protobuf.Timestamp
-	32, // 26: transfer.v1.AdminListTransfersResponse.transfers:type_name -> transfer.v1.AdminTransfer
-	3,  // 27: transfer.v1.TransferService.InitiateTransfer:input_type -> transfer.v1.InitiateTransferRequest
-	5,  // 28: transfer.v1.TransferService.SendChunk:input_type -> transfer.v1.SendChunkRequest
-	7,  // 29: transfer.v1.TransferService.ReceiveChunks:input_type -> transfer.v1.ReceiveChunksRequest
-	9,  // 30: transfer.v1.TransferService.GetTransferStatus:input_type -> transfer.v1.GetTransferStatusRequest
-	11, // 31: transfer.v1.TransferService.ListTransfers:input_type -> transfer.v1.ListTransfersRequest
-	14, // 32: transfer.v1.TransferService.CancelTransfer:input_type -> transfer.v1.CancelTransferRequest
-	16, // 33: transfer.v1.TransferService.WatchTransfers:input_type -> transfer.v1.WatchTransfersRequest
-	18, // 34: transfer.v1.TransferService.GetP2PConnectionInfo:input_type -> transfer.v1.GetP2PConnectionInfoRequest
-	20, // 35: transfer.v1.TransferService.ConfirmP2PTransfer:input_type -> transfer.v1.ConfirmP2PTransferRequest
-	22, // 36: transfer.v1.TransferService.RespondToTransfer:input_type -> transfer.v1.RespondToTransferRequest
-	25, // 37: transfer.v1.TransferService.InitiateGroupTransfer:input_type -> transfer.v1.InitiateGroupTransferRequest
-	28, // 38: transfer.v1.TransferService.ListGroupTransfers:input_type -> transfer.v1.ListGroupTransfersRequest
-	30, // 39: transfer.v1.TransferService.GetTransferStats:input_type -> transfer.v1.GetTransferStatsRequest
-	33, // 40: transfer.v1.TransferService.AdminListTransfers:input_type -> transfer.v1.AdminListTransfersRequest
-	4,  // 41: transfer.v1.TransferService.InitiateTransfer:output_type -> transfer.v1.InitiateTransferResponse
-	6,  // 42: transfer.v1.TransferService.SendChunk:output_type -> transfer.v1.SendChunkResponse
-	8,  // 43: transfer.v1.TransferService.ReceiveChunks:output_type -> transfer.v1.DataChunk
-	10, // 44: transfer.v1.TransferService.GetTransferStatus:output_type -> transfer.v1.GetTransferStatusResponse
-	12, // 45: transfer.v1.TransferService.ListTransfers:output_type -> transfer.v1.ListTransfersResponse
-	15, // 46: transfer.v1.TransferService.CancelTransfer:output_type -> transfer.v1.CancelTransferResponse
-	17, // 47: transfer.v1.TransferService.WatchTransfers:output_type -> transfer.v1.TransferEvent
-	19, // 48: transfer.v1.TransferService.GetP2PConnectionInfo:output_type -> transfer.v1.GetP2PConnectionInfoResponse
-	21, // 49: transfer.v1.TransferService.ConfirmP2PTransfer:output_type -> transfer.v1.ConfirmP2PTransferResponse
-	23, // 50: transfer.v1.TransferService.RespondToTransfer:output_type -> transfer.v1.RespondToTransferResponse
-	26, // 51: transfer.v1.TransferService.InitiateGroupTransfer:output_type -> transfer.v1.InitiateGroupTransferResponse
-	29, // 52: transfer.v1.TransferService.ListGroupTransfers:output_type -> transfer.v1.ListGroupTransfersResponse
-	31, // 53: transfer.v1.TransferService.GetTransferStats:output_type -> transfer.v1.GetTransferStatsResponse
-	34, // 54: transfer.v1.TransferService.AdminListTransfers:output_type -> transfer.v1.AdminListTransfersResponse
-	41, // [41:55] is the sub-list for method output_type
-	27, // [27:41] is the sub-list for method input_type
-	27, // [27:27] is the sub-list for extension type_name
-	27, // [27:27] is the sub-list for extension extendee
-	0,  // [0:27] is the sub-list for field type_name
+	0,  // 13: transfer.v1.PauseTransferResponse.status:type_name -> transfer.v1.TransferStatus
+	0,  // 14: transfer.v1.ResumeTransferResponse.status:type_name -> transfer.v1.TransferStatus
+	2,  // 15: transfer.v1.TransferEvent.type:type_name -> transfer.v1.TransferEvent.EventType
+	13, // 16: transfer.v1.TransferEvent.transfer:type_name -> transfer.v1.TransferInfo
+	39, // 17: transfer.v1.TransferEvent.timestamp:type_name -> google.protobuf.Timestamp
+	0,  // 18: transfer.v1.ConfirmP2PTransferResponse.status:type_name -> transfer.v1.TransferStatus
+	0,  // 19: transfer.v1.RespondToTransferResponse.status:type_name -> transfer.v1.TransferStatus
+	28, // 20: transfer.v1.InitiateGroupTransferRequest.recipient_keys:type_name -> transfer.v1.RecipientKey
+	13, // 21: transfer.v1.InitiateGroupTransferResponse.transfers:type_name -> transfer.v1.TransferInfo
+	39, // 22: transfer.v1.InitiateGroupTransferResponse.created_at:type_name -> google.protobuf.Timestamp
+	13, // 23: transfer.v1.GroupTransferInfo.transfers:type_name -> transfer.v1.TransferInfo
+	39, // 24: transfer.v1.GroupTransferInfo.created_at:type_name -> google.protobuf.Timestamp
+	31, // 25: transfer.v1.ListGroupTransfersResponse.group_transfers:type_name -> transfer.v1.GroupTransferInfo
+	39, // 26: transfer.v1.AdminTransfer.created_at:type_name -> google.protobuf.Timestamp
+	39, // 27: transfer.v1.AdminTransfer.updated_at:type_name -> google.protobuf.Timestamp
+	36, // 28: transfer.v1.AdminListTransfersResponse.transfers:type_name -> transfer.v1.AdminTransfer
+	3,  // 29: transfer.v1.TransferService.InitiateTransfer:input_type -> transfer.v1.InitiateTransferRequest
+	5,  // 30: transfer.v1.TransferService.SendChunk:input_type -> transfer.v1.SendChunkRequest
+	7,  // 31: transfer.v1.TransferService.ReceiveChunks:input_type -> transfer.v1.ReceiveChunksRequest
+	9,  // 32: transfer.v1.TransferService.GetTransferStatus:input_type -> transfer.v1.GetTransferStatusRequest
+	11, // 33: transfer.v1.TransferService.ListTransfers:input_type -> transfer.v1.ListTransfersRequest
+	14, // 34: transfer.v1.TransferService.CancelTransfer:input_type -> transfer.v1.CancelTransferRequest
+	16, // 35: transfer.v1.TransferService.PauseTransfer:input_type -> transfer.v1.PauseTransferRequest
+	18, // 36: transfer.v1.TransferService.ResumeTransfer:input_type -> transfer.v1.ResumeTransferRequest
+	20, // 37: transfer.v1.TransferService.WatchTransfers:input_type -> transfer.v1.WatchTransfersRequest
+	22, // 38: transfer.v1.TransferService.GetP2PConnectionInfo:input_type -> transfer.v1.GetP2PConnectionInfoRequest
+	24, // 39: transfer.v1.TransferService.ConfirmP2PTransfer:input_type -> transfer.v1.ConfirmP2PTransferRequest
+	26, // 40: transfer.v1.TransferService.RespondToTransfer:input_type -> transfer.v1.RespondToTransferRequest
+	29, // 41: transfer.v1.TransferService.InitiateGroupTransfer:input_type -> transfer.v1.InitiateGroupTransferRequest
+	32, // 42: transfer.v1.TransferService.ListGroupTransfers:input_type -> transfer.v1.ListGroupTransfersRequest
+	34, // 43: transfer.v1.TransferService.GetTransferStats:input_type -> transfer.v1.GetTransferStatsRequest
+	37, // 44: transfer.v1.TransferService.AdminListTransfers:input_type -> transfer.v1.AdminListTransfersRequest
+	4,  // 45: transfer.v1.TransferService.InitiateTransfer:output_type -> transfer.v1.InitiateTransferResponse
+	6,  // 46: transfer.v1.TransferService.SendChunk:output_type -> transfer.v1.SendChunkResponse
+	8,  // 47: transfer.v1.TransferService.ReceiveChunks:output_type -> transfer.v1.DataChunk
+	10, // 48: transfer.v1.TransferService.GetTransferStatus:output_type -> transfer.v1.GetTransferStatusResponse
+	12, // 49: transfer.v1.TransferService.ListTransfers:output_type -> transfer.v1.ListTransfersResponse
+	15, // 50: transfer.v1.TransferService.CancelTransfer:output_type -> transfer.v1.CancelTransferResponse
+	17, // 51: transfer.v1.TransferService.PauseTransfer:output_type -> transfer.v1.PauseTransferResponse
+	19, // 52: transfer.v1.TransferService.ResumeTransfer:output_type -> transfer.v1.ResumeTransferResponse
+	21, // 53: transfer.v1.TransferService.WatchTransfers:output_type -> transfer.v1.TransferEvent
+	23, // 54: transfer.v1.TransferService.GetP2PConnectionInfo:output_type -> transfer.v1.GetP2PConnectionInfoResponse
+	25, // 55: transfer.v1.TransferService.ConfirmP2PTransfer:output_type -> transfer.v1.ConfirmP2PTransferResponse
+	27, // 56: transfer.v1.TransferService.RespondToTransfer:output_type -> transfer.v1.RespondToTransferResponse
+	30, // 57: transfer.v1.TransferService.InitiateGroupTransfer:output_type -> transfer.v1.InitiateGroupTransferResponse
+	33, // 58: transfer.v1.TransferService.ListGroupTransfers:output_type -> transfer.v1.ListGroupTransfersResponse
+	35, // 59: transfer.v1.TransferService.GetTransferStats:output_type -> transfer.v1.GetTransferStatsResponse
+	38, // 60: transfer.v1.TransferService.AdminListTransfers:output_type -> transfer.v1.AdminListTransfersResponse
+	45, // [45:61] is the sub-list for method output_type
+	29, // [29:45] is the sub-list for method input_type
+	29, // [29:29] is the sub-list for extension type_name
+	29, // [29:29] is the sub-list for extension extendee
+	0,  // [0:29] is the sub-list for field type_name
 }
 
 func init() { file_transfer_v1_transfer_proto_init() }
@@ -2767,7 +2996,7 @@ func file_transfer_v1_transfer_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_transfer_v1_transfer_proto_rawDesc), len(file_transfer_v1_transfer_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   32,
+			NumMessages:   36,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -26,6 +26,12 @@ service TransferService {
   // Cancels an in-progress transfer.
   rpc CancelTransfer(CancelTransferRequest) returns (CancelTransferResponse);
 
+  // Pauses an in-progress transfer.
+  rpc PauseTransfer(PauseTransferRequest) returns (PauseTransferResponse);
+
+  // Resumes a paused transfer.
+  rpc ResumeTransfer(ResumeTransferRequest) returns (ResumeTransferResponse);
+
   // Streams transfer events (new/updated/completed) for a given node so
   // receivers can react to incoming transfers without polling.
   rpc WatchTransfers(WatchTransfersRequest) returns (stream TransferEvent);
@@ -171,6 +177,28 @@ message CancelTransferResponse {
   string message = 2;
 }
 
+// ─── PauseTransfer ──────────────────────────────────────
+
+message PauseTransferRequest {
+  string transfer_id = 1;
+}
+
+message PauseTransferResponse {
+  string transfer_id    = 1;
+  TransferStatus status = 2;
+}
+
+// ─── ResumeTransfer ─────────────────────────────────────
+
+message ResumeTransferRequest {
+  string transfer_id = 1;
+}
+
+message ResumeTransferResponse {
+  string transfer_id    = 1;
+  TransferStatus status = 2;
+}
+
 // ─── WatchTransfers ─────────────────────────────────────
 
 message WatchTransfersRequest {
@@ -191,6 +219,8 @@ message TransferEvent {
     EVENT_TYPE_UPDATED     = 2; // Status or progress changed
     EVENT_TYPE_COMPLETED   = 3; // Reached terminal completed state
     EVENT_TYPE_CANCELLED   = 4; // Reached terminal cancelled/failed state
+    EVENT_TYPE_PAUSED      = 5; // Transfer was paused
+    EVENT_TYPE_RESUMED     = 6; // Transfer was resumed
   }
 }
 
@@ -204,6 +234,7 @@ enum TransferStatus {
   TRANSFER_STATUS_FAILED      = 4;
   TRANSFER_STATUS_CANCELLED   = 5;
   TRANSFER_STATUS_AWAITING_APPROVAL = 6;
+  TRANSFER_STATUS_PAUSED            = 7;
 }
 
 enum TransferMode {

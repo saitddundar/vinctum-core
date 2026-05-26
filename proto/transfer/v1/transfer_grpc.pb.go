@@ -25,6 +25,8 @@ const (
 	TransferService_GetTransferStatus_FullMethodName     = "/transfer.v1.TransferService/GetTransferStatus"
 	TransferService_ListTransfers_FullMethodName         = "/transfer.v1.TransferService/ListTransfers"
 	TransferService_CancelTransfer_FullMethodName        = "/transfer.v1.TransferService/CancelTransfer"
+	TransferService_PauseTransfer_FullMethodName         = "/transfer.v1.TransferService/PauseTransfer"
+	TransferService_ResumeTransfer_FullMethodName        = "/transfer.v1.TransferService/ResumeTransfer"
 	TransferService_WatchTransfers_FullMethodName        = "/transfer.v1.TransferService/WatchTransfers"
 	TransferService_GetP2PConnectionInfo_FullMethodName  = "/transfer.v1.TransferService/GetP2PConnectionInfo"
 	TransferService_ConfirmP2PTransfer_FullMethodName    = "/transfer.v1.TransferService/ConfirmP2PTransfer"
@@ -51,6 +53,10 @@ type TransferServiceClient interface {
 	ListTransfers(ctx context.Context, in *ListTransfersRequest, opts ...grpc.CallOption) (*ListTransfersResponse, error)
 	// Cancels an in-progress transfer.
 	CancelTransfer(ctx context.Context, in *CancelTransferRequest, opts ...grpc.CallOption) (*CancelTransferResponse, error)
+	// Pauses an in-progress transfer.
+	PauseTransfer(ctx context.Context, in *PauseTransferRequest, opts ...grpc.CallOption) (*PauseTransferResponse, error)
+	// Resumes a paused transfer.
+	ResumeTransfer(ctx context.Context, in *ResumeTransferRequest, opts ...grpc.CallOption) (*ResumeTransferResponse, error)
 	// Streams transfer events (new/updated/completed) for a given node so
 	// receivers can react to incoming transfers without polling.
 	WatchTransfers(ctx context.Context, in *WatchTransfersRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[TransferEvent], error)
@@ -145,6 +151,26 @@ func (c *transferServiceClient) CancelTransfer(ctx context.Context, in *CancelTr
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CancelTransferResponse)
 	err := c.cc.Invoke(ctx, TransferService_CancelTransfer_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *transferServiceClient) PauseTransfer(ctx context.Context, in *PauseTransferRequest, opts ...grpc.CallOption) (*PauseTransferResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PauseTransferResponse)
+	err := c.cc.Invoke(ctx, TransferService_PauseTransfer_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *transferServiceClient) ResumeTransfer(ctx context.Context, in *ResumeTransferRequest, opts ...grpc.CallOption) (*ResumeTransferResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ResumeTransferResponse)
+	err := c.cc.Invoke(ctx, TransferService_ResumeTransfer_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -256,6 +282,10 @@ type TransferServiceServer interface {
 	ListTransfers(context.Context, *ListTransfersRequest) (*ListTransfersResponse, error)
 	// Cancels an in-progress transfer.
 	CancelTransfer(context.Context, *CancelTransferRequest) (*CancelTransferResponse, error)
+	// Pauses an in-progress transfer.
+	PauseTransfer(context.Context, *PauseTransferRequest) (*PauseTransferResponse, error)
+	// Resumes a paused transfer.
+	ResumeTransfer(context.Context, *ResumeTransferRequest) (*ResumeTransferResponse, error)
 	// Streams transfer events (new/updated/completed) for a given node so
 	// receivers can react to incoming transfers without polling.
 	WatchTransfers(*WatchTransfersRequest, grpc.ServerStreamingServer[TransferEvent]) error
@@ -300,6 +330,12 @@ func (UnimplementedTransferServiceServer) ListTransfers(context.Context, *ListTr
 }
 func (UnimplementedTransferServiceServer) CancelTransfer(context.Context, *CancelTransferRequest) (*CancelTransferResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CancelTransfer not implemented")
+}
+func (UnimplementedTransferServiceServer) PauseTransfer(context.Context, *PauseTransferRequest) (*PauseTransferResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method PauseTransfer not implemented")
+}
+func (UnimplementedTransferServiceServer) ResumeTransfer(context.Context, *ResumeTransferRequest) (*ResumeTransferResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ResumeTransfer not implemented")
 }
 func (UnimplementedTransferServiceServer) WatchTransfers(*WatchTransfersRequest, grpc.ServerStreamingServer[TransferEvent]) error {
 	return status.Error(codes.Unimplemented, "method WatchTransfers not implemented")
@@ -431,6 +467,42 @@ func _TransferService_CancelTransfer_Handler(srv interface{}, ctx context.Contex
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TransferServiceServer).CancelTransfer(ctx, req.(*CancelTransferRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TransferService_PauseTransfer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PauseTransferRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TransferServiceServer).PauseTransfer(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TransferService_PauseTransfer_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TransferServiceServer).PauseTransfer(ctx, req.(*PauseTransferRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TransferService_ResumeTransfer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ResumeTransferRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TransferServiceServer).ResumeTransfer(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TransferService_ResumeTransfer_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TransferServiceServer).ResumeTransfer(ctx, req.(*ResumeTransferRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -594,6 +666,14 @@ var TransferService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CancelTransfer",
 			Handler:    _TransferService_CancelTransfer_Handler,
+		},
+		{
+			MethodName: "PauseTransfer",
+			Handler:    _TransferService_PauseTransfer_Handler,
+		},
+		{
+			MethodName: "ResumeTransfer",
+			Handler:    _TransferService_ResumeTransfer_Handler,
 		},
 		{
 			MethodName: "GetP2PConnectionInfo",
