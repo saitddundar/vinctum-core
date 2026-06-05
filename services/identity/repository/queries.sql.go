@@ -372,7 +372,7 @@ func (q *Queries) CreatePeerSession(ctx context.Context, arg CreatePeerSessionPa
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (username, email, password_hash)
 VALUES ($1, $2, $3)
-RETURNING id, username, email, password_hash, created_at, email_verified, verification_token, verification_expires_at
+RETURNING id, username, email, password_hash, created_at, email_verified, verification_token, verification_expires_at, avatar_data
 `
 
 type CreateUserParams struct {
@@ -393,6 +393,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.EmailVerified,
 		&i.VerificationToken,
 		&i.VerificationExpiresAt,
+		&i.AvatarData,
 	)
 	return i, err
 }
@@ -550,8 +551,52 @@ func (q *Queries) GetPeerSession(ctx context.Context, dollar_1 string) (PeerSess
 	return i, err
 }
 
+const getPresenceByUserIDs = `-- name: GetPresenceByUserIDs :many
+SELECT DISTINCT ON (user_id) user_id, device_id, last_seen
+FROM presence
+WHERE user_id = ANY($1::uuid[])
+ORDER BY user_id, last_seen DESC
+`
+
+type GetPresenceByUserIDsRow struct {
+	UserID   string    `json:"user_id"`
+	DeviceID string    `json:"device_id"`
+	LastSeen time.Time `json:"last_seen"`
+}
+
+func (q *Queries) GetPresenceByUserIDs(ctx context.Context, dollar_1 []string) ([]GetPresenceByUserIDsRow, error) {
+	rows, err := q.db.Query(ctx, getPresenceByUserIDs, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetPresenceByUserIDsRow
+	for rows.Next() {
+		var i GetPresenceByUserIDsRow
+		if err := rows.Scan(&i.UserID, &i.DeviceID, &i.LastSeen); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getUserAvatar = `-- name: GetUserAvatar :one
+SELECT avatar_data FROM users WHERE id = $1::uuid
+`
+
+func (q *Queries) GetUserAvatar(ctx context.Context, dollar_1 string) (pgtype.Text, error) {
+	row := q.db.QueryRow(ctx, getUserAvatar, dollar_1)
+	var avatar_data pgtype.Text
+	err := row.Scan(&avatar_data)
+	return avatar_data, err
+}
+
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, username, email, password_hash, created_at, email_verified, verification_token, verification_expires_at FROM users WHERE email = $1
+SELECT id, username, email, password_hash, created_at, email_verified, verification_token, verification_expires_at, avatar_data FROM users WHERE email = $1
 `
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
@@ -566,12 +611,13 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.EmailVerified,
 		&i.VerificationToken,
 		&i.VerificationExpiresAt,
+		&i.AvatarData,
 	)
 	return i, err
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, username, email, password_hash, created_at, email_verified, verification_token, verification_expires_at FROM users WHERE id = $1::uuid
+SELECT id, username, email, password_hash, created_at, email_verified, verification_token, verification_expires_at, avatar_data FROM users WHERE id = $1::uuid
 `
 
 func (q *Queries) GetUserByID(ctx context.Context, dollar_1 string) (User, error) {
@@ -586,12 +632,13 @@ func (q *Queries) GetUserByID(ctx context.Context, dollar_1 string) (User, error
 		&i.EmailVerified,
 		&i.VerificationToken,
 		&i.VerificationExpiresAt,
+		&i.AvatarData,
 	)
 	return i, err
 }
 
 const getUserByVerificationToken = `-- name: GetUserByVerificationToken :one
-SELECT id, username, email, password_hash, created_at, email_verified, verification_token, verification_expires_at FROM users
+SELECT id, username, email, password_hash, created_at, email_verified, verification_token, verification_expires_at, avatar_data FROM users
 WHERE verification_token = $1
   AND verification_expires_at > NOW()
 `
@@ -608,6 +655,7 @@ func (q *Queries) GetUserByVerificationToken(ctx context.Context, verificationTo
 		&i.EmailVerified,
 		&i.VerificationToken,
 		&i.VerificationExpiresAt,
+		&i.AvatarData,
 	)
 	return i, err
 }
@@ -1043,6 +1091,22 @@ func (q *Queries) UpdateDeviceVisibility(ctx context.Context, arg UpdateDeviceVi
 	return err
 }
 
+const updateUserAvatar = `-- name: UpdateUserAvatar :exec
+
+UPDATE users SET avatar_data = $2 WHERE id = $1::uuid
+`
+
+type UpdateUserAvatarParams struct {
+	Column1    string      `json:"column_1"`
+	AvatarData pgtype.Text `json:"avatar_data"`
+}
+
+// ─── Avatar ───────────────────────────────────────
+func (q *Queries) UpdateUserAvatar(ctx context.Context, arg UpdateUserAvatarParams) error {
+	_, err := q.db.Exec(ctx, updateUserAvatar, arg.Column1, arg.AvatarData)
+	return err
+}
+
 const upsertDeviceKey = `-- name: UpsertDeviceKey :one
 
 INSERT INTO device_keys (device_id, kex_algo, kex_public_key)
@@ -1072,6 +1136,24 @@ func (q *Queries) UpsertDeviceKey(ctx context.Context, arg UpsertDeviceKeyParams
 		&i.RotatedAt,
 	)
 	return i, err
+}
+
+const upsertPresence = `-- name: UpsertPresence :exec
+
+INSERT INTO presence (device_id, user_id, last_seen)
+VALUES ($1, $2::uuid, NOW())
+ON CONFLICT (device_id) DO UPDATE SET last_seen = NOW(), user_id = EXCLUDED.user_id
+`
+
+type UpsertPresenceParams struct {
+	DeviceID string `json:"device_id"`
+	Column2  string `json:"column_2"`
+}
+
+// ─── Presence ─────────────────────────────────────
+func (q *Queries) UpsertPresence(ctx context.Context, arg UpsertPresenceParams) error {
+	_, err := q.db.Exec(ctx, upsertPresence, arg.DeviceID, arg.Column2)
+	return err
 }
 
 const verifyUserEmail = `-- name: VerifyUserEmail :exec

@@ -187,3 +187,24 @@ SELECT * FROM audit_logs ORDER BY created_at DESC LIMIT $1 OFFSET $2;
 
 -- name: AdminCountAuditLogs :one
 SELECT COUNT(*) FROM audit_logs;
+
+-- ─── Presence ─────────────────────────────────────
+
+-- name: UpsertPresence :exec
+INSERT INTO presence (device_id, user_id, last_seen)
+VALUES ($1, $2::uuid, NOW())
+ON CONFLICT (device_id) DO UPDATE SET last_seen = NOW(), user_id = EXCLUDED.user_id;
+
+-- name: GetPresenceByUserIDs :many
+SELECT DISTINCT ON (user_id) user_id, device_id, last_seen
+FROM presence
+WHERE user_id = ANY($1::uuid[])
+ORDER BY user_id, last_seen DESC;
+
+-- ─── Avatar ───────────────────────────────────────
+
+-- name: UpdateUserAvatar :exec
+UPDATE users SET avatar_data = $2 WHERE id = $1::uuid;
+
+-- name: GetUserAvatar :one
+SELECT avatar_data FROM users WHERE id = $1::uuid;

@@ -69,6 +69,12 @@ type PeerSessionDevice struct {
 	LeftAt    pgtype.Timestamptz `json:"left_at"`
 }
 
+type Presence struct {
+	DeviceID string    `json:"device_id"`
+	UserID   string    `json:"user_id"`
+	LastSeen time.Time `json:"last_seen"`
+}
+
 type User struct {
 	ID                    string             `json:"id"`
 	Username              string             `json:"username"`
@@ -78,4 +84,5 @@ type User struct {
 	EmailVerified         bool               `json:"email_verified"`
 	VerificationToken     pgtype.Text        `json:"verification_token"`
 	VerificationExpiresAt pgtype.Timestamptz `json:"verification_expires_at"`
+	AvatarData            pgtype.Text        `json:"avatar_data"`
 }

@@ -11,6 +11,7 @@ sql:
       - "scripts/migrations/014_create_friends.sql"
       - "scripts/migrations/016_add_device_is_public.sql"
       - "scripts/migrations/013_create_audit_logs.sql"
+      - "scripts/migrations/017_presence_and_avatar.sql"
     queries: "services/identity/repository/queries.sql"
     gen:
       go:
@@ -62,6 +63,7 @@ sql:
       - "scripts/migrations/011_add_sender_ephemeral_pubkey.sql"
       - "scripts/migrations/012_add_transfer_mode.sql"
       - "scripts/migrations/015_create_group_transfers.sql"
+      - "scripts/migrations/018_transfer_activity_index.sql"
     queries: "services/transfer/repository/queries.sql"
     gen:
       go:

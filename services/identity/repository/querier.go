@@ -38,6 +38,8 @@ type Querier interface {
 	GetFriendship(ctx context.Context, dollar_1 string) (Friend, error)
 	GetFriendshipBetween(ctx context.Context, arg GetFriendshipBetweenParams) (Friend, error)
 	GetPeerSession(ctx context.Context, dollar_1 string) (PeerSession, error)
+	GetPresenceByUserIDs(ctx context.Context, dollar_1 []string) ([]GetPresenceByUserIDsRow, error)
+	GetUserAvatar(ctx context.Context, dollar_1 string) (pgtype.Text, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, dollar_1 string) (User, error)
 	GetUserByVerificationToken(ctx context.Context, verificationToken pgtype.Text) (User, error)
@@ -57,8 +59,12 @@ type Querier interface {
 	SetVerificationToken(ctx context.Context, arg SetVerificationTokenParams) error
 	UpdateDeviceActivity(ctx context.Context, arg UpdateDeviceActivityParams) error
 	UpdateDeviceVisibility(ctx context.Context, arg UpdateDeviceVisibilityParams) error
+	// ─── Avatar ───────────────────────────────────────
+	UpdateUserAvatar(ctx context.Context, arg UpdateUserAvatarParams) error
 	// ─── Device Keys ────────────────────────────────────
 	UpsertDeviceKey(ctx context.Context, arg UpsertDeviceKeyParams) (DeviceKey, error)
+	// ─── Presence ─────────────────────────────────────
+	UpsertPresence(ctx context.Context, arg UpsertPresenceParams) error
 	VerifyUserEmail(ctx context.Context, dollar_1 string) error
 }
 
