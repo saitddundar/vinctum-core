@@ -55,6 +55,12 @@ service TransferService {
   // Platform Stats (public, no auth required)
   rpc GetTransferStats(GetTransferStatsRequest) returns (GetTransferStatsResponse);
 
+  // Activity heatmap: daily transfer counts for a node over last 364 days
+  rpc GetTransferActivity(GetTransferActivityRequest) returns (GetTransferActivityResponse);
+
+  // Speed stats: bytes/sec over last 60 seconds for a node
+  rpc GetTransferSpeed(GetTransferSpeedRequest) returns (GetTransferSpeedResponse);
+
   // Admin
   rpc AdminListTransfers(AdminListTransfersRequest) returns (AdminListTransfersResponse);
 }
@@ -361,4 +367,28 @@ message AdminListTransfersRequest {
 message AdminListTransfersResponse {
   repeated AdminTransfer transfers = 1;
   int64 total = 2;
+}
+
+// ─── Activity Heatmap ────────────────────────────────
+
+message DailyActivity {
+  string date           = 1;  // ISO date: "2026-06-05"
+  int64  transfer_count = 2;
+}
+
+message GetTransferActivityRequest {
+  string node_id = 1;
+}
+message GetTransferActivityResponse {
+  repeated DailyActivity days = 1;
+}
+
+// ─── Transfer Speed ───────────────────────────────────
+
+message GetTransferSpeedRequest {
+  string node_id = 1;
+}
+message GetTransferSpeedResponse {
+  int64 bytes_per_sec    = 1;  // Average bytes/sec over last 60 seconds
+  int64 active_transfers = 2;
 }

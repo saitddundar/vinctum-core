@@ -34,6 +34,8 @@ const (
 	TransferService_InitiateGroupTransfer_FullMethodName = "/transfer.v1.TransferService/InitiateGroupTransfer"
 	TransferService_ListGroupTransfers_FullMethodName    = "/transfer.v1.TransferService/ListGroupTransfers"
 	TransferService_GetTransferStats_FullMethodName      = "/transfer.v1.TransferService/GetTransferStats"
+	TransferService_GetTransferActivity_FullMethodName   = "/transfer.v1.TransferService/GetTransferActivity"
+	TransferService_GetTransferSpeed_FullMethodName      = "/transfer.v1.TransferService/GetTransferSpeed"
 	TransferService_AdminListTransfers_FullMethodName    = "/transfer.v1.TransferService/AdminListTransfers"
 )
 
@@ -73,6 +75,10 @@ type TransferServiceClient interface {
 	ListGroupTransfers(ctx context.Context, in *ListGroupTransfersRequest, opts ...grpc.CallOption) (*ListGroupTransfersResponse, error)
 	// Platform Stats (public, no auth required)
 	GetTransferStats(ctx context.Context, in *GetTransferStatsRequest, opts ...grpc.CallOption) (*GetTransferStatsResponse, error)
+	// Activity heatmap: daily transfer counts for a node over last 364 days
+	GetTransferActivity(ctx context.Context, in *GetTransferActivityRequest, opts ...grpc.CallOption) (*GetTransferActivityResponse, error)
+	// Speed stats: bytes/sec over last 60 seconds for a node
+	GetTransferSpeed(ctx context.Context, in *GetTransferSpeedRequest, opts ...grpc.CallOption) (*GetTransferSpeedResponse, error)
 	// Admin
 	AdminListTransfers(ctx context.Context, in *AdminListTransfersRequest, opts ...grpc.CallOption) (*AdminListTransfersResponse, error)
 }
@@ -256,6 +262,26 @@ func (c *transferServiceClient) GetTransferStats(ctx context.Context, in *GetTra
 	return out, nil
 }
 
+func (c *transferServiceClient) GetTransferActivity(ctx context.Context, in *GetTransferActivityRequest, opts ...grpc.CallOption) (*GetTransferActivityResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetTransferActivityResponse)
+	err := c.cc.Invoke(ctx, TransferService_GetTransferActivity_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *transferServiceClient) GetTransferSpeed(ctx context.Context, in *GetTransferSpeedRequest, opts ...grpc.CallOption) (*GetTransferSpeedResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetTransferSpeedResponse)
+	err := c.cc.Invoke(ctx, TransferService_GetTransferSpeed_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *transferServiceClient) AdminListTransfers(ctx context.Context, in *AdminListTransfersRequest, opts ...grpc.CallOption) (*AdminListTransfersResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(AdminListTransfersResponse)
@@ -302,6 +328,10 @@ type TransferServiceServer interface {
 	ListGroupTransfers(context.Context, *ListGroupTransfersRequest) (*ListGroupTransfersResponse, error)
 	// Platform Stats (public, no auth required)
 	GetTransferStats(context.Context, *GetTransferStatsRequest) (*GetTransferStatsResponse, error)
+	// Activity heatmap: daily transfer counts for a node over last 364 days
+	GetTransferActivity(context.Context, *GetTransferActivityRequest) (*GetTransferActivityResponse, error)
+	// Speed stats: bytes/sec over last 60 seconds for a node
+	GetTransferSpeed(context.Context, *GetTransferSpeedRequest) (*GetTransferSpeedResponse, error)
 	// Admin
 	AdminListTransfers(context.Context, *AdminListTransfersRequest) (*AdminListTransfersResponse, error)
 }
@@ -357,6 +387,12 @@ func (UnimplementedTransferServiceServer) ListGroupTransfers(context.Context, *L
 }
 func (UnimplementedTransferServiceServer) GetTransferStats(context.Context, *GetTransferStatsRequest) (*GetTransferStatsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetTransferStats not implemented")
+}
+func (UnimplementedTransferServiceServer) GetTransferActivity(context.Context, *GetTransferActivityRequest) (*GetTransferActivityResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetTransferActivity not implemented")
+}
+func (UnimplementedTransferServiceServer) GetTransferSpeed(context.Context, *GetTransferSpeedRequest) (*GetTransferSpeedResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetTransferSpeed not implemented")
 }
 func (UnimplementedTransferServiceServer) AdminListTransfers(context.Context, *AdminListTransfersRequest) (*AdminListTransfersResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method AdminListTransfers not implemented")
@@ -626,6 +662,42 @@ func _TransferService_GetTransferStats_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TransferService_GetTransferActivity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetTransferActivityRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TransferServiceServer).GetTransferActivity(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TransferService_GetTransferActivity_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TransferServiceServer).GetTransferActivity(ctx, req.(*GetTransferActivityRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TransferService_GetTransferSpeed_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetTransferSpeedRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TransferServiceServer).GetTransferSpeed(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TransferService_GetTransferSpeed_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TransferServiceServer).GetTransferSpeed(ctx, req.(*GetTransferSpeedRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _TransferService_AdminListTransfers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(AdminListTransfersRequest)
 	if err := dec(in); err != nil {
@@ -698,6 +770,14 @@ var TransferService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetTransferStats",
 			Handler:    _TransferService_GetTransferStats_Handler,
+		},
+		{
+			MethodName: "GetTransferActivity",
+			Handler:    _TransferService_GetTransferActivity_Handler,
+		},
+		{
+			MethodName: "GetTransferSpeed",
+			Handler:    _TransferService_GetTransferSpeed_Handler,
 		},
 		{
 			MethodName: "AdminListTransfers",

@@ -152,6 +152,14 @@ func (h *GatewayHandler) RegisterRoutes(mux *http.ServeMux) {
 	// platform stats (public, no auth)
 	mux.HandleFunc("GET /api/v1/stats", h.handlePlatformStats)
 
+	// presence
+	mux.HandleFunc("POST /api/v1/presence/heartbeat", h.handleHeartbeat)
+	mux.HandleFunc("POST /api/v1/presence/bulk", h.handleGetPresence)
+
+	// profile avatar
+	mux.HandleFunc("PUT /api/v1/profile/avatar", h.handleUpdateAvatar)
+	mux.HandleFunc("GET /api/v1/profile/{userId}/avatar", h.handleGetAvatar)
+
 	// admin (restricted to admin email)
 	mux.HandleFunc("GET /api/v1/admin/users", h.adminOnly(h.handleAdminListUsers))
 	mux.HandleFunc("GET /api/v1/admin/devices", h.adminOnly(h.handleAdminListDevices))
@@ -197,6 +205,10 @@ func (h *GatewayHandler) RegisterRoutes(mux *http.ServeMux) {
 	// Group transfers (session-based multi-recipient)
 	mux.HandleFunc("POST /api/v1/sessions/{sessionId}/transfer", h.handleInitiateGroupTransfer)
 	mux.HandleFunc("GET /api/v1/sessions/{sessionId}/transfers", h.handleListGroupTransfers)
+
+	// transfer activity heatmap and speed
+	mux.HandleFunc("GET /api/v1/node-transfers/{nodeId}/activity", h.handleTransferActivity)
+	mux.HandleFunc("GET /api/v1/node-transfers/{nodeId}/speed", h.handleTransferSpeed)
 }
 
 // ─── Health ─────────────────────────────────────────────────
@@ -1899,4 +1911,118 @@ func (h *GatewayHandler) handlePlatformStats(w http.ResponseWriter, _ *http.Requ
 	}
 
 	writeJSON(w, http.StatusOK, result)
+}
+
+// ─── Presence Proxy ─────────────────────────────────────────
+
+func (h *GatewayHandler) handleHeartbeat(w http.ResponseWriter, r *http.Request) {
+	if h.identityClient == nil {
+		writeError(w, http.StatusServiceUnavailable, "identity service unavailable")
+		return
+	}
+	var body struct {
+		DeviceID string `json:"device_id"`
+	}
+	if err := decodeJSON(r, &body); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	ctx := forwardAuth(r)
+	resp, err := h.identityClient.Heartbeat(ctx, &identityv1.HeartbeatRequest{DeviceId: body.DeviceID})
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+func (h *GatewayHandler) handleGetPresence(w http.ResponseWriter, r *http.Request) {
+	if h.identityClient == nil {
+		writeError(w, http.StatusServiceUnavailable, "identity service unavailable")
+		return
+	}
+	var body struct {
+		UserIDs []string `json:"user_ids"`
+	}
+	if err := decodeJSON(r, &body); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	ctx := forwardAuth(r)
+	resp, err := h.identityClient.GetPresence(ctx, &identityv1.GetPresenceRequest{UserIds: body.UserIDs})
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+// ─── Avatar Proxy ────────────────────────────────────────────
+
+func (h *GatewayHandler) handleUpdateAvatar(w http.ResponseWriter, r *http.Request) {
+	if h.identityClient == nil {
+		writeError(w, http.StatusServiceUnavailable, "identity service unavailable")
+		return
+	}
+	var body struct {
+		AvatarData string `json:"avatar_data"`
+	}
+	if err := decodeJSON(r, &body); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	ctx := forwardAuth(r)
+	resp, err := h.identityClient.UpdateAvatar(ctx, &identityv1.UpdateAvatarRequest{AvatarData: body.AvatarData})
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+func (h *GatewayHandler) handleGetAvatar(w http.ResponseWriter, r *http.Request) {
+	if h.identityClient == nil {
+		writeError(w, http.StatusServiceUnavailable, "identity service unavailable")
+		return
+	}
+	userID := r.PathValue("userId")
+	ctx := forwardAuth(r)
+	resp, err := h.identityClient.GetAvatar(ctx, &identityv1.GetAvatarRequest{UserId: userID})
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+// ─── Transfer Activity + Speed Proxy ─────────────────────────
+
+func (h *GatewayHandler) handleTransferActivity(w http.ResponseWriter, r *http.Request) {
+	if h.transferClient == nil {
+		writeError(w, http.StatusServiceUnavailable, "transfer service unavailable")
+		return
+	}
+	nodeID := r.PathValue("nodeId")
+	ctx := forwardAuth(r)
+	resp, err := h.transferClient.GetTransferActivity(ctx, &transferv1.GetTransferActivityRequest{NodeId: nodeID})
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+func (h *GatewayHandler) handleTransferSpeed(w http.ResponseWriter, r *http.Request) {
+	if h.transferClient == nil {
+		writeError(w, http.StatusServiceUnavailable, "transfer service unavailable")
+		return
+	}
+	nodeID := r.PathValue("nodeId")
+	ctx := forwardAuth(r)
+	resp, err := h.transferClient.GetTransferSpeed(ctx, &transferv1.GetTransferSpeedRequest{NodeId: nodeID})
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, resp)
 }
