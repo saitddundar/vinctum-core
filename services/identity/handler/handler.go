@@ -1113,6 +1113,89 @@ func (h *IdentityHandler) GetPlatformStats(ctx context.Context, _ *identityv1.Ge
 	}, nil
 }
 
+// ─── Presence RPCs ─────────────────────────────────
+
+func (h *IdentityHandler) Heartbeat(ctx context.Context, req *identityv1.HeartbeatRequest) (*identityv1.HeartbeatResponse, error) {
+	userID, ok := middleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "not authenticated")
+	}
+	if req.DeviceId == "" {
+		return nil, status.Error(codes.InvalidArgument, "device_id is required")
+	}
+	if err := h.queries.UpsertPresence(ctx, repository.UpsertPresenceParams{
+		Column1: req.DeviceId,
+		Column2: userID,
+	}); err != nil {
+		return nil, status.Error(codes.Internal, "failed to update presence")
+	}
+	return &identityv1.HeartbeatResponse{Success: true}, nil
+}
+
+func (h *IdentityHandler) GetPresence(ctx context.Context, req *identityv1.GetPresenceRequest) (*identityv1.GetPresenceResponse, error) {
+	_, ok := middleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "not authenticated")
+	}
+	if len(req.UserIds) == 0 {
+		return &identityv1.GetPresenceResponse{}, nil
+	}
+	rows, err := h.queries.GetPresenceByUserIDs(ctx, req.UserIds)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to get presence")
+	}
+	onlineThreshold := time.Now().Add(-60 * time.Second)
+	result := make([]*identityv1.PresenceInfo, len(rows))
+	for i, r := range rows {
+		result[i] = &identityv1.PresenceInfo{
+			UserId:   r.UserID,
+			DeviceId: r.DeviceID,
+			LastSeen: timestamppb.New(r.LastSeen),
+			Online:   r.LastSeen.After(onlineThreshold),
+		}
+	}
+	return &identityv1.GetPresenceResponse{Presence: result}, nil
+}
+
+// ─── Avatar RPCs ───────────────────────────────────
+
+const maxAvatarBytes = 1 * 1024 * 1024 // 1 MB base64 limit
+
+func (h *IdentityHandler) UpdateAvatar(ctx context.Context, req *identityv1.UpdateAvatarRequest) (*identityv1.UpdateAvatarResponse, error) {
+	userID, ok := middleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "not authenticated")
+	}
+	if len(req.AvatarData) > maxAvatarBytes {
+		return nil, status.Error(codes.InvalidArgument, "avatar_data exceeds 1 MB limit")
+	}
+	if err := h.queries.UpdateUserAvatar(ctx, repository.UpdateUserAvatarParams{
+		Column1: userID,
+		Column2: pgtype.Text{String: req.AvatarData, Valid: req.AvatarData != ""},
+	}); err != nil {
+		return nil, status.Error(codes.Internal, "failed to update avatar")
+	}
+	log.Info().Str("user_id", userID).Msg("avatar updated")
+	return &identityv1.UpdateAvatarResponse{Success: true}, nil
+}
+
+func (h *IdentityHandler) GetAvatar(ctx context.Context, req *identityv1.GetAvatarRequest) (*identityv1.GetAvatarResponse, error) {
+	_, ok := middleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "not authenticated")
+	}
+	if req.UserId == "" {
+		return nil, status.Error(codes.InvalidArgument, "user_id is required")
+	}
+	avatarData, err := h.queries.GetUserAvatar(ctx, req.UserId)
+	if err != nil {
+		return &identityv1.GetAvatarResponse{}, nil // no avatar, return empty
+	}
+	return &identityv1.GetAvatarResponse{AvatarData: avatarData.String}, nil
+}
+
+
+
 func (h *IdentityHandler) AdminListUsers(ctx context.Context, req *identityv1.AdminListUsersRequest) (*identityv1.AdminListUsersResponse, error) {
 	limit := req.Limit
 	if limit <= 0 || limit > 200 {
