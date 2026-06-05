@@ -271,6 +271,68 @@ func (q *Queries) GetTransfer(ctx context.Context, transferID string) (Transfer,
 	return i, err
 }
 
+const getTransferActivityHeatmap = `-- name: GetTransferActivityHeatmap :many
+
+SELECT
+    DATE(created_at AT TIME ZONE 'UTC') AS day,
+    COUNT(*) AS transfer_count
+FROM transfers
+WHERE (sender_node_id = $1 OR receiver_node_id = $1)
+  AND created_at >= NOW() - INTERVAL '364 days'
+GROUP BY DATE(created_at AT TIME ZONE 'UTC')
+ORDER BY day ASC
+`
+
+type GetTransferActivityHeatmapRow struct {
+	Day           pgtype.Date `json:"day"`
+	TransferCount int64       `json:"transfer_count"`
+}
+
+// ─── Activity Heatmap ─────────────────────────────
+func (q *Queries) GetTransferActivityHeatmap(ctx context.Context, senderNodeID string) ([]GetTransferActivityHeatmapRow, error) {
+	rows, err := q.db.Query(ctx, getTransferActivityHeatmap, senderNodeID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetTransferActivityHeatmapRow
+	for rows.Next() {
+		var i GetTransferActivityHeatmapRow
+		if err := rows.Scan(&i.Day, &i.TransferCount); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getTransferSpeedStats = `-- name: GetTransferSpeedStats :one
+
+SELECT
+    COALESCE(SUM(total_size_bytes), 0)::bigint AS bytes_last_minute,
+    COUNT(*) AS transfers_last_minute
+FROM transfers
+WHERE (sender_node_id = $1 OR receiver_node_id = $1)
+  AND status = 3
+  AND updated_at >= NOW() - INTERVAL '60 seconds'
+`
+
+type GetTransferSpeedStatsRow struct {
+	BytesLastMinute     int64 `json:"bytes_last_minute"`
+	TransfersLastMinute int64 `json:"transfers_last_minute"`
+}
+
+// ─── Speed Stats ──────────────────────────────────
+func (q *Queries) GetTransferSpeedStats(ctx context.Context, senderNodeID string) (GetTransferSpeedStatsRow, error) {
+	row := q.db.QueryRow(ctx, getTransferSpeedStats, senderNodeID)
+	var i GetTransferSpeedStatsRow
+	err := row.Scan(&i.BytesLastMinute, &i.TransfersLastMinute)
+	return i, err
+}
+
 const listGroupTransfersBySession = `-- name: ListGroupTransfersBySession :many
 SELECT id, session_id, sender_node_id, filename, total_size_bytes, content_hash, chunk_size_bytes, total_chunks, sender_ephemeral_pubkey, created_at FROM group_transfers WHERE session_id = $1 ORDER BY created_at DESC
 `

@@ -21,6 +21,10 @@ type Querier interface {
 	CreateTransfer(ctx context.Context, arg CreateTransferParams) (Transfer, error)
 	GetGroupTransfer(ctx context.Context, id string) (GroupTransfer, error)
 	GetTransfer(ctx context.Context, transferID string) (Transfer, error)
+	// ─── Activity Heatmap ─────────────────────────────
+	GetTransferActivityHeatmap(ctx context.Context, senderNodeID string) ([]GetTransferActivityHeatmapRow, error)
+	// ─── Speed Stats ──────────────────────────────────
+	GetTransferSpeedStats(ctx context.Context, senderNodeID string) (GetTransferSpeedStatsRow, error)
 	ListGroupTransfersBySession(ctx context.Context, sessionID pgtype.UUID) ([]GroupTransfer, error)
 	ListTransfersByGroupID(ctx context.Context, groupTransferID pgtype.Text) ([]Transfer, error)
 	ListTransfersByNode(ctx context.Context, senderNodeID string) ([]Transfer, error)

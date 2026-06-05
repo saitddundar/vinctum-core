@@ -56,3 +56,27 @@ SELECT COALESCE(SUM(total_size_bytes), 0)::bigint FROM transfers WHERE status = 
 
 -- name: AdminListTransfers :many
 SELECT * FROM transfers ORDER BY created_at DESC LIMIT $1 OFFSET $2;
+
+-- ─── Activity Heatmap ─────────────────────────────
+
+-- name: GetTransferActivityHeatmap :many
+SELECT
+    DATE(created_at AT TIME ZONE 'UTC') AS day,
+    COUNT(*) AS transfer_count
+FROM transfers
+WHERE (sender_node_id = $1 OR receiver_node_id = $1)
+  AND created_at >= NOW() - INTERVAL '364 days'
+GROUP BY DATE(created_at AT TIME ZONE 'UTC')
+ORDER BY day ASC;
+
+-- ─── Speed Stats ──────────────────────────────────
+
+-- name: GetTransferSpeedStats :one
+SELECT
+    COALESCE(SUM(total_size_bytes), 0)::bigint AS bytes_last_minute,
+    COUNT(*) AS transfers_last_minute
+FROM transfers
+WHERE (sender_node_id = $1 OR receiver_node_id = $1)
+  AND status = 3
+  AND updated_at >= NOW() - INTERVAL '60 seconds';
+
