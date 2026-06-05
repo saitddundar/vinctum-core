@@ -827,7 +827,6 @@ func (h *IdentityHandler) GetDeviceKey(ctx context.Context, req *identityv1.GetD
 	return &identityv1.GetDeviceKeyResponse{Key: deviceKeyToProto(key)}, nil
 }
 
-
 func (h *IdentityHandler) GetSessionDeviceKeys(ctx context.Context, req *identityv1.GetSessionDeviceKeysRequest) (*identityv1.GetSessionDeviceKeysResponse, error) {
 	userID, ok := middleware.UserIDFromContext(ctx)
 	if !ok {
@@ -1124,8 +1123,8 @@ func (h *IdentityHandler) Heartbeat(ctx context.Context, req *identityv1.Heartbe
 		return nil, status.Error(codes.InvalidArgument, "device_id is required")
 	}
 	if err := h.queries.UpsertPresence(ctx, repository.UpsertPresenceParams{
-		Column1: req.DeviceId,
-		Column2: userID,
+		DeviceID: req.DeviceId,
+		Column2:  userID,
 	}); err != nil {
 		return nil, status.Error(codes.Internal, "failed to update presence")
 	}
@@ -1170,8 +1169,8 @@ func (h *IdentityHandler) UpdateAvatar(ctx context.Context, req *identityv1.Upda
 		return nil, status.Error(codes.InvalidArgument, "avatar_data exceeds 1 MB limit")
 	}
 	if err := h.queries.UpdateUserAvatar(ctx, repository.UpdateUserAvatarParams{
-		Column1: userID,
-		Column2: pgtype.Text{String: req.AvatarData, Valid: req.AvatarData != ""},
+		Column1:    userID,
+		AvatarData: pgtype.Text{String: req.AvatarData, Valid: req.AvatarData != ""},
 	}); err != nil {
 		return nil, status.Error(codes.Internal, "failed to update avatar")
 	}
@@ -1193,8 +1192,6 @@ func (h *IdentityHandler) GetAvatar(ctx context.Context, req *identityv1.GetAvat
 	}
 	return &identityv1.GetAvatarResponse{AvatarData: avatarData.String}, nil
 }
-
-
 
 func (h *IdentityHandler) AdminListUsers(ctx context.Context, req *identityv1.AdminListUsersRequest) (*identityv1.AdminListUsersResponse, error) {
 	limit := req.Limit
@@ -1243,7 +1240,7 @@ func (h *IdentityHandler) AdminListDevices(ctx context.Context, req *identityv1.
 			IsApproved:    r.IsApproved,
 			IsRevoked:     r.RevokedAt.Valid,
 			IsPublic:      r.IsPublic,
-			OwnerUsername:  r.OwnerUsername,
+			OwnerUsername: r.OwnerUsername,
 			OwnerEmail:    r.OwnerEmail,
 			LastActive:    timestamppb.New(r.LastActive),
 			CreatedAt:     timestamppb.New(r.CreatedAt),

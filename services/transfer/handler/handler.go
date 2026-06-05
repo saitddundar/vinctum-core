@@ -1004,6 +1004,43 @@ func (h *TransferHandler) GetTransferStats(ctx context.Context, _ *transferv1.Ge
 	}, nil
 }
 
+func (h *TransferHandler) GetTransferActivity(ctx context.Context, req *transferv1.GetTransferActivityRequest) (*transferv1.GetTransferActivityResponse, error) {
+	if req.NodeId == "" {
+		return nil, status.Error(codes.InvalidArgument, "node_id is required")
+	}
+	rows, err := h.queries.GetTransferActivityHeatmap(ctx, req.NodeId)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to get activity")
+	}
+	days := make([]*transferv1.DailyActivity, 0, len(rows))
+	for _, r := range rows {
+		days = append(days, &transferv1.DailyActivity{
+			Date:          r.Day.Time.Format("2006-01-02"),
+			TransferCount: r.TransferCount,
+		})
+	}
+	return &transferv1.GetTransferActivityResponse{Days: days}, nil
+}
+
+func (h *TransferHandler) GetTransferSpeed(ctx context.Context, req *transferv1.GetTransferSpeedRequest) (*transferv1.GetTransferSpeedResponse, error) {
+	if req.NodeId == "" {
+		return nil, status.Error(codes.InvalidArgument, "node_id is required")
+	}
+	row, err := h.queries.GetTransferSpeedStats(ctx, req.NodeId)
+	if err != nil {
+		return &transferv1.GetTransferSpeedResponse{}, nil
+	}
+	// bytes_last_minute / 60 = bytes_per_sec
+	bps := int64(0)
+	if row.BytesLastMinute > 0 {
+		bps = row.BytesLastMinute / 60
+	}
+	return &transferv1.GetTransferSpeedResponse{
+		BytesPerSec:     bps,
+		ActiveTransfers: row.TransfersLastMinute,
+	}, nil
+}
+
 // pgUUID converts a google uuid to pgtype.UUID.
 func pgUUID(u uuid.UUID) pgtype.UUID {
 	return pgtype.UUID{Bytes: u, Valid: true}

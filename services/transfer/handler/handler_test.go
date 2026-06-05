@@ -30,18 +30,18 @@ var errNotFound = pgx.ErrNoRows
 
 func (f *fakeQuerier) CreateTransfer(_ context.Context, arg repository.CreateTransferParams) (repository.Transfer, error) {
 	t := repository.Transfer{
-		TransferID:     arg.TransferID,
-		SenderNodeID:   arg.SenderNodeID,
-		ReceiverNodeID: arg.ReceiverNodeID,
-		Filename:       arg.Filename,
-		TotalSizeBytes: arg.TotalSizeBytes,
-		ContentHash:    arg.ContentHash,
-		ChunkSizeBytes: arg.ChunkSizeBytes,
-		TotalChunks:    arg.TotalChunks,
-		ChunksDone:     0,
-		Status:         arg.Status,
-		CreatedAt:      time.Now(),
-		UpdatedAt:      time.Now(),
+		TransferID:            arg.TransferID,
+		SenderNodeID:          arg.SenderNodeID,
+		ReceiverNodeID:        arg.ReceiverNodeID,
+		Filename:              arg.Filename,
+		TotalSizeBytes:        arg.TotalSizeBytes,
+		ContentHash:           arg.ContentHash,
+		ChunkSizeBytes:        arg.ChunkSizeBytes,
+		TotalChunks:           arg.TotalChunks,
+		ChunksDone:            0,
+		Status:                arg.Status,
+		CreatedAt:             time.Now(),
+		UpdatedAt:             time.Now(),
 		EncryptionKey:         arg.EncryptionKey,
 		RouteHops:             arg.RouteHops,
 		ReplicationFactor:     arg.ReplicationFactor,
@@ -174,6 +174,48 @@ func (f *fakeQuerier) ListGroupTransfersBySession(_ context.Context, _ pgtype.UU
 
 func (f *fakeQuerier) ListTransfersByGroupID(_ context.Context, _ pgtype.Text) ([]repository.Transfer, error) {
 	return nil, nil
+}
+
+func (f *fakeQuerier) GetTransferActivityHeatmap(_ context.Context, nodeID string) ([]repository.GetTransferActivityHeatmapRow, error) {
+	counts := make(map[time.Time]int64)
+	for _, transfer := range f.transfers {
+		if transfer.SenderNodeID != nodeID && transfer.ReceiverNodeID != nodeID {
+			continue
+		}
+		day := time.Date(
+			transfer.CreatedAt.UTC().Year(),
+			transfer.CreatedAt.UTC().Month(),
+			transfer.CreatedAt.UTC().Day(),
+			0, 0, 0, 0,
+			time.UTC,
+		)
+		counts[day]++
+	}
+
+	rows := make([]repository.GetTransferActivityHeatmapRow, 0, len(counts))
+	for day, count := range counts {
+		rows = append(rows, repository.GetTransferActivityHeatmapRow{
+			Day:           pgtype.Date{Time: day, Valid: true},
+			TransferCount: count,
+		})
+	}
+	return rows, nil
+}
+
+func (f *fakeQuerier) GetTransferSpeedStats(_ context.Context, nodeID string) (repository.GetTransferSpeedStatsRow, error) {
+	var row repository.GetTransferSpeedStatsRow
+	cutoff := time.Now().Add(-time.Minute)
+	for _, transfer := range f.transfers {
+		if transfer.SenderNodeID != nodeID && transfer.ReceiverNodeID != nodeID {
+			continue
+		}
+		if transfer.Status != int32(transferv1.TransferStatus_TRANSFER_STATUS_COMPLETED) || transfer.UpdatedAt.Before(cutoff) {
+			continue
+		}
+		row.BytesLastMinute += transfer.TotalSizeBytes
+		row.TransfersLastMinute++
+	}
+	return row, nil
 }
 
 // Compile-time interface check.

@@ -515,6 +515,56 @@ func (f *fakeQuerier) UpdateDeviceVisibility(_ context.Context, arg repository.U
 	return nil
 }
 
+func (f *fakeQuerier) AdminCountAuditLogs(_ context.Context) (int64, error) {
+	return 0, nil
+}
+
+func (f *fakeQuerier) AdminListAuditLogs(_ context.Context, _ repository.AdminListAuditLogsParams) ([]repository.AuditLog, error) {
+	return nil, nil
+}
+
+func (f *fakeQuerier) AdminListDevices(_ context.Context, _ repository.AdminListDevicesParams) ([]repository.AdminListDevicesRow, error) {
+	return nil, nil
+}
+
+func (f *fakeQuerier) AdminListUsers(_ context.Context, _ repository.AdminListUsersParams) ([]repository.AdminListUsersRow, error) {
+	return nil, nil
+}
+
+func (f *fakeQuerier) CountDevices(_ context.Context) (int64, error) {
+	return int64(len(f.devices)), nil
+}
+
+func (f *fakeQuerier) CountUsers(_ context.Context) (int64, error) {
+	return int64(len(f.users)), nil
+}
+
+func (f *fakeQuerier) GetPresenceByUserIDs(_ context.Context, userIDs []string) ([]repository.GetPresenceByUserIDsRow, error) {
+	return nil, nil
+}
+
+func (f *fakeQuerier) GetUserAvatar(_ context.Context, userID string) (pgtype.Text, error) {
+	u, ok := f.users[userID]
+	if !ok {
+		return pgtype.Text{}, pgx.ErrNoRows
+	}
+	return u.AvatarData, nil
+}
+
+func (f *fakeQuerier) UpdateUserAvatar(_ context.Context, arg repository.UpdateUserAvatarParams) error {
+	u, ok := f.users[arg.Column1]
+	if !ok {
+		return pgx.ErrNoRows
+	}
+	u.AvatarData = arg.AvatarData
+	f.users[u.ID] = u
+	return nil
+}
+
+func (f *fakeQuerier) UpsertPresence(_ context.Context, _ repository.UpsertPresenceParams) error {
+	return nil
+}
+
 // Ensure fakeQuerier satisfies the Querier interface at compile time.
 var _ repository.Querier = (*fakeQuerier)(nil)
 
@@ -668,7 +718,6 @@ func seedApprovedDevice(t *testing.T, f *testFixture) (userID, deviceID string) 
 	f.q.devices[dev.ID] = dev
 	return user.ID, dev.ID
 }
-
 
 func TestUploadDeviceKey(t *testing.T) {
 	f := newTestFixture()
