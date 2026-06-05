@@ -51,6 +51,14 @@ service IdentityService {
   rpc GetNotificationCount(GetNotificationCountRequest) returns (GetNotificationCountResponse);
   rpc ListFriendDevices(ListFriendDevicesRequest) returns (ListFriendDevicesResponse);
 
+  // Presence
+  rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
+  rpc GetPresence(GetPresenceRequest) returns (GetPresenceResponse);
+
+  // Avatar
+  rpc UpdateAvatar(UpdateAvatarRequest) returns (UpdateAvatarResponse);
+  rpc GetAvatar(GetAvatarRequest) returns (GetAvatarResponse);
+
   // Platform Stats (public, no auth required)
   rpc GetPlatformStats(GetPlatformStatsRequest) returns (GetPlatformStatsResponse);
 
@@ -120,6 +128,7 @@ message User {
   string email     = 3;
   google.protobuf.Timestamp created_at = 4;
   bool   email_verified = 5;
+  string avatar_data    = 6;  // base64-encoded image (data URI prefix included)
 }
 
 message VerifyEmailRequest {
@@ -397,6 +406,45 @@ message ListFriendDevicesRequest {
 }
 message ListFriendDevicesResponse {
   repeated Device devices = 1;
+}
+
+// ─── Presence types ───────────────────────────────
+
+message HeartbeatRequest {
+  string device_id = 1;
+}
+message HeartbeatResponse {
+  bool success = 1;
+}
+
+message PresenceInfo {
+  string   user_id   = 1;
+  string   device_id = 2;
+  google.protobuf.Timestamp last_seen = 3;
+  bool     online    = 4;  // true if last_seen < 60s ago
+}
+
+message GetPresenceRequest {
+  repeated string user_ids = 1;
+}
+message GetPresenceResponse {
+  repeated PresenceInfo presence = 1;
+}
+
+// ─── Avatar types ─────────────────────────────────
+
+message UpdateAvatarRequest {
+  string avatar_data = 1;  // base64 data URI e.g. "data:image/jpeg;base64,..."
+}
+message UpdateAvatarResponse {
+  bool success = 1;
+}
+
+message GetAvatarRequest {
+  string user_id = 1;
+}
+message GetAvatarResponse {
+  string avatar_data = 1;
 }
 
 // ─── Platform Stats ───────────────────────────────

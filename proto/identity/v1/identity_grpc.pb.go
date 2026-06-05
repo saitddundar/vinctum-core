@@ -52,6 +52,10 @@ const (
 	IdentityService_SearchUsers_FullMethodName            = "/identity.v1.IdentityService/SearchUsers"
 	IdentityService_GetNotificationCount_FullMethodName   = "/identity.v1.IdentityService/GetNotificationCount"
 	IdentityService_ListFriendDevices_FullMethodName      = "/identity.v1.IdentityService/ListFriendDevices"
+	IdentityService_Heartbeat_FullMethodName              = "/identity.v1.IdentityService/Heartbeat"
+	IdentityService_GetPresence_FullMethodName            = "/identity.v1.IdentityService/GetPresence"
+	IdentityService_UpdateAvatar_FullMethodName           = "/identity.v1.IdentityService/UpdateAvatar"
+	IdentityService_GetAvatar_FullMethodName              = "/identity.v1.IdentityService/GetAvatar"
 	IdentityService_GetPlatformStats_FullMethodName       = "/identity.v1.IdentityService/GetPlatformStats"
 	IdentityService_AdminListUsers_FullMethodName         = "/identity.v1.IdentityService/AdminListUsers"
 	IdentityService_AdminListDevices_FullMethodName       = "/identity.v1.IdentityService/AdminListDevices"
@@ -100,6 +104,12 @@ type IdentityServiceClient interface {
 	SearchUsers(ctx context.Context, in *SearchUsersRequest, opts ...grpc.CallOption) (*SearchUsersResponse, error)
 	GetNotificationCount(ctx context.Context, in *GetNotificationCountRequest, opts ...grpc.CallOption) (*GetNotificationCountResponse, error)
 	ListFriendDevices(ctx context.Context, in *ListFriendDevicesRequest, opts ...grpc.CallOption) (*ListFriendDevicesResponse, error)
+	// Presence
+	Heartbeat(ctx context.Context, in *HeartbeatRequest, opts ...grpc.CallOption) (*HeartbeatResponse, error)
+	GetPresence(ctx context.Context, in *GetPresenceRequest, opts ...grpc.CallOption) (*GetPresenceResponse, error)
+	// Avatar
+	UpdateAvatar(ctx context.Context, in *UpdateAvatarRequest, opts ...grpc.CallOption) (*UpdateAvatarResponse, error)
+	GetAvatar(ctx context.Context, in *GetAvatarRequest, opts ...grpc.CallOption) (*GetAvatarResponse, error)
 	// Platform Stats (public, no auth required)
 	GetPlatformStats(ctx context.Context, in *GetPlatformStatsRequest, opts ...grpc.CallOption) (*GetPlatformStatsResponse, error)
 	// Admin
@@ -446,6 +456,46 @@ func (c *identityServiceClient) ListFriendDevices(ctx context.Context, in *ListF
 	return out, nil
 }
 
+func (c *identityServiceClient) Heartbeat(ctx context.Context, in *HeartbeatRequest, opts ...grpc.CallOption) (*HeartbeatResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(HeartbeatResponse)
+	err := c.cc.Invoke(ctx, IdentityService_Heartbeat_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) GetPresence(ctx context.Context, in *GetPresenceRequest, opts ...grpc.CallOption) (*GetPresenceResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetPresenceResponse)
+	err := c.cc.Invoke(ctx, IdentityService_GetPresence_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) UpdateAvatar(ctx context.Context, in *UpdateAvatarRequest, opts ...grpc.CallOption) (*UpdateAvatarResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateAvatarResponse)
+	err := c.cc.Invoke(ctx, IdentityService_UpdateAvatar_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) GetAvatar(ctx context.Context, in *GetAvatarRequest, opts ...grpc.CallOption) (*GetAvatarResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetAvatarResponse)
+	err := c.cc.Invoke(ctx, IdentityService_GetAvatar_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *identityServiceClient) GetPlatformStats(ctx context.Context, in *GetPlatformStatsRequest, opts ...grpc.CallOption) (*GetPlatformStatsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetPlatformStatsResponse)
@@ -528,6 +578,12 @@ type IdentityServiceServer interface {
 	SearchUsers(context.Context, *SearchUsersRequest) (*SearchUsersResponse, error)
 	GetNotificationCount(context.Context, *GetNotificationCountRequest) (*GetNotificationCountResponse, error)
 	ListFriendDevices(context.Context, *ListFriendDevicesRequest) (*ListFriendDevicesResponse, error)
+	// Presence
+	Heartbeat(context.Context, *HeartbeatRequest) (*HeartbeatResponse, error)
+	GetPresence(context.Context, *GetPresenceRequest) (*GetPresenceResponse, error)
+	// Avatar
+	UpdateAvatar(context.Context, *UpdateAvatarRequest) (*UpdateAvatarResponse, error)
+	GetAvatar(context.Context, *GetAvatarRequest) (*GetAvatarResponse, error)
 	// Platform Stats (public, no auth required)
 	GetPlatformStats(context.Context, *GetPlatformStatsRequest) (*GetPlatformStatsResponse, error)
 	// Admin
@@ -641,6 +697,18 @@ func (UnimplementedIdentityServiceServer) GetNotificationCount(context.Context, 
 }
 func (UnimplementedIdentityServiceServer) ListFriendDevices(context.Context, *ListFriendDevicesRequest) (*ListFriendDevicesResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListFriendDevices not implemented")
+}
+func (UnimplementedIdentityServiceServer) Heartbeat(context.Context, *HeartbeatRequest) (*HeartbeatResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method Heartbeat not implemented")
+}
+func (UnimplementedIdentityServiceServer) GetPresence(context.Context, *GetPresenceRequest) (*GetPresenceResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetPresence not implemented")
+}
+func (UnimplementedIdentityServiceServer) UpdateAvatar(context.Context, *UpdateAvatarRequest) (*UpdateAvatarResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateAvatar not implemented")
+}
+func (UnimplementedIdentityServiceServer) GetAvatar(context.Context, *GetAvatarRequest) (*GetAvatarResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetAvatar not implemented")
 }
 func (UnimplementedIdentityServiceServer) GetPlatformStats(context.Context, *GetPlatformStatsRequest) (*GetPlatformStatsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetPlatformStats not implemented")
@@ -1268,6 +1336,78 @@ func _IdentityService_ListFriendDevices_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _IdentityService_Heartbeat_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HeartbeatRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).Heartbeat(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_Heartbeat_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).Heartbeat(ctx, req.(*HeartbeatRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_GetPresence_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPresenceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).GetPresence(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_GetPresence_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).GetPresence(ctx, req.(*GetPresenceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_UpdateAvatar_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateAvatarRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).UpdateAvatar(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_UpdateAvatar_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).UpdateAvatar(ctx, req.(*UpdateAvatarRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_GetAvatar_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAvatarRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).GetAvatar(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_GetAvatar_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).GetAvatar(ctx, req.(*GetAvatarRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _IdentityService_GetPlatformStats_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetPlatformStatsRequest)
 	if err := dec(in); err != nil {
@@ -1478,6 +1618,22 @@ var IdentityService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListFriendDevices",
 			Handler:    _IdentityService_ListFriendDevices_Handler,
+		},
+		{
+			MethodName: "Heartbeat",
+			Handler:    _IdentityService_Heartbeat_Handler,
+		},
+		{
+			MethodName: "GetPresence",
+			Handler:    _IdentityService_GetPresence_Handler,
+		},
+		{
+			MethodName: "UpdateAvatar",
+			Handler:    _IdentityService_UpdateAvatar_Handler,
+		},
+		{
+			MethodName: "GetAvatar",
+			Handler:    _IdentityService_GetAvatar_Handler,
 		},
 		{
 			MethodName: "GetPlatformStats",
