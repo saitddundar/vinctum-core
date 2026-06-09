@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: routing
+  namespace: vinctum
+  labels:
+    app: routing
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: routing
+  template:
+    metadata:
+      labels:
+        app: routing
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "51053"
+        prometheus.io/path: "/metrics"
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: routing
+          image: ghcr.io/saitddundar/vinctum-core/routing:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 50053
+              name: grpc
+            - containerPort: 51053
+              name: metrics
+          env:
+            - name: VINCTUM_SERVICE_NAME
+              value: routing-service
+            - name: VINCTUM_GRPC_PORT
+              value: "50053"
+            - name: VINCTUM_DATABASE_DSN
+              valueFrom:
+                secretKeyRef:
+                  name: vinctum-secrets
+                  key: postgres-dsn
+            - name: VINCTUM_AUTH_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: vinctum-secrets
+                  key: jwt-secret
+            - name: VINCTUM_DISCOVERY_ADDR
+              value: discovery:50052
+          livenessProbe:
+            grpc:
+              port: 50053
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            grpc:
+              port: 50053
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: routing
+  namespace: vinctum
+spec:
+  selector:
+    app: routing
+  ports:
+    - name: grpc
+      port: 50053
+      targetPort: 50053
+    - name: metrics
+      port: 51053
+      targetPort: 51053

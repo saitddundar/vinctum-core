@@ -1,0 +1,105 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: transfer
+  namespace: vinctum
+  labels:
+    app: transfer
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: transfer
+  template:
+    metadata:
+      labels:
+        app: transfer
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "51054"
+        prometheus.io/path: "/metrics"
+    spec:
+      terminationGracePeriodSeconds: 60  # longer for in-flight transfers
+      containers:
+        - name: transfer
+          image: ghcr.io/saitddundar/vinctum-core/transfer:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 50054
+              name: grpc
+            - containerPort: 51054
+              name: metrics
+          env:
+            - name: VINCTUM_SERVICE_NAME
+              value: transfer-service
+            - name: VINCTUM_GRPC_PORT
+              value: "50054"
+            - name: VINCTUM_DATABASE_DSN
+              valueFrom:
+                secretKeyRef:
+                  name: vinctum-secrets
+                  key: postgres-dsn
+            - name: VINCTUM_AUTH_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: vinctum-secrets
+                  key: jwt-secret
+            - name: VINCTUM_ROUTING_ADDR
+              value: routing:50053
+            - name: VINCTUM_DISCOVERY_ADDR
+              value: discovery:50052
+            - name: VINCTUM_CHUNK_DIR
+              value: /data/chunks
+          volumeMounts:
+            - name: chunk-storage
+              mountPath: /data/chunks
+          livenessProbe:
+            grpc:
+              port: 50054
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            grpc:
+              port: 50054
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "256Mi"
+            limits:
+              cpu: "1000m"
+              memory: "1Gi"
+      volumes:
+        - name: chunk-storage
+          persistentVolumeClaim:
+            claimName: transfer-chunks-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: transfer
+  namespace: vinctum
+spec:
+  selector:
+    app: transfer
+  ports:
+    - name: grpc
+      port: 50054
+      targetPort: 50054
+    - name: metrics
+      port: 51054
+      targetPort: 51054
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: transfer-chunks-pvc
+  namespace: vinctum
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: standard

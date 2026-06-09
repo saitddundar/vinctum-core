@@ -1,0 +1,89 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: discovery
+  namespace: vinctum
+  labels:
+    app: discovery
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: discovery
+  template:
+    metadata:
+      labels:
+        app: discovery
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "51052"
+        prometheus.io/path: "/metrics"
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: discovery
+          image: ghcr.io/saitddundar/vinctum-core/discovery:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 50052
+              name: grpc
+            - containerPort: 4001
+              name: p2p-tcp
+              protocol: TCP
+            - containerPort: 4001
+              name: p2p-udp
+              protocol: UDP
+            - containerPort: 51052
+              name: metrics
+          env:
+            - name: VINCTUM_SERVICE_NAME
+              value: discovery-service
+            - name: VINCTUM_GRPC_PORT
+              value: "50052"
+            - name: VINCTUM_DATABASE_DSN
+              valueFrom:
+                secretKeyRef:
+                  name: vinctum-secrets
+                  key: postgres-dsn
+          livenessProbe:
+            grpc:
+              port: 50052
+            initialDelaySeconds: 10
+            periodSeconds: 15
+            failureThreshold: 3
+          readinessProbe:
+            grpc:
+              port: 50052
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "1Gi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: discovery
+  namespace: vinctum
+spec:
+  selector:
+    app: discovery
+  ports:
+    - name: grpc
+      port: 50052
+      targetPort: 50052
+    - name: p2p-tcp
+      port: 4001
+      targetPort: 4001
+      protocol: TCP
+    - name: p2p-udp
+      port: 4001
+      targetPort: 4001
+      protocol: UDP
+    - name: metrics
+      port: 51052
+      targetPort: 51052

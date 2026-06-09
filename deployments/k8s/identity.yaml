@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: identity
+  namespace: vinctum
+  labels:
+    app: identity
+    app.kubernetes.io/version: "0.1.0"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: identity
+  template:
+    metadata:
+      labels:
+        app: identity
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "51051"
+        prometheus.io/path: "/metrics"
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: identity
+          image: ghcr.io/saitddundar/vinctum-core/identity:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 50051
+              name: grpc
+              protocol: TCP
+            - containerPort: 51051
+              name: metrics
+              protocol: TCP
+          env:
+            - name: VINCTUM_SERVICE_NAME
+              value: identity-service
+            - name: VINCTUM_GRPC_PORT
+              value: "50051"
+            - name: VINCTUM_DATABASE_DSN
+              valueFrom:
+                secretKeyRef:
+                  name: vinctum-secrets
+                  key: postgres-dsn
+            - name: VINCTUM_AUTH_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: vinctum-secrets
+                  key: jwt-secret
+            - name: VINCTUM_REDIS_ADDR
+              value: redis:6379
+            - name: VINCTUM_REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: vinctum-secrets
+                  key: redis-password
+          livenessProbe:
+            grpc:
+              port: 50051
+            initialDelaySeconds: 10
+            periodSeconds: 15
+            failureThreshold: 3
+          readinessProbe:
+            grpc:
+              port: 50051
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: identity
+  namespace: vinctum
+spec:
+  selector:
+    app: identity
+  ports:
+    - name: grpc
+      port: 50051
+      targetPort: 50051
+    - name: metrics
+      port: 51051
+      targetPort: 51051
