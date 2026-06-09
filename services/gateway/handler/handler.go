@@ -106,6 +106,7 @@ func (h *GatewayHandler) RegisterRoutes(mux *http.ServeMux) {
 	// identity proxy
 	mux.HandleFunc("POST /api/v1/auth/register", h.handleRegister)
 	mux.HandleFunc("POST /api/v1/auth/login", h.handleLogin)
+	mux.HandleFunc("POST /api/v1/auth/logout", h.handleLogout)
 	mux.HandleFunc("POST /api/v1/auth/refresh", h.handleRefresh)
 	mux.HandleFunc("POST /api/v1/auth/validate", h.handleValidate)
 	mux.HandleFunc("POST /api/v1/auth/verify", h.handleVerifyEmail)
@@ -385,6 +386,28 @@ func (h *GatewayHandler) handleResendVerification(w http.ResponseWriter, r *http
 	}
 
 	resp, err := h.identityClient.ResendVerification(r.Context(), &req)
+	if err != nil {
+		writeGRPCError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+func (h *GatewayHandler) handleLogout(w http.ResponseWriter, r *http.Request) {
+	if h.identityClient == nil {
+		writeError(w, http.StatusServiceUnavailable, "identity service unavailable")
+		return
+	}
+
+	var req identityv1.LogoutRequest
+	if err := decodeJSON(r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	// Forward auth header so the identity service can also blacklist the access token
+	ctx := forwardAuth(r)
+	resp, err := h.identityClient.Logout(ctx, &req)
 	if err != nil {
 		writeGRPCError(w, err)
 		return
