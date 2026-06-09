@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -53,7 +54,17 @@ func main() {
 	// Allowed CORS origins from env (comma-separated) or default for dev.
 	allowedOrigins := parseOrigins(envOrDefault("VINCTUM_CORS_ORIGINS", "http://localhost:5173,http://localhost:3000,http://localhost:8081,http://localhost:8082"))
 
-	wrapped := securityMiddleware(allowedOrigins, mux)
+	// HTTP rate limiter: 20 req/s general, 5 req/s for auth endpoints.
+	rl := newHTTPRateLimiter(
+		envOrDefaultFloat("VINCTUM_HTTP_RATE_RPS", 20),
+		envOrDefaultInt("VINCTUM_HTTP_RATE_BURST", 60),
+	)
+	rlAuth := newHTTPRateLimiter(
+		envOrDefaultFloat("VINCTUM_HTTP_AUTH_RATE_RPS", 5),
+		envOrDefaultInt("VINCTUM_HTTP_AUTH_RATE_BURST", 10),
+	)
+
+	wrapped := rateLimitMiddleware(rl, rlAuth, securityMiddleware(allowedOrigins, mux))
 
 	httpAddr := fmt.Sprintf(":%d", envOrDefaultInt("VINCTUM_GATEWAY_HTTP_PORT", 8080))
 
@@ -161,4 +172,114 @@ func envOrDefaultInt(key string, fallback int) int {
 		}
 	}
 	return fallback
+}
+
+func envOrDefaultFloat(key string, fallback float64) float64 {
+	if v := os.Getenv(key); v != "" {
+		var f float64
+		fmt.Sscanf(v, "%f", &f)
+		if f > 0 {
+			return f
+		}
+	}
+	return fallback
+}
+
+// ─── HTTP Rate Limiter ──────────────────────────────────────────────────────
+
+type httpLimiterEntry struct {
+	tokens   float64
+	lastSeen time.Time
+}
+
+type httpRateLimiter struct {
+	mu      sync.Mutex
+	clients map[string]*httpLimiterEntry
+	rate    float64 // tokens per second
+	burst   float64
+}
+
+func newHTTPRateLimiter(rps float64, burst int) *httpRateLimiter {
+	rl := &httpRateLimiter{
+		clients: make(map[string]*httpLimiterEntry),
+		rate:    rps,
+		burst:   float64(burst),
+	}
+	go rl.cleanup()
+	return rl
+}
+
+func (rl *httpRateLimiter) allow(ip string) bool {
+	rl.mu.Lock()
+	defer rl.mu.Unlock()
+
+	now := time.Now()
+	e, ok := rl.clients[ip]
+	if !ok {
+		rl.clients[ip] = &httpLimiterEntry{tokens: rl.burst - 1, lastSeen: now}
+		return true
+	}
+
+	elapsed := now.Sub(e.lastSeen).Seconds()
+	e.tokens += elapsed * rl.rate
+	if e.tokens > rl.burst {
+		e.tokens = rl.burst
+	}
+	e.lastSeen = now
+
+	if e.tokens < 1 {
+		return false
+	}
+	e.tokens--
+	return true
+}
+
+func (rl *httpRateLimiter) cleanup() {
+	ticker := time.NewTicker(5 * time.Minute)
+	defer ticker.Stop()
+	for range ticker.C {
+		rl.mu.Lock()
+		cutoff := time.Now().Add(-10 * time.Minute)
+		for k, e := range rl.clients {
+			if e.lastSeen.Before(cutoff) {
+				delete(rl.clients, k)
+			}
+		}
+		rl.mu.Unlock()
+	}
+}
+
+// clientIP extracts the real client IP, respecting X-Forwarded-For.
+func clientIP(r *http.Request) string {
+	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
+		parts := strings.SplitN(xff, ",", 2)
+		return strings.TrimSpace(parts[0])
+	}
+	ip := r.RemoteAddr
+	if idx := strings.LastIndex(ip, ":"); idx != -1 {
+		ip = ip[:idx]
+	}
+	return ip
+}
+
+// authPaths are endpoints that get the stricter per-IP rate limit.
+var authPaths = map[string]bool{
+	"/api/v1/auth/login":    true,
+	"/api/v1/auth/register": true,
+}
+
+func rateLimitMiddleware(general, auth *httpRateLimiter, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ip := clientIP(r)
+		rl := general
+		if authPaths[r.URL.Path] {
+			rl = auth
+		}
+		if !rl.allow(ip) {
+			w.Header().Set("Retry-After", "1")
+			http.Error(w, `{"error":"rate limit exceeded"}`, http.StatusTooManyRequests)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
 }
