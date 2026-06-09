@@ -6,12 +6,12 @@ RUN go mod download
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o /go/bin/identity ./cmd/identity
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o /go/bin/identity ./cmd/identity/...
 
-FROM scratch
-COPY --from=alpine:latest /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+FROM gcr.io/distroless/static-debian12:nonroot
 COPY --from=builder /go/bin/identity /identity
 
 EXPOSE 50051
+EXPOSE 51051
 
 ENTRYPOINT ["/identity"]

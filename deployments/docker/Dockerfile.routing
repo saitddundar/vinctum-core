@@ -1,11 +1,17 @@
-FROM golang:1.25-alpine AS build
-WORKDIR /src
+FROM golang:1.25-alpine AS builder
+WORKDIR /app
+
 COPY go.mod go.sum ./
 RUN go mod download
-COPY . .
-RUN CGO_ENABLED=0 go build -o /bin/routing ./cmd/routing/...
 
-FROM alpine:3.19
-RUN apk add --no-cache ca-certificates
-COPY --from=build /bin/routing /usr/local/bin/routing
-ENTRYPOINT ["routing"]
+COPY . .
+
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o /go/bin/routing ./cmd/routing/...
+
+FROM gcr.io/distroless/static-debian12:nonroot
+COPY --from=builder /go/bin/routing /routing
+
+EXPOSE 50053
+EXPOSE 51053
+
+ENTRYPOINT ["/routing"]

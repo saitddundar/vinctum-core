@@ -1,11 +1,17 @@
-FROM golang:1.25-alpine AS build
-WORKDIR /src
+FROM golang:1.25-alpine AS builder
+WORKDIR /app
+
 COPY go.mod go.sum ./
 RUN go mod download
-COPY . .
-RUN CGO_ENABLED=0 go build -o /bin/transfer ./cmd/transfer/...
 
-FROM alpine:3.19
-RUN apk add --no-cache ca-certificates
-COPY --from=build /bin/transfer /usr/local/bin/transfer
-ENTRYPOINT ["transfer"]
+COPY . .
+
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o /go/bin/transfer ./cmd/transfer/...
+
+FROM gcr.io/distroless/static-debian12:nonroot
+COPY --from=builder /go/bin/transfer /transfer
+
+EXPOSE 50054
+EXPOSE 51054
+
+ENTRYPOINT ["/transfer"]
