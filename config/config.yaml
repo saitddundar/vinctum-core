@@ -1,23 +1,23 @@
 service:
   name: identity-service
-  environment: development
+  environment: production
   version: 0.1.0
-  log_level: debug
+  log_level: info
 
 grpc:
   host: 0.0.0.0
   port: 50051
-  tls_enabled: false
+  tls_enabled: false   # set true + provide cert_file/key_file/ca_file for mTLS
 
 auth:
-  jwt_secret: "change-me-in-production-please!!"
-  jwt_expiry: 24h
+  jwt_secret: ""           # REQUIRED: set via VINCTUM_AUTH_JWT_SECRET env var
+  jwt_expiry: 15m          # shorter access token for production
   refresh_expiry: 168h
   bcrypt_cost: 12
 
 database:
   driver: postgres
-  dsn: "postgres://vinctum:vinctum@localhost:5432/vinctum_identity?sslmode=disable"
+  dsn: ""                  # REQUIRED: set via VINCTUM_DATABASE_DSN env var (use sslmode=require)
   max_open_conns: 25
   max_idle_conns: 10
   conn_max_lifetime: 5m
@@ -31,4 +31,4 @@ p2p:
 
 wireguard:
   enabled: false
-  dry_run: true
+  dry_run: false
