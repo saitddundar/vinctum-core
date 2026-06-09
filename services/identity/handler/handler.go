@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -20,6 +22,53 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
+
+// ─── Validation helpers ────────────────────────────────────────────────────
+
+var emailRE = regexp.MustCompile(`^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$`)
+
+const (
+	minPasswordLen = 8
+	maxPasswordLen = 128
+	minUsernameLen = 3
+	maxUsernameLen = 32
+	maxEmailLen    = 254
+)
+
+func validateEmail(email string) error {
+	email = strings.TrimSpace(email)
+	if email == "" {
+		return fmt.Errorf("email is required")
+	}
+	if len(email) > maxEmailLen {
+		return fmt.Errorf("email must be at most %d characters", maxEmailLen)
+	}
+	if !emailRE.MatchString(email) {
+		return fmt.Errorf("email format is invalid")
+	}
+	return nil
+}
+
+func validatePassword(pw string) error {
+	if len(pw) < minPasswordLen {
+		return fmt.Errorf("password must be at least %d characters", minPasswordLen)
+	}
+	if len(pw) > maxPasswordLen {
+		return fmt.Errorf("password must be at most %d characters", maxPasswordLen)
+	}
+	return nil
+}
+
+func validateUsername(username string) error {
+	username = strings.TrimSpace(username)
+	if len(username) < minUsernameLen {
+		return fmt.Errorf("username must be at least %d characters", minUsernameLen)
+	}
+	if len(username) > maxUsernameLen {
+		return fmt.Errorf("username must be at most %d characters", maxUsernameLen)
+	}
+	return nil
+}
 
 type IdentityHandler struct {
 	identityv1.UnimplementedIdentityServiceServer
@@ -38,8 +87,14 @@ func NewIdentityHandler(q repository.Querier, jwt *auth.Manager, bl *auth.TokenB
 // ─── Auth RPCs (unchanged) ─────────────────────────
 
 func (h *IdentityHandler) Register(ctx context.Context, req *identityv1.RegisterRequest) (*identityv1.RegisterResponse, error) {
-	if req.Email == "" || req.Password == "" || req.Username == "" {
-		return nil, status.Error(codes.InvalidArgument, "email, username and password are required")
+	if err := validateEmail(req.Email); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+	if err := validatePassword(req.Password); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+	if err := validateUsername(req.Username); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	hash, err := crypto.HashPassword(req.Password, h.bcryptCost)
@@ -92,8 +147,11 @@ func (h *IdentityHandler) Register(ctx context.Context, req *identityv1.Register
 }
 
 func (h *IdentityHandler) Login(ctx context.Context, req *identityv1.LoginRequest) (*identityv1.LoginResponse, error) {
-	if req.Email == "" || req.Password == "" {
-		return nil, status.Error(codes.InvalidArgument, "email and password are required")
+	if err := validateEmail(req.Email); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+	if req.Password == "" {
+		return nil, status.Error(codes.InvalidArgument, "password is required")
 	}
 
 	user, err := h.queries.GetUserByEmail(ctx, req.Email)
