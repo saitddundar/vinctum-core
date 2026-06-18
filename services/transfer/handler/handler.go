@@ -123,6 +123,10 @@ func (h *TransferHandler) InitiateTransfer(ctx context.Context, req *transferv1.
 		initialStatus = transferv1.TransferStatus_TRANSFER_STATUS_AWAITING_APPROVAL
 	}
 
+	// Ensure non-nil byte slices to avoid SQL NULL on NOT NULL columns.
+	if routeJSON == nil {
+		routeJSON = []byte("[]")
+	}
 	t, err := h.queries.CreateTransfer(ctx, repository.CreateTransferParams{
 		TransferID:            transferID,
 		SenderNodeID:          req.SenderNodeId,
@@ -137,6 +141,7 @@ func (h *TransferHandler) InitiateTransfer(ctx context.Context, req *transferv1.
 		RouteHops:             routeJSON,
 		ReplicationFactor:     replicationFactor,
 		SenderEphemeralPubkey: req.SenderEphemeralPubkey,
+		WrappedFileKey:        []byte{}, // no server-side key escrow; set to empty
 	})
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to create transfer")
