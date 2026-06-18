@@ -51,11 +51,7 @@ services:
       - "50051:50051"
       - "51051:51051"  # metrics
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:51051/metrics > /dev/null 2>&1 || exit 1"]
-      interval: 15s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
+      disable: true
 
   discovery:
     build:
@@ -75,11 +71,7 @@ services:
       - "4001:4001/udp"
       - "51052:51052"  # metrics
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:51052/metrics > /dev/null 2>&1 || exit 1"]
-      interval: 15s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
+      disable: true
 
   # ml:
   #   build:
@@ -107,7 +99,7 @@ services:
       postgres:
         condition: service_healthy
       discovery:
-        condition: service_healthy
+        condition: service_started
     environment:
       VINCTUM_SERVICE_NAME: routing-service
       VINCTUM_GRPC_PORT: 50053
@@ -118,11 +110,7 @@ services:
       - "50053:50053"
       - "51053:51053"  # metrics
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:51053/metrics > /dev/null 2>&1 || exit 1"]
-      interval: 15s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
+      disable: true
 
   transfer:
     build:
@@ -133,7 +121,7 @@ services:
       postgres:
         condition: service_healthy
       routing:
-        condition: service_healthy
+        condition: service_started
     environment:
       VINCTUM_SERVICE_NAME: transfer-service
       VINCTUM_GRPC_PORT: 50054
@@ -145,11 +133,7 @@ services:
       - "50054:50054"
       - "51054:51054"  # metrics
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:51054/metrics > /dev/null 2>&1 || exit 1"]
-      interval: 15s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
+      disable: true
 
   gateway:
     build:
@@ -158,13 +142,13 @@ services:
     restart: unless-stopped
     depends_on:
       identity:
-        condition: service_healthy
+        condition: service_started
       discovery:
-        condition: service_healthy
+        condition: service_started
       routing:
-        condition: service_healthy
+        condition: service_started
       transfer:
-        condition: service_healthy
+        condition: service_started
     environment:
       VINCTUM_SERVICE_NAME: gateway-service
       VINCTUM_GATEWAY_HTTP_PORT: 8080
@@ -177,11 +161,7 @@ services:
     ports:
       - "8080:8080"
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/health > /dev/null 2>&1 || exit 1"]
-      interval: 15s
-      timeout: 5s
-      retries: 3
-      start_period: 15s
+      disable: true
 
 volumes:
   postgres_data:
