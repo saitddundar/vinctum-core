@@ -133,6 +133,8 @@ func (h *IdentityHandler) Register(ctx context.Context, req *identityv1.Register
 			if err := h.mailer.SendVerification(user.Email, token); err != nil {
 				log.Error().Err(err).Str("email", user.Email).Msg("failed to send verification email")
 			}
+		} else {
+			log.Info().Str("email", user.Email).Str("token", token).Msg("stub mode: verification email bypassed, use token to verify")
 		}
 	}
 
@@ -278,6 +280,8 @@ func (h *IdentityHandler) ResendVerification(ctx context.Context, req *identityv
 			log.Error().Err(err).Str("email", user.Email).Msg("failed to resend verification email")
 			return nil, status.Error(codes.Internal, "failed to send email")
 		}
+	} else {
+		log.Info().Str("email", user.Email).Str("token", token).Msg("stub mode: verification email resent, use token to verify")
 	}
 
 	log.Info().Str("email", user.Email).Msg("verification email resent")
